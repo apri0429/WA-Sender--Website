@@ -75,7 +75,8 @@ export default function WaWebPage() {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "calc(100vh - 118px)",
+        flex: 1,
+        height: "100%",
         overflow: "hidden",
         background: "#f0f2f5",
       }}
@@ -109,12 +110,8 @@ export default function WaWebPage() {
         ref={containerRef}
         style={{
           flex: 1,
-          overflow: "auto",
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "center",
-          padding: 0,
-          cursor: "pointer",
+          overflow: "hidden",
+          position: "relative",
           outline: "none",
         }}
         tabIndex={0}
@@ -123,16 +120,15 @@ export default function WaWebPage() {
       >
         {!connected && (
           <div style={{
+            position: "absolute", inset: 0,
             display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", height: "100%", gap: 12, color: "#94a3b8",
+            justifyContent: "center", gap: 12, color: "#94a3b8",
           }}>
             <div style={{ fontSize: 48 }}>📱</div>
             <div style={{ fontSize: 14, fontWeight: 500 }}>
               {waReady ? "Memuat tampilan..." : "WhatsApp belum login"}
             </div>
-            <div style={{ fontSize: 12 }}>
-              Login dulu di halaman Dashboard
-            </div>
+            <div style={{ fontSize: 12 }}>Login dulu di halaman Dashboard</div>
           </div>
         )}
 
@@ -143,8 +139,9 @@ export default function WaWebPage() {
           style={{
             display: connected ? "block" : "none",
             width: "100%",
-            maxWidth: naturalSize.w,
-            height: "auto",
+            height: "100%",
+            objectFit: "contain",
+            objectPosition: "top left",
             userSelect: "none",
             cursor: "default",
           }}
