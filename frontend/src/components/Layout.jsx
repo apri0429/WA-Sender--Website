@@ -1,22 +1,21 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { BarChartSquare02, Browser, Settings01 } from "@untitledui/icons";
+import { BarChartSquare02, Settings01 } from "@untitledui/icons";
 
 import TemplateSidebar from "../templateComponents/Sidebar";
 import TemplateHeader from "../templateComponents/Header";
 import BackgroundMain from "../templateComponents/BackgroundMain";
+import WaWebModal from "./WaWebModal";
 
 const FONT = "'Plus Jakarta Sans', 'Inter', sans-serif";
 
 const waPrimaryItems = [
   { label: "Dashboard", href: "/", icon: BarChartSquare02 },
-  { label: "WA Web", href: "/wa-web", icon: Browser },
   { label: "Settings", href: "/settings", icon: Settings01 },
 ];
 
 const pageBreadcrumbs = {
   "/": [{ label: "Dashboard", active: true }],
-  "/wa-web": [{ label: "WA Web", active: true }],
   "/settings": [{ label: "Settings", active: true }],
 };
 
@@ -108,26 +107,25 @@ export default function Layout() {
 
         <main
           className="dashboard-main"
-          style={{ position: "relative", padding: 0, overflow: "hidden" }}
+          style={{ position: "relative", padding: 0 }}
         >
-          {location.pathname !== "/wa-web" && (
-            <BackgroundMain position="absolute" zIndex={0} />
-          )}
-
+          <BackgroundMain position="absolute" zIndex={0} />
           <div
             style={{
               position: "relative",
               zIndex: 1,
-              height: "100%",
+              minHeight: "100%",
               display: "flex",
               flexDirection: "column",
             }}
           >
             <Outlet />
-            {location.pathname !== "/wa-web" && <MainFooter />}
+            <MainFooter />
           </div>
         </main>
       </div>
+
+      <WaWebModal />
     </div>
   );
 }

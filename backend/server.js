@@ -369,21 +369,23 @@ function resetWhatsAppRuntimeState() {
   lastQrAt = null;
 }
 
+let screencastViewers = 0;
+
 async function startScreencast() {
   if (!waClient?.pupPage || cdpSession) return;
   try {
     cdpSession = await waClient.pupPage.target().createCDPSession();
     await cdpSession.send("Page.startScreencast", {
       format: "jpeg",
-      quality: 70,
-      maxWidth: 1440,
-      maxHeight: 900,
+      quality: 65,
+      maxWidth: 1280,
+      maxHeight: 800,
     });
     cdpSession.on("Page.screencastFrame", async ({ data, sessionId, metadata }) => {
       io.emit("wa-screen", {
         data,
-        width: metadata.deviceWidth || 1440,
-        height: metadata.deviceHeight || 900,
+        width: metadata.deviceWidth || 1280,
+        height: metadata.deviceHeight || 800,
       });
       try { await cdpSession.send("Page.screencastFrameAck", { sessionId }); } catch {}
     });
@@ -890,7 +892,6 @@ async function initWhatsAppClient(options = {}) {
         lastUsedAt: new Date().toISOString(),
       });
 
-      startScreencast();
       emitLog("success", "WhatsApp Web sudah login dan siap dipakai");
       io.emit("wa-ready", {
         sessionId: requestedSessionId,
@@ -1839,13 +1840,30 @@ io.on("connection", (socket) => {
       account: getWhatsAppAccountInfo(),
       sessions: getWhatsAppSessionsSummary(),
     });
-    // Kirim screenshot sekarang agar langsung tampil
+  }
+
+  // Buka modal WA Web — mulai screencast
+  socket.on("wa-screen-open", async () => {
+    screencastViewers++;
+    if (screencastViewers === 1) await startScreencast();
+    // Kirim screenshot segera agar modal langsung tampil
     if (waClient?.pupPage) {
-      waClient.pupPage.screenshot({ type: "jpeg", quality: 70, encoding: "base64" })
-        .then((data) => socket.emit("wa-screen", { data, width: 1440, height: 900 }))
+      waClient.pupPage.screenshot({ type: "jpeg", quality: 65, encoding: "base64" })
+        .then((data) => socket.emit("wa-screen", { data, width: 1280, height: 800 }))
         .catch(() => {});
     }
-  }
+  });
+
+  // Tutup modal WA Web — stop screencast kalau tidak ada viewer
+  socket.on("wa-screen-close", async () => {
+    screencastViewers = Math.max(0, screencastViewers - 1);
+    if (screencastViewers === 0) await stopScreencast();
+  });
+
+  socket.on("disconnect", async () => {
+    screencastViewers = Math.max(0, screencastViewers - 1);
+    if (screencastViewers === 0) await stopScreencast();
+  });
 
   // Interaksi WA Web: klik
   socket.on("wa-click", async ({ x, y, vpW, vpH }) => {
