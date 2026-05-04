@@ -1,0 +1,13 @@
+{
+  "isSending": true,
+  "progress": {
+    "current": 0,
+    "total": 5,
+    "currentCustomer": "NELAYAN MARITIM JAYA, PT",
+    "startedAt": "2026-04-15T06:40:15.451Z",
+    "updatedAt": "2026-04-15T06:40:15.455Z"
+  },
+  "summary": null,
+  "results": [],
+  "updatedAt": "2026-04-15T06:40:15.455Z"
+}

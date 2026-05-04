@@ -1,0 +1,3 @@
+{
+  "template": "*LAPORAN INVOICE YANG AKAN JATUH TEMPO*\n\nKepada Yth,\n*{nama}*\n\nTerima kasih telah menjadi pelanggan setia kami. Berikut kami informasikan tagihan Bapak/Ibu Yang akan/sudah jatuh tempo.\n\n💰 *Total Tagihan:* {total}\n📅 *Jatuh Tempo:* {tempo}\n\n📄 *Dokumen Invoice:*\n{pdf}\n\nBila ada perbedan nilai tagihan, mohon menghubungi kami kembali. pembayaran dapat dilakukan dengan cara transfer ke rekening:\n\nPT Pilar Niaga Makmur\nВСА : 7020 355 560\n\nMohon untuk melakukan pembayaran sesuai dengan tanggal jatuh tempo yang tertera.\n\nTerima kasih atas kerjasamanya.\n\n_Pesan ini dikirim secara otomatis oleh sistem_"
+}

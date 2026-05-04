@@ -1,0 +1,16 @@
+{
+  "watch": [
+    "server.js",
+    "data"
+  ],
+  "ignore": [
+    "sessions/**",
+    "uploads/**",
+    "server.out.log",
+    "server.err.log",
+    "data/wa-sessions.json",
+    "data/send_results.json",
+    "data/send-state.json"
+  ],
+  "ext": "js,json"
+}

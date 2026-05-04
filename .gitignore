@@ -1,0 +1,6 @@
+backend/sessions/
+backend/server.err.log
+*.log
+**/Code Cache/
+node_modules/
+.env
