@@ -3,19 +3,23 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    outDir: "../backend/frontend_dist",
+    emptyOutDir: true,
+  },
   server: {
     host: "0.0.0.0",
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://192.168.1.97:8005",
-        changeOrigin: true
+        target: "http://localhost:8090",
+        changeOrigin: true,
       },
       "/socket.io": {
-        target: "http://192.168.1.97:8005",
+        target: "http://localhost:8090",
         ws: true,
-        changeOrigin: true
-      }
-    }
-  }
+        changeOrigin: true,
+      },
+    },
+  },
 });
