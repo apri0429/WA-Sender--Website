@@ -27,6 +27,10 @@ function getGroupKey(item) {
   return `group:${getItemKey(item)}`
 }
 
+function isExternalUrl(href) {
+  return typeof href === 'string' && /^(https?:)?\/\//.test(href)
+}
+
 function isItemActive(item, currentPath) {
   if (item.href === currentPath) {
     return true
@@ -62,6 +66,7 @@ function SidebarNavItem({
   const submenuId = hasChildren ? `${getGroupKey(item)}-submenu` : undefined
   const className = [
     'nav-item',
+    item.className ?? '',
     active ? 'active' : '',
     hasChildren ? 'nav-item--accordion' : '',
     expanded ? 'nav-item--expanded' : '',
@@ -161,6 +166,13 @@ function Sidebar({
   onToggleCollapse,
   onCloseMobile,
 }) {
+  const backToPilarGroupItem = {
+    id: 'back-to-pilargroup',
+    label: 'Back to Pilargroup',
+    href: 'https://pilargroup.id',
+    icon: ChevronLeft,
+    className: 'nav-item--back-to-pilargroup',
+  }
   const [selectedPath, setSelectedPath] = useState(activePath)
   const [expandedGroups, setExpandedGroups] = useState(() =>
     getInitiallyExpandedGroups([...primaryItems, ...secondaryItems], activePath)
@@ -206,6 +218,15 @@ function Sidebar({
     }
 
     if (!item.href) {
+      return
+    }
+
+    if (isExternalUrl(item.href)) {
+      if (mobileOpen) {
+        onCloseMobile?.()
+      }
+
+      window.location.assign(item.href)
       return
     }
 
@@ -307,6 +328,16 @@ function Sidebar({
             onToggleGroup={handleToggleGroup}
           />
         ))}
+
+        <SidebarNavItem
+          key={getItemKey(backToPilarGroupItem)}
+          item={backToPilarGroupItem}
+          selectedPath={selectedPath}
+          collapsed={collapsed}
+          onSelect={handleSelect}
+          expandedGroups={expandedGroups}
+          onToggleGroup={handleToggleGroup}
+        />
       </div>
     </aside>
   )

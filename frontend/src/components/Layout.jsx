@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { BarChartSquare02, Settings01 } from "@untitledui/icons";
+import { BarChartSquare02, MessageChatSquare, Settings01 } from "@untitledui/icons";
 
 import TemplateSidebar from "../templateComponents/Sidebar";
 import TemplateHeader from "../templateComponents/Header";
@@ -10,11 +10,13 @@ const FONT = "'Plus Jakarta Sans', 'Inter', sans-serif";
 
 const waPrimaryItems = [
   { label: "Dashboard", href: "/", icon: BarChartSquare02 },
+  { label: "Chats", href: "/chats", icon: MessageChatSquare },
   { label: "Settings", href: "/settings", icon: Settings01 },
 ];
 
 const pageBreadcrumbs = {
   "/": [{ label: "Dashboard", active: true }],
+  "/chats": [{ label: "Chats", active: true }],
   "/settings": [{ label: "Settings", active: true }],
 };
 
@@ -37,31 +39,19 @@ function MainFooter() {
       <div
         style={{
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          gap: 6,
+          gap: 2,
           fontFamily: FONT,
           fontSize: 12,
           fontWeight: 700,
           color: "#334155",
           letterSpacing: "-0.1px",
-          whiteSpace: "nowrap",
+          textAlign: "center",
         }}
       >
-        <img
-          src="/piagam.ico"
-          alt=""
-          style={{
-            width: 18,
-            height: 18,
-            objectFit: "contain",
-            borderRadius: 5,
-            background: "linear-gradient(135deg,#3a5bbf,#233971)",
-            padding: 2,
-            filter: "brightness(0) invert(1)",
-            flexShrink: 0,
-          }}
-        />
-        WA Sender &bull; PT Pilar Niaga Makmur
+        <span>&copy; 2026 PT Pilar Niaga Makmur. All rights reserved.</span>
+        <span>Developed by IT Team PT Pilar Niaga Makmur.</span>
       </div>
     </div>
   );

@@ -85,6 +85,30 @@ let currentSendProgress = {
   customer: null,
 };
 
+// Chat inbox storage (in-memory)
+const chatHistory = new Map(); // chatId -> { id, name, phone, unread, messages: [] }
+
+function upsertChat(chatId, name, phone) {
+  if (!chatHistory.has(chatId)) {
+    chatHistory.set(chatId, { id: chatId, name, phone, unread: 0, messages: [] });
+  }
+  return chatHistory.get(chatId);
+}
+
+function addMessage(chatId, name, phone, msg) {
+  const chat = upsertChat(chatId, name, phone);
+  const entry = {
+    id: msg.id?.id || `${Date.now()}`,
+    from: msg.fromMe ? "me" : "them",
+    body: msg.body || "",
+    timestamp: msg.timestamp ? msg.timestamp * 1000 : Date.now(),
+    type: msg.type || "chat",
+  };
+  chat.messages.push(entry);
+  if (!msg.fromMe) chat.unread += 1;
+  return entry;
+}
+
 function getWhatsAppAccountInfo() {
   const info = waClient?.info;
   const wid = info?.wid;
@@ -870,6 +894,34 @@ async function initWhatsAppClient(options = {}) {
       }
     });
 
+    waClient.on("message", async (msg) => {
+      try {
+        const chatId = msg.from;
+        const contact = await msg.getContact();
+        const name = contact.pushname || contact.name || contact.number || chatId.replace("@c.us", "");
+        const phone = chatId.replace("@c.us", "").replace("@g.us", "");
+        const entry = addMessage(chatId, name, phone, msg);
+        const chat = chatHistory.get(chatId);
+        io.emit("chat:new-message", { chatId, name, phone, message: entry, unread: chat.unread });
+      } catch (e) {
+        console.error("chat message handler error:", e.message);
+      }
+    });
+
+    waClient.on("message_create", async (msg) => {
+      if (!msg.fromMe) return;
+      try {
+        const chatId = msg.to;
+        const contact = await msg.getContact();
+        const name = contact.pushname || contact.name || contact.number || chatId.replace("@c.us", "");
+        const phone = chatId.replace("@c.us", "").replace("@g.us", "");
+        const entry = addMessage(chatId, name, phone, msg);
+        io.emit("chat:new-message", { chatId, name, phone, message: entry, unread: 0 });
+      } catch (e) {
+        console.error("chat message_create handler error:", e.message);
+      }
+    });
+
     try {
       await waClient.initialize();
     } catch (error) {
@@ -1630,6 +1682,44 @@ app.post("/api/send-messages", async (req, res) => {
   }
 });
 
+app.get("/api/chats", (req, res) => {
+  const list = Array.from(chatHistory.values())
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      phone: c.phone,
+      unread: c.unread,
+      lastMessage: c.messages[c.messages.length - 1] || null,
+    }))
+    .sort((a, b) => {
+      const ta = a.lastMessage?.timestamp || 0;
+      const tb = b.lastMessage?.timestamp || 0;
+      return tb - ta;
+    });
+  res.json({ success: true, chats: list });
+});
+
+app.get("/api/chats/:chatId/messages", (req, res) => {
+  const key = decodeURIComponent(req.params.chatId);
+  const chat = chatHistory.get(key);
+  if (!chat) return res.json({ success: true, messages: [] });
+  chatHistory.get(key).unread = 0;
+  res.json({ success: true, messages: chat.messages });
+});
+
+app.post("/api/chats/:chatId/reply", async (req, res) => {
+  try {
+    const chatId = decodeURIComponent(req.params.chatId);
+    const { message } = req.body;
+    if (!message?.trim()) return res.status(400).json({ success: false, message: "Pesan kosong" });
+    await ensureWhatsAppStable();
+    await waClient.sendMessage(chatId, message.trim());
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 app.get("*", (req, res, next) => {
   if (
     req.path.startsWith("/api") ||
@@ -1663,6 +1753,23 @@ io.on("connection", (socket) => {
       account: getWhatsAppAccountInfo(),
       sessions: getWhatsAppSessionsSummary(),
     });
+  }
+
+  const chatList = Array.from(chatHistory.values())
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      phone: c.phone,
+      unread: c.unread,
+      lastMessage: c.messages[c.messages.length - 1] || null,
+    }))
+    .sort((a, b) => {
+      const ta = a.lastMessage?.timestamp || 0;
+      const tb = b.lastMessage?.timestamp || 0;
+      return tb - ta;
+    });
+  if (chatList.length > 0) {
+    socket.emit("chat:history", chatList);
   }
 });
 

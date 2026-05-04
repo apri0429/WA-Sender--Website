@@ -698,7 +698,6 @@ export default function SettingsCard({
                 objectFit: "contain",
                 position: "relative",
                 zIndex: 1,
-                filter: "brightness(0) invert(1)",
               }}
             />
           </Box>

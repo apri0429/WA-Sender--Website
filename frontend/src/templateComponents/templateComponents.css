@@ -3003,6 +3003,10 @@ select {
     display: inline-flex;
   }
 
+  .nav-item--back-to-pilargroup {
+    margin-bottom: 20px;
+  }
+
   .dashboard-shell {
     grid-template-columns: 1fr;
   }
