@@ -122,24 +122,22 @@ export default function ChatPage() {
 
   const activeChat = chats.find((c) => c.id === activeChatId);
 
-  useEffect(() => {
+  const loadChats = () => {
     fetch("/api/chats")
       .then((r) => r.json())
       .then((d) => { if (d.success) setChats(d.chats); })
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadChats();
 
     const socket = getSocket();
 
-    socket.on("chat:history", (list) => setChats(list));
-
-    socket.on("chat:new-message", ({ chatId, name, phone, message, unread }) => {
-      setChats((prev) => {
-        const idx = prev.findIndex((c) => c.id === chatId);
-        const updated = idx >= 0
-          ? prev.map((c) => c.id === chatId ? { ...c, lastMessage: message, unread: activeChatId === chatId ? 0 : unread } : c)
-          : [{ id: chatId, name, phone, unread: 1, lastMessage: message }, ...prev];
-        return updated.sort((a, b) => (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0));
-      });
+    socket.on("chat:new-message", ({ chatId, name, phone, message }) => {
+      // Refresh chat list supaya urutan & unread count update dari WA
+      loadChats();
+      // Kalau chat yang aktif dapat pesan baru, tambah ke messages
       setMessages((prev) => {
         if (activeChatId === chatId) return [...prev, message];
         return prev;
@@ -147,7 +145,6 @@ export default function ChatPage() {
     });
 
     return () => {
-      socket.off("chat:history");
       socket.off("chat:new-message");
     };
   }, [activeChatId]);

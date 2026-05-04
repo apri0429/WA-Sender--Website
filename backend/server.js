@@ -85,28 +85,16 @@ let currentSendProgress = {
   customer: null,
 };
 
-// Chat inbox storage (in-memory)
-const chatHistory = new Map(); // chatId -> { id, name, phone, unread, messages: [] }
-
-function upsertChat(chatId, name, phone) {
-  if (!chatHistory.has(chatId)) {
-    chatHistory.set(chatId, { id: chatId, name, phone, unread: 0, messages: [] });
-  }
-  return chatHistory.get(chatId);
-}
-
-function addMessage(chatId, name, phone, msg) {
-  const chat = upsertChat(chatId, name, phone);
-  const entry = {
-    id: msg.id?.id || `${Date.now()}`,
+// Chat - helper to convert whatsapp-web.js message object to plain object
+function serializeMessage(msg) {
+  return {
+    id: msg.id?.id || String(Date.now()),
     from: msg.fromMe ? "me" : "them",
     body: msg.body || "",
     timestamp: msg.timestamp ? msg.timestamp * 1000 : Date.now(),
     type: msg.type || "chat",
+    hasMedia: msg.hasMedia || false,
   };
-  chat.messages.push(entry);
-  if (!msg.fromMe) chat.unread += 1;
-  return entry;
 }
 
 function getWhatsAppAccountInfo() {
@@ -900,9 +888,7 @@ async function initWhatsAppClient(options = {}) {
         const contact = await msg.getContact();
         const name = contact.pushname || contact.name || contact.number || chatId.replace("@c.us", "");
         const phone = chatId.replace("@c.us", "").replace("@g.us", "");
-        const entry = addMessage(chatId, name, phone, msg);
-        const chat = chatHistory.get(chatId);
-        io.emit("chat:new-message", { chatId, name, phone, message: entry, unread: chat.unread });
+        io.emit("chat:new-message", { chatId, name, phone, message: serializeMessage(msg) });
       } catch (e) {
         console.error("chat message handler error:", e.message);
       }
@@ -915,8 +901,7 @@ async function initWhatsAppClient(options = {}) {
         const contact = await msg.getContact();
         const name = contact.pushname || contact.name || contact.number || chatId.replace("@c.us", "");
         const phone = chatId.replace("@c.us", "").replace("@g.us", "");
-        const entry = addMessage(chatId, name, phone, msg);
-        io.emit("chat:new-message", { chatId, name, phone, message: entry, unread: 0 });
+        io.emit("chat:new-message", { chatId, name, phone, message: serializeMessage(msg) });
       } catch (e) {
         console.error("chat message_create handler error:", e.message);
       }
@@ -1682,29 +1667,44 @@ app.post("/api/send-messages", async (req, res) => {
   }
 });
 
-app.get("/api/chats", (req, res) => {
-  const list = Array.from(chatHistory.values())
-    .map((c) => ({
-      id: c.id,
-      name: c.name,
-      phone: c.phone,
-      unread: c.unread,
-      lastMessage: c.messages[c.messages.length - 1] || null,
-    }))
-    .sort((a, b) => {
-      const ta = a.lastMessage?.timestamp || 0;
-      const tb = b.lastMessage?.timestamp || 0;
-      return tb - ta;
+app.get("/api/chats", async (req, res) => {
+  try {
+    await ensureWhatsAppStable();
+    const waChats = await waClient.getChats();
+    const list = waChats.slice(0, 50).map((c) => {
+      const lastMsg = c.lastMessage;
+      return {
+        id: c.id._serialized,
+        name: c.name || c.id.user,
+        phone: c.id.user,
+        isGroup: c.isGroup,
+        unread: c.unreadCount || 0,
+        lastMessage: lastMsg ? {
+          id: lastMsg.id?.id,
+          from: lastMsg.fromMe ? "me" : "them",
+          body: lastMsg.body || "",
+          timestamp: lastMsg.timestamp ? lastMsg.timestamp * 1000 : null,
+          type: lastMsg.type,
+        } : null,
+      };
     });
-  res.json({ success: true, chats: list });
+    res.json({ success: true, chats: list });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
-app.get("/api/chats/:chatId/messages", (req, res) => {
-  const key = decodeURIComponent(req.params.chatId);
-  const chat = chatHistory.get(key);
-  if (!chat) return res.json({ success: true, messages: [] });
-  chatHistory.get(key).unread = 0;
-  res.json({ success: true, messages: chat.messages });
+app.get("/api/chats/:chatId/messages", async (req, res) => {
+  try {
+    await ensureWhatsAppStable();
+    const chatId = decodeURIComponent(req.params.chatId);
+    const chat = await waClient.getChatById(chatId);
+    const msgs = await chat.fetchMessages({ limit: 50 });
+    const messages = msgs.map(serializeMessage);
+    res.json({ success: true, messages });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 app.post("/api/chats/:chatId/reply", async (req, res) => {
@@ -1755,22 +1755,6 @@ io.on("connection", (socket) => {
     });
   }
 
-  const chatList = Array.from(chatHistory.values())
-    .map((c) => ({
-      id: c.id,
-      name: c.name,
-      phone: c.phone,
-      unread: c.unread,
-      lastMessage: c.messages[c.messages.length - 1] || null,
-    }))
-    .sort((a, b) => {
-      const ta = a.lastMessage?.timestamp || 0;
-      const tb = b.lastMessage?.timestamp || 0;
-      return tb - ta;
-    });
-  if (chatList.length > 0) {
-    socket.emit("chat:history", chatList);
-  }
 });
 
 server.listen(PORT, "0.0.0.0", () => {
