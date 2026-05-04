@@ -105,6 +105,7 @@ export default function ChatPage() {
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [msgError, setMsgError] = useState(null);
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
@@ -144,13 +145,19 @@ export default function ChatPage() {
     setActiveChatId(chat.id);
     setActiveChat(chat);
     setMessages([]);
+    setMsgError(null);
     setLoadingMessages(true);
 
     fetch(`/api/chats/${encodeURIComponent(chat.id)}/messages`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.success) setMessages(d.messages);
+        if (d.success) {
+          setMessages(d.messages);
+        } else {
+          setMsgError(d.message || "Gagal memuat pesan");
+        }
       })
+      .catch((e) => setMsgError(e.message || "Gagal terhubung ke server"))
       .finally(() => {
         setLoadingMessages(false);
         setTimeout(() => inputRef.current?.focus(), 100);
@@ -286,7 +293,15 @@ export default function ChatPage() {
                   Memuat pesan...
                 </div>
               )}
-              {!loadingMessages && messages.length === 0 && (
+              {msgError && (
+                <div style={{
+                  textAlign: "center", color: "#dc2626", fontSize: 12, marginTop: 32,
+                  padding: "12px 16px", background: "#fef2f2", borderRadius: 8, margin: "32px auto", maxWidth: 320,
+                }}>
+                  ⚠️ {msgError}
+                </div>
+              )}
+              {!loadingMessages && !msgError && messages.length === 0 && (
                 <div style={{ textAlign: "center", color: "#94a3b8", fontSize: 13, marginTop: 32 }}>
                   Belum ada pesan
                 </div>
