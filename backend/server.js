@@ -72,6 +72,7 @@ let waClient = null;
 let activeSessionId = null;
 let currentClientSessionId = null;
 let isWhatsAppReady = false;
+let cdpSession = null;
 let isWhatsAppInitializing = false;
 let isSending = false;
 let lastQrString = null;
@@ -85,7 +86,9 @@ let currentSendProgress = {
   customer: null,
 };
 
-// Chat - helper to convert whatsapp-web.js message object to plain object
+// Chat inbox - in-memory store
+const chatHistory = new Map(); // chatId -> { id, name, phone, unread, messages[] }
+
 function serializeMessage(msg) {
   return {
     id: msg.id?.id || String(Date.now()),
@@ -95,6 +98,24 @@ function serializeMessage(msg) {
     type: msg.type || "chat",
     hasMedia: msg.hasMedia || false,
   };
+}
+
+function storeMessage(chatId, name, phone, msg) {
+  if (!chatHistory.has(chatId)) {
+    chatHistory.set(chatId, { id: chatId, name, phone, unread: 0, messages: [] });
+  }
+  const chat = chatHistory.get(chatId);
+  chat.name = name;
+  chat.phone = phone;
+  const entry = serializeMessage(msg);
+  // Hindari duplikat
+  if (!chat.messages.find((m) => m.id === entry.id)) {
+    chat.messages.push(entry);
+    // Batasi 200 pesan per chat
+    if (chat.messages.length > 200) chat.messages.splice(0, chat.messages.length - 200);
+  }
+  if (!msg.fromMe) chat.unread += 1;
+  return entry;
 }
 
 function getWhatsAppAccountInfo() {
@@ -346,6 +367,38 @@ function resetWhatsAppRuntimeState() {
   isWhatsAppInitializing = false;
   lastQrString = null;
   lastQrAt = null;
+}
+
+async function startScreencast() {
+  if (!waClient?.pupPage || cdpSession) return;
+  try {
+    cdpSession = await waClient.pupPage.target().createCDPSession();
+    await cdpSession.send("Page.startScreencast", {
+      format: "jpeg",
+      quality: 70,
+      maxWidth: 1440,
+      maxHeight: 900,
+    });
+    cdpSession.on("Page.screencastFrame", async ({ data, sessionId, metadata }) => {
+      io.emit("wa-screen", {
+        data,
+        width: metadata.deviceWidth || 1440,
+        height: metadata.deviceHeight || 900,
+      });
+      try { await cdpSession.send("Page.screencastFrameAck", { sessionId }); } catch {}
+    });
+  } catch (e) {
+    console.error("startScreencast error:", e.message);
+    cdpSession = null;
+  }
+}
+
+async function stopScreencast() {
+  if (!cdpSession) return;
+  const sess = cdpSession;
+  cdpSession = null;
+  try { await sess.send("Page.stopScreencast"); } catch {}
+  try { await sess.detach(); } catch {}
 }
 
 async function destroyWhatsAppClient() {
@@ -837,6 +890,7 @@ async function initWhatsAppClient(options = {}) {
         lastUsedAt: new Date().toISOString(),
       });
 
+      startScreencast();
       emitLog("success", "WhatsApp Web sudah login dan siap dipakai");
       io.emit("wa-ready", {
         sessionId: requestedSessionId,
@@ -871,6 +925,7 @@ async function initWhatsAppClient(options = {}) {
     });
 
     waClient.on("disconnected", (reason) => {
+      stopScreencast();
       const disconnectedClient = waClient;
       waClient = null;
       currentClientSessionId = null;
@@ -885,10 +940,12 @@ async function initWhatsAppClient(options = {}) {
     waClient.on("message", async (msg) => {
       try {
         const chatId = msg.from;
-        const contact = await msg.getContact();
-        const name = contact.pushname || contact.name || contact.number || chatId.replace("@c.us", "");
+        const contact = await msg.getContact().catch(() => null);
+        const name = contact?.pushname || contact?.name || contact?.number || chatId.replace("@c.us", "");
         const phone = chatId.replace("@c.us", "").replace("@g.us", "");
-        io.emit("chat:new-message", { chatId, name, phone, message: serializeMessage(msg) });
+        const entry = storeMessage(chatId, name, phone, msg);
+        const chat = chatHistory.get(chatId);
+        io.emit("chat:new-message", { chatId, name, phone, message: entry, unread: chat.unread });
       } catch (e) {
         console.error("chat message handler error:", e.message);
       }
@@ -898,10 +955,11 @@ async function initWhatsAppClient(options = {}) {
       if (!msg.fromMe) return;
       try {
         const chatId = msg.to;
-        const contact = await msg.getContact();
-        const name = contact.pushname || contact.name || contact.number || chatId.replace("@c.us", "");
+        const contact = await msg.getContact().catch(() => null);
+        const name = contact?.pushname || contact?.name || contact?.number || chatId.replace("@c.us", "");
         const phone = chatId.replace("@c.us", "").replace("@g.us", "");
-        io.emit("chat:new-message", { chatId, name, phone, message: serializeMessage(msg) });
+        const entry = storeMessage(chatId, name, phone, msg);
+        io.emit("chat:new-message", { chatId, name, phone, message: entry, unread: 0 });
       } catch (e) {
         console.error("chat message_create handler error:", e.message);
       }
@@ -1698,10 +1756,38 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
   try {
     await ensureWhatsAppStable();
     const chatId = decodeURIComponent(req.params.chatId);
-    const chat = await waClient.getChatById(chatId);
-    const msgs = await chat.fetchMessages({ limit: 50 });
-    const messages = msgs.map(serializeMessage);
-    res.json({ success: true, messages });
+
+    // Coba fetchMessages dari WA langsung
+    try {
+      const chat = await waClient.getChatById(chatId);
+      const msgs = await chat.fetchMessages({ limit: 50 });
+      const messages = msgs.map(serializeMessage);
+
+      // Simpan ke memory sekalian agar sinkron
+      const contact = await waClient.getContactById(chatId).catch(() => null);
+      const name = contact?.pushname || contact?.name || chatId.replace("@c.us", "");
+      const phone = chatId.replace("@c.us", "").replace("@g.us", "");
+      if (!chatHistory.has(chatId)) {
+        chatHistory.set(chatId, { id: chatId, name, phone, unread: 0, messages: [] });
+      }
+      const stored = chatHistory.get(chatId);
+      messages.forEach((m) => {
+        if (!stored.messages.find((s) => s.id === m.id)) stored.messages.push(m);
+      });
+      stored.messages.sort((a, b) => a.timestamp - b.timestamp);
+
+      return res.json({ success: true, messages: stored.messages, source: "wa" });
+    } catch (fetchErr) {
+      // fetchMessages gagal — kembalikan dari memori
+      console.warn("fetchMessages failed, using memory:", fetchErr.message);
+      const stored = chatHistory.get(chatId);
+      return res.json({
+        success: true,
+        messages: stored?.messages || [],
+        source: "memory",
+        note: "Riwayat terbatas pada sesi ini (fetchMessages tidak tersedia)",
+      });
+    }
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -1753,8 +1839,52 @@ io.on("connection", (socket) => {
       account: getWhatsAppAccountInfo(),
       sessions: getWhatsAppSessionsSummary(),
     });
+    // Kirim screenshot sekarang agar langsung tampil
+    if (waClient?.pupPage) {
+      waClient.pupPage.screenshot({ type: "jpeg", quality: 70, encoding: "base64" })
+        .then((data) => socket.emit("wa-screen", { data, width: 1440, height: 900 }))
+        .catch(() => {});
+    }
   }
 
+  // Interaksi WA Web: klik
+  socket.on("wa-click", async ({ x, y, vpW, vpH }) => {
+    if (!waClient?.pupPage || !isWhatsAppReady) return;
+    try {
+      const vp = waClient.pupPage.viewport() || { width: 1440, height: 900 };
+      await waClient.pupPage.mouse.click(
+        Math.round(x * (vp.width / vpW)),
+        Math.round(y * (vp.height / vpH))
+      );
+    } catch {}
+  });
+
+  // Interaksi WA Web: ketik teks
+  socket.on("wa-type", async ({ text }) => {
+    if (!waClient?.pupPage || !isWhatsAppReady) return;
+    try { await waClient.pupPage.keyboard.type(text, { delay: 20 }); } catch {}
+  });
+
+  // Interaksi WA Web: tekan tombol keyboard (Enter, Backspace, dll)
+  socket.on("wa-key", async ({ key }) => {
+    if (!waClient?.pupPage || !isWhatsAppReady) return;
+    try { await waClient.pupPage.keyboard.press(key); } catch {}
+  });
+
+  // Interaksi WA Web: scroll
+  socket.on("wa-scroll", async ({ x, y, vpW, vpH, deltaY }) => {
+    if (!waClient?.pupPage || !isWhatsAppReady) return;
+    try {
+      const vp = waClient.pupPage.viewport() || { width: 1440, height: 900 };
+      const px = Math.round(x * (vp.width / vpW));
+      const py = Math.round(y * (vp.height / vpH));
+      await waClient.pupPage.mouse.move(px, py);
+      await waClient.pupPage.evaluate(
+        (px, py, dy) => window.scrollBy({ top: dy }),
+        px, py, deltaY
+      );
+    } catch {}
+  });
 });
 
 server.listen(PORT, "0.0.0.0", () => {

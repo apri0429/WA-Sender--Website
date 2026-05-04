@@ -106,6 +106,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [msgError, setMsgError] = useState(null);
+  const [msgNote, setMsgNote] = useState(null);
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
@@ -146,6 +147,7 @@ export default function ChatPage() {
     setActiveChat(chat);
     setMessages([]);
     setMsgError(null);
+    setMsgNote(null);
     setLoadingMessages(true);
 
     fetch(`/api/chats/${encodeURIComponent(chat.id)}/messages`)
@@ -153,6 +155,7 @@ export default function ChatPage() {
       .then((d) => {
         if (d.success) {
           setMessages(d.messages);
+          if (d.note) setMsgNote(d.note);
         } else {
           setMsgError(d.message || "Gagal memuat pesan");
         }
@@ -295,10 +298,18 @@ export default function ChatPage() {
               )}
               {msgError && (
                 <div style={{
-                  textAlign: "center", color: "#dc2626", fontSize: 12, marginTop: 32,
+                  textAlign: "center", color: "#dc2626", fontSize: 12,
                   padding: "12px 16px", background: "#fef2f2", borderRadius: 8, margin: "32px auto", maxWidth: 320,
                 }}>
                   ⚠️ {msgError}
+                </div>
+              )}
+              {msgNote && (
+                <div style={{
+                  textAlign: "center", color: "#92400e", fontSize: 11,
+                  padding: "6px 12px", background: "#fef3c7", borderRadius: 6, margin: "0 auto 12px", maxWidth: 340,
+                }}>
+                  ℹ️ {msgNote}
                 </div>
               )}
               {!loadingMessages && !msgError && messages.length === 0 && (
