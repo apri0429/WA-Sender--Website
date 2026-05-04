@@ -1,5 +1,7 @@
 backend/sessions/
+backend/uploads/
 backend/server.err.log
+backend/server.out.log
 *.log
 **/Code Cache/
 node_modules/

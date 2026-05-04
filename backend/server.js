@@ -29,7 +29,6 @@ const PORT = process.env.PORT || 8090;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://192.168.1.254:5173";
 
 const BASE_DIR = __dirname;
-const UPLOAD_DIR = path.join(BASE_DIR, "uploads");
 const SESSION_DIR = path.join(BASE_DIR, "sessions");
 const DATA_DIR = path.join(BASE_DIR, "data");
 const FRONTEND_DIST_DIR = path.join(BASE_DIR, "frontend_dist");
@@ -37,7 +36,6 @@ const TEMPLATE_FILE = path.join(DATA_DIR, "template.json");
 const GSHEET_FILE = path.join(DATA_DIR, "gsheet.json");
 const WA_SESSIONS_FILE = path.join(DATA_DIR, "wa-sessions.json");
 
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 if (!fs.existsSync(SESSION_DIR)) fs.mkdirSync(SESSION_DIR, { recursive: true });
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
@@ -51,18 +49,8 @@ app.use(
 app.use(express.json());
 app.use(express.static(FRONTEND_DIST_DIR));
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, UPLOAD_DIR);
-  },
-  filename: function (req, file, cb) {
-    const safeName = `${Date.now()}-${file.originalname.replace(/\s+/g, "-")}`;
-    cb(null, safeName);
-  },
-});
-
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   fileFilter: (req, file, cb) => {
     const allowed = [
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -1194,7 +1182,7 @@ app.post("/api/upload-excel", upload.single("file"), async (req, res) => {
       });
     }
 
-    const workbook = XLSX.readFile(req.file.path);
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rawData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
     const data = normalizeCustomerData(rawData);
