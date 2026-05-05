@@ -10,6 +10,11 @@ export default function WaWebPage() {
   const lastFrame = useRef(null);
 
   useEffect(() => {
+    socket.emit("wa-screen-open");
+    return () => socket.emit("wa-screen-close");
+  }, []);
+
+  useEffect(() => {
     const onScreen = ({ data, width, height }) => {
       if (!imgRef.current) return;
       setConnected(true);
@@ -32,26 +37,26 @@ export default function WaWebPage() {
     };
   }, []);
 
-  const getScaledCoords = (e) => {
+  const toVpCoords = (clientX, clientY) => {
     const rect = imgRef.current.getBoundingClientRect();
     const { w, h } = lastFrame.current || naturalSize;
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-      vpW: rect.width,
-      vpH: rect.height,
+      x: (clientX - rect.left) * (w / rect.width),
+      y: (clientY - rect.top) * (h / rect.height),
     };
   };
 
   const handleClick = (e) => {
-    if (!imgRef.current) return;
-    socket.emit("wa-click", getScaledCoords(e));
+    if (!imgRef.current || !connected) return;
+    containerRef.current?.focus();
+    socket.emit("wa-click", toVpCoords(e.clientX, e.clientY));
   };
 
   const handleWheel = (e) => {
-    if (!imgRef.current) return;
-    const coords = getScaledCoords(e);
-    socket.emit("wa-scroll", { ...coords, deltaY: e.deltaY });
+    if (!imgRef.current || !connected) return;
+    e.preventDefault();
+    const { x, y } = toVpCoords(e.clientX, e.clientY);
+    socket.emit("wa-scroll", { x, y, deltaY: e.deltaY });
   };
 
   const handleKeyDown = (e) => {
