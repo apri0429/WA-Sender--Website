@@ -378,15 +378,17 @@ async function startScreencast() {
     const vp = waClient.pupPage.viewport() || { width: 1280, height: 800 };
     await cdpSession.send("Page.startScreencast", {
       format: "jpeg",
-      quality: 70,
+      quality: 55,
       maxWidth: vp.width,
       maxHeight: vp.height,
+      everyNthFrame: 2, // ~15fps, cukup smooth tapi tidak berat
     });
     cdpSession.on("Page.screencastFrame", async ({ data, sessionId, metadata }) => {
-      io.emit("wa-screen", {
+      // Kirim hanya ke viewer aktif, bukan broadcast semua client
+      io.to("screencast").emit("wa-screen", {
         data,
-        width: metadata.deviceWidth || 1280,
-        height: metadata.deviceHeight || 800,
+        width: metadata.deviceWidth || vp.width,
+        height: metadata.deviceHeight || vp.height,
       });
       try { await cdpSession.send("Page.screencastFrameAck", { sessionId }); } catch {}
     });
@@ -1843,28 +1845,30 @@ io.on("connection", (socket) => {
     });
   }
 
-  // Buka modal WA Web — mulai screencast & kirim dimensi viewport asli
+  // Buka screencast — masukkan socket ke room "screencast"
   socket.on("wa-screen-open", async () => {
+    socket.join("screencast");
     screencastViewers++;
     if (screencastViewers === 1) await startScreencast();
-    // Kirim dimensi viewport Puppeteer agar frontend bisa scale dengan tepat
     const vp = waClient?.pupPage?.viewport() || { width: 1280, height: 800 };
     socket.emit("wa-viewport", { width: vp.width, height: vp.height });
-    // Screenshot segera agar modal tidak kosong saat pertama buka
+    // Screenshot pertama agar tidak kosong saat buka
     if (waClient?.pupPage) {
-      waClient.pupPage.screenshot({ type: "jpeg", quality: 65, encoding: "base64" })
+      waClient.pupPage.screenshot({ type: "jpeg", quality: 55, encoding: "base64" })
         .then((data) => socket.emit("wa-screen", { data, width: vp.width, height: vp.height }))
         .catch(() => {});
     }
   });
 
-  // Tutup modal WA Web — stop screencast kalau tidak ada viewer
+  // Tutup screencast — keluarkan dari room, stop kalau tidak ada viewer
   socket.on("wa-screen-close", async () => {
+    socket.leave("screencast");
     screencastViewers = Math.max(0, screencastViewers - 1);
     if (screencastViewers === 0) await stopScreencast();
   });
 
   socket.on("disconnect", async () => {
+    socket.leave("screencast");
     screencastViewers = Math.max(0, screencastViewers - 1);
     if (screencastViewers === 0) await stopScreencast();
   });
