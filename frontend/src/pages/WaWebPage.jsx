@@ -93,9 +93,11 @@ export default function WaWebPage() {
 
   return (
     <div style={{
+      position: "absolute",
+      inset: 0,
+      zIndex: 5,
       display: "flex",
       flexDirection: "column",
-      height: "calc(100vh - 65px)",
       overflow: "hidden",
       background: "#e5ddd5",
     }}>
