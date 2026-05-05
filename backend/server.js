@@ -1842,14 +1842,17 @@ io.on("connection", (socket) => {
     });
   }
 
-  // Buka modal WA Web — mulai screencast
+  // Buka modal WA Web — mulai screencast & kirim dimensi viewport asli
   socket.on("wa-screen-open", async () => {
     screencastViewers++;
     if (screencastViewers === 1) await startScreencast();
-    // Kirim screenshot segera agar modal langsung tampil
+    // Kirim dimensi viewport Puppeteer agar frontend bisa scale dengan tepat
+    const vp = waClient?.pupPage?.viewport() || { width: 1280, height: 800 };
+    socket.emit("wa-viewport", { width: vp.width, height: vp.height });
+    // Screenshot segera agar modal tidak kosong saat pertama buka
     if (waClient?.pupPage) {
       waClient.pupPage.screenshot({ type: "jpeg", quality: 65, encoding: "base64" })
-        .then((data) => socket.emit("wa-screen", { data, width: 1280, height: 800 }))
+        .then((data) => socket.emit("wa-screen", { data, width: vp.width, height: vp.height }))
         .catch(() => {});
     }
   });
@@ -1865,42 +1868,33 @@ io.on("connection", (socket) => {
     if (screencastViewers === 0) await stopScreencast();
   });
 
-  // Interaksi WA Web: klik
-  socket.on("wa-click", async ({ x, y, vpW, vpH }) => {
+  // Klik — frontend sudah scale ke koordinat Puppeteer
+  socket.on("wa-click", async ({ x, y }) => {
     if (!waClient?.pupPage || !isWhatsAppReady) return;
     try {
-      const vp = waClient.pupPage.viewport() || { width: 1440, height: 900 };
-      await waClient.pupPage.mouse.click(
-        Math.round(x * (vp.width / vpW)),
-        Math.round(y * (vp.height / vpH))
-      );
+      await waClient.pupPage.mouse.move(Math.round(x), Math.round(y));
+      await waClient.pupPage.mouse.click(Math.round(x), Math.round(y));
     } catch {}
   });
 
-  // Interaksi WA Web: ketik teks
+  // Ketik teks
   socket.on("wa-type", async ({ text }) => {
     if (!waClient?.pupPage || !isWhatsAppReady) return;
     try { await waClient.pupPage.keyboard.type(text, { delay: 20 }); } catch {}
   });
 
-  // Interaksi WA Web: tekan tombol keyboard (Enter, Backspace, dll)
+  // Tombol spesial (Enter, Backspace, dll)
   socket.on("wa-key", async ({ key }) => {
     if (!waClient?.pupPage || !isWhatsAppReady) return;
     try { await waClient.pupPage.keyboard.press(key); } catch {}
   });
 
-  // Interaksi WA Web: scroll
-  socket.on("wa-scroll", async ({ x, y, vpW, vpH, deltaY }) => {
+  // Scroll — pakai mouse.wheel agar bekerja di container scroll WA Web
+  socket.on("wa-scroll", async ({ x, y, deltaY }) => {
     if (!waClient?.pupPage || !isWhatsAppReady) return;
     try {
-      const vp = waClient.pupPage.viewport() || { width: 1440, height: 900 };
-      const px = Math.round(x * (vp.width / vpW));
-      const py = Math.round(y * (vp.height / vpH));
-      await waClient.pupPage.mouse.move(px, py);
-      await waClient.pupPage.evaluate(
-        (px, py, dy) => window.scrollBy({ top: dy }),
-        px, py, deltaY
-      );
+      await waClient.pupPage.mouse.move(Math.round(x), Math.round(y));
+      await waClient.pupPage.mouse.wheel({ deltaY });
     } catch {}
   });
 });

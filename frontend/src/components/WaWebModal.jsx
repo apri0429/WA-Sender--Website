@@ -7,7 +7,8 @@ export default function WaWebModal() {
   const [waReady, setWaReady] = useState(false);
   const imgRef = useRef(null);
   const containerRef = useRef(null);
-  const frameSize = useRef({ w: 1280, h: 800 });
+  // Dimensi viewport Puppeteer yang sebenarnya — untuk scaling koordinat
+  const vpRef = useRef({ w: 1280, h: 800 });
 
   // Track WA ready state
   useEffect(() => {
@@ -21,57 +22,68 @@ export default function WaWebModal() {
     };
   }, []);
 
-  // Screencast listener
+  // Screencast + viewport listener — hanya aktif saat modal terbuka
   useEffect(() => {
     if (!open) return;
 
-    const onScreen = ({ data, width, height }) => {
+    const onViewport = ({ width, height }) => {
+      vpRef.current = { w: width, h: height };
+    };
+
+    const onScreen = ({ data }) => {
       if (!imgRef.current) return;
-      frameSize.current = { w: width, h: height };
       imgRef.current.src = `data:image/jpeg;base64,${data}`;
       setConnected(true);
     };
 
+    socket.on("wa-viewport", onViewport);
     socket.on("wa-screen", onScreen);
     socket.emit("wa-screen-open");
 
     return () => {
+      socket.off("wa-viewport", onViewport);
       socket.off("wa-screen", onScreen);
       socket.emit("wa-screen-close");
       setConnected(false);
     };
   }, [open]);
 
-  // Close on Escape
+  // Tutup dengan Escape
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const getCoords = (e) => {
+  // Konversi posisi klik/scroll dari display pixel → Puppeteer viewport pixel
+  const toVpCoords = (clientX, clientY) => {
     const rect = imgRef.current.getBoundingClientRect();
+    const { w, h } = vpRef.current;
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-      vpW: rect.width,
-      vpH: rect.height,
+      x: (clientX - rect.left) * (w / rect.width),
+      y: (clientY - rect.top) * (h / rect.height),
     };
   };
 
   const handleClick = (e) => {
-    if (!imgRef.current) return;
+    if (!imgRef.current || !connected) return;
     containerRef.current?.focus();
-    socket.emit("wa-click", getCoords(e));
+    socket.emit("wa-click", toVpCoords(e.clientX, e.clientY));
   };
 
   const handleWheel = (e) => {
-    if (!imgRef.current) return;
-    socket.emit("wa-scroll", { ...getCoords(e), deltaY: e.deltaY });
+    if (!imgRef.current || !connected) return;
+    e.preventDefault();
+    const { x, y } = toVpCoords(e.clientX, e.clientY);
+    socket.emit("wa-scroll", { x, y, deltaY: e.deltaY });
   };
 
   const handleKeyDown = (e) => {
-    const special = ["Enter","Backspace","Delete","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Tab","Escape"];
+    const special = [
+      "Enter", "Backspace", "Delete",
+      "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+      "Tab",
+    ];
     if (e.key === "Escape") { setOpen(false); return; }
     if (special.includes(e.key)) {
       e.preventDefault();
@@ -83,7 +95,7 @@ export default function WaWebModal() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating WA button */}
       <button
         onClick={() => setOpen(true)}
         title="Buka WhatsApp Web"
@@ -100,28 +112,28 @@ export default function WaWebModal() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.22)",
           zIndex: 1000,
-          transition: "background 0.2s, transform 0.15s",
+          transition: "transform 0.15s, background 0.2s",
           color: "#fff",
         }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.08)"}
-        onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
       >
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.557 4.118 1.529 5.845L.057 23.928l6.235-1.635A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.85 0-3.587-.485-5.089-1.333l-.361-.214-3.742.981.999-3.648-.235-.374A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+        {/* WhatsApp icon */}
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+          <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.38 1.26 4.79L2.05 22l5.45-1.43c1.36.73 2.9 1.15 4.54 1.15 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.18c-1.49 0-2.9-.4-4.12-1.1l-.3-.17-3.08.81.82-3.01-.19-.32a8.24 8.24 0 01-1.28-4.39c0-4.54 3.7-8.23 8.25-8.23s8.25 3.69 8.25 8.23-3.71 8.18-8.25 8.18m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.78.97-.14.17-.29.19-.54.07-.25-.12-1.05-.39-2-.12-1.36-.72-1.56-1.6-1.56-1.6-.11-.19-.01-.29.08-.39.08-.08.17-.21.26-.32.08-.1.11-.19.17-.32.05-.12.03-.23-.02-.32s-.56-1.35-.77-1.84c-.2-.48-.4-.41-.56-.42h-.48c-.17 0-.43.06-.66.31s-.86.84-.86 2.05.88 2.38 1 2.54c.12.17 1.72 2.63 4.17 3.69.58.25 1.04.4 1.39.51.58.19 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.21-.57.21-1.06.14-1.16-.07-.1-.23-.16-.48-.28"/>
         </svg>
       </button>
 
-      {/* Modal overlay */}
+      {/* Modal */}
       {open && (
         <div
           onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.55)",
+            background: "rgba(0,0,0,0.6)",
             backdropFilter: "blur(4px)",
             zIndex: 2000,
             display: "flex",
@@ -130,43 +142,43 @@ export default function WaWebModal() {
           }}
         >
           <div style={{
-            width: "min(1100px, 96vw)",
-            height: "min(720px, 92vh)",
+            width: "min(1120px, 96vw)",
+            height: "min(740px, 94vh)",
             background: "#fff",
             borderRadius: 14,
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
-            boxShadow: "0 24px 80px rgba(0,0,0,0.35)",
+            boxShadow: "0 32px 80px rgba(0,0,0,0.4)",
           }}>
-            {/* Modal header */}
+            {/* Header */}
             <div style={{
               display: "flex",
               alignItems: "center",
-              padding: "10px 16px",
-              borderBottom: "1px solid #e2e8f0",
-              background: "#f8fafc",
-              flexShrink: 0,
               gap: 10,
+              padding: "8px 14px",
+              background: "#075e54",
+              flexShrink: 0,
             }}>
               <span style={{
-                width: 9, height: 9, borderRadius: "50%", flexShrink: 0,
-                background: waReady && connected ? "#22c55e" : "#f59e0b",
+                width: 8, height: 8, borderRadius: "50%",
+                background: connected ? "#25d366" : "#fbbf24",
+                flexShrink: 0,
               }} />
-              <span style={{ fontWeight: 600, fontSize: 13.5, color: "#1e293b", flex: 1 }}>
+              <span style={{ fontWeight: 600, fontSize: 13.5, color: "#fff", flex: 1 }}>
                 WhatsApp Web
               </span>
-              <span style={{ fontSize: 11, color: "#94a3b8" }}>
-                {connected ? "Live — klik area chat lalu ketik" : "Memuat..."}
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.65)" }}>
+                {connected ? "Klik area lalu ketik untuk berinteraksi" : "Memuat..."}
               </span>
               <button
                 onClick={() => setOpen(false)}
-                style={{
-                  border: "none", background: "none", cursor: "pointer",
-                  color: "#64748b", fontSize: 18, lineHeight: 1, padding: "2px 6px",
-                  borderRadius: 6,
-                }}
                 title="Tutup (Esc)"
+                style={{
+                  border: "none", background: "rgba(255,255,255,0.15)",
+                  cursor: "pointer", color: "#fff", fontSize: 14,
+                  borderRadius: 6, padding: "3px 8px", lineHeight: 1,
+                }}
               >
                 ✕
               </button>
@@ -184,7 +196,6 @@ export default function WaWebModal() {
                 outline: "none",
                 background: "#f0f2f5",
                 position: "relative",
-                cursor: "default",
               }}
             >
               {!connected && (
@@ -192,11 +203,11 @@ export default function WaWebModal() {
                   position: "absolute", inset: 0,
                   display: "flex", flexDirection: "column",
                   alignItems: "center", justifyContent: "center",
-                  gap: 10, color: "#94a3b8",
+                  gap: 12, color: "#94a3b8",
                 }}>
-                  <div style={{ fontSize: 40 }}>📱</div>
+                  <div style={{ fontSize: 44 }}>📱</div>
                   <div style={{ fontSize: 13 }}>
-                    {waReady ? "Memuat tampilan WhatsApp..." : "WhatsApp belum login"}
+                    {waReady ? "Memuat tampilan WhatsApp..." : "WhatsApp belum login — buka Dashboard dulu"}
                   </div>
                 </div>
               )}
@@ -211,6 +222,7 @@ export default function WaWebModal() {
                   objectFit: "fill",
                   userSelect: "none",
                   cursor: "default",
+                  WebkitUserDrag: "none",
                 }}
                 draggable={false}
               />
