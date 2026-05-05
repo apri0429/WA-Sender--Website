@@ -3,7 +3,6 @@ import Layout from "./components/Layout";
 import DashboardPage from "./pages/DashboardPage";
 import SettingsCard from "./pages/SettingsCard";
 import WaWebPage from "./pages/WaWebPage";
-import ChatPage from "./pages/ChatPage";
 
 export default function App() {
   return (
@@ -13,7 +12,6 @@ export default function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/settings" element={<SettingsCard />} />
           <Route path="/wa-web" element={<WaWebPage />} />
-          <Route path="/chat" element={<ChatPage />} />
         </Route>
       </Routes>
     </HashRouter>

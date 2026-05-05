@@ -1,18 +1,16 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { BarChartSquare02, Settings01, MessageChatSquare, Monitor01 } from "@untitledui/icons";
+import { BarChartSquare02, Settings01, Monitor01 } from "@untitledui/icons";
 
 import TemplateSidebar from "../templateComponents/Sidebar";
 import TemplateHeader from "../templateComponents/Header";
 import BackgroundMain from "../templateComponents/BackgroundMain";
-import WaWebModal from "./WaWebModal";
 
 const FONT = "'Plus Jakarta Sans', 'Inter', sans-serif";
 
 const waPrimaryItems = [
   { label: "Dashboard", href: "/", icon: BarChartSquare02 },
   { label: "WA Web", href: "/wa-web", icon: Monitor01 },
-  { label: "Chat", href: "/chat", icon: MessageChatSquare },
   { label: "Settings", href: "/settings", icon: Settings01 },
 ];
 
@@ -20,7 +18,6 @@ const pageBreadcrumbs = {
   "/": [{ label: "Dashboard", active: true }],
   "/settings": [{ label: "Settings", active: true }],
   "/wa-web": [{ label: "WA Web", active: true }],
-  "/chat": [{ label: "Chat", active: true }],
 };
 
 function MainFooter() {
@@ -129,7 +126,6 @@ export default function Layout() {
         </main>
       </div>
 
-      <WaWebModal />
     </div>
   );
 }
