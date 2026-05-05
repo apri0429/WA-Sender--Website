@@ -375,11 +375,12 @@ async function startScreencast() {
   if (!waClient?.pupPage || cdpSession) return;
   try {
     cdpSession = await waClient.pupPage.target().createCDPSession();
+    const vp = waClient.pupPage.viewport() || { width: 1280, height: 800 };
     await cdpSession.send("Page.startScreencast", {
       format: "jpeg",
-      quality: 65,
-      maxWidth: 1280,
-      maxHeight: 800,
+      quality: 70,
+      maxWidth: vp.width,
+      maxHeight: vp.height,
     });
     cdpSession.on("Page.screencastFrame", async ({ data, sessionId, metadata }) => {
       io.emit("wa-screen", {
@@ -1896,6 +1897,21 @@ io.on("connection", (socket) => {
       await waClient.pupPage.mouse.move(Math.round(x), Math.round(y));
       await waClient.pupPage.mouse.wheel({ deltaY });
     } catch {}
+  });
+
+  // Resize viewport Puppeteer agar pas dengan ukuran layar user (hilangkan garis hitam)
+  socket.on("wa-set-viewport", async ({ width, height }) => {
+    if (!waClient?.pupPage) return;
+    try {
+      const w = Math.round(Math.max(800, Math.min(2560, width)));
+      const h = Math.round(Math.max(500, Math.min(1440, height)));
+      await waClient.pupPage.setViewport({ width: w, height: h });
+      await stopScreencast();
+      await startScreencast();
+      socket.emit("wa-viewport", { width: w, height: h });
+    } catch (e) {
+      console.error("wa-set-viewport error:", e.message);
+    }
   });
 });
 
