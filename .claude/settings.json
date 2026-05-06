@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /c/WA-Sender--Website/ 2>&1)",
+      "Read(//c//**)",
+      "Bash(cmd /c \"dir C:\\\\WA-Sender--Website /b\")"
+    ]
+  }
+}
