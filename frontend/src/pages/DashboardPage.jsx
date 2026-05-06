@@ -2012,6 +2012,20 @@ export default function DashboardPage() {
                       {checkingWhatsapp ? "Mengecek..." : "Cek Status"}
                     </ActionBtn>
                   </Box>
+
+                  <ActionBtn
+                    variant="outline"
+                    color="brand"
+                    size="md"
+                    fullWidth
+                    startIcon={<LaunchRoundedIcon sx={{ fontSize: "15px !important" }} />}
+                    onClick={() => {
+                      window.open(window.location.origin + "/#/wa-fullscreen", "_blank");
+                    }}
+                    disabled={!whatsappReady}
+                  >
+                    Buka WA Web
+                  </ActionBtn>
                 </Box>
 
                 <Box
