@@ -83,7 +83,7 @@ function WaFloatingButton() {
     } catch (error) {
       const message =
         error?.response?.data?.message ||
-        "Gagal membuka browser WhatsApp untuk session aktif";
+        "Gagal membuka ulang browser WhatsApp untuk session aktif";
       window.alert(message);
     } finally {
       setIsOpening(false);

@@ -454,6 +454,49 @@ async function stopScreencast() {
   try { await sess.detach(); } catch {}
 }
 
+async function focusWhatsAppBrowserWindow(timeoutMs = 15000) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const page = waClient?.pupPage;
+      const browser = waClient?.pupBrowser;
+
+      if (page && browser) {
+        const pages = await browser.pages().catch(() => []);
+
+        if (pages.length > 0) {
+          const activePage =
+            pages.find((browserPage) => browserPage === page) ||
+            pages.find((browserPage) =>
+              String(browserPage.url() || "").includes("web.whatsapp.com")
+            ) ||
+            pages[0];
+
+          const currentUrl = String(activePage.url() || "");
+          if (!currentUrl || currentUrl === "about:blank") {
+            await activePage.goto("https://web.whatsapp.com/", {
+              waitUntil: "domcontentloaded",
+              timeout: 15000,
+            }).catch(() => {});
+          }
+
+          await activePage.bringToFront().catch(() => {});
+          await activePage.evaluate(() => {
+            window.focus();
+          }).catch(() => {});
+
+          return true;
+        }
+      }
+    } catch {}
+
+    await sleep(300);
+  }
+
+  return false;
+}
+
 async function destroyWhatsAppClient() {
   if (!waClient) return;
 
@@ -783,19 +826,26 @@ function killOrphanedBrowserProcesses(sessionId) {
   const sessionDir = getWhatsAppSessionDir(sessionId);
   try {
     const escapedPath = sessionDir.replace(/\\/g, "\\\\");
-    const cmd = `wmic process where "Name='chrome.exe' and CommandLine like '%${escapedPath}%'" get ProcessId /format:csv 2>nul`;
-    const output = execSync(cmd, { encoding: "utf8", timeout: 5000 });
-    const pids = output
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line && !line.startsWith("Node"))
-      .map((line) => {
-        const parts = line.split(",");
-        return parseInt(parts[parts.length - 1], 10);
-      })
-      .filter((pid) => !isNaN(pid) && pid > 0);
+    const browserProcessNames = ["chrome.exe", "msedge.exe"];
+    const pids = [];
 
-    for (const pid of pids) {
+    for (const processName of browserProcessNames) {
+      const cmd = `wmic process where "Name='${processName}' and CommandLine like '%${escapedPath}%'" get ProcessId /format:csv 2>nul`;
+      const output = execSync(cmd, { encoding: "utf8", timeout: 5000 });
+      const foundPids = output
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith("Node"))
+        .map((line) => {
+          const parts = line.split(",");
+          return parseInt(parts[parts.length - 1], 10);
+        })
+        .filter((pid) => !isNaN(pid) && pid > 0);
+
+      pids.push(...foundPids);
+    }
+
+    for (const pid of [...new Set(pids)]) {
       try {
         execSync(`taskkill /PID ${pid} /F /T 2>nul`, { timeout: 3000 });
         console.log(`Killed orphaned browser process PID: ${pid} for session: ${sessionId}`);
@@ -878,6 +928,7 @@ async function initWhatsAppClient(options = {}) {
     options.browser !== undefined
       ? normalizeBrowserTarget(options.browser)
       : currentClientBrowser;
+  const shouldForceReopen = options.forceReopen === true;
 
   const shouldSwitchSession =
     currentClientSessionId && currentClientSessionId !== requestedSessionId;
@@ -887,7 +938,7 @@ async function initWhatsAppClient(options = {}) {
     (currentClientVisible !== requestedVisible ||
       (requestedVisible && currentClientBrowser !== requestedBrowser));
 
-  if (shouldSwitchSession || shouldRebuildForBrowserMode) {
+  if (shouldSwitchSession || shouldRebuildForBrowserMode || shouldForceReopen) {
     await destroyWhatsAppClient();
     resetWhatsAppRuntimeState();
   }
@@ -902,15 +953,15 @@ async function initWhatsAppClient(options = {}) {
     });
   }
 
-  if (waClient && isWhatsAppReady) {
+  if (waClient && isWhatsAppReady && !shouldForceReopen) {
     return waClient;
   }
 
-  if (isWhatsAppInitializing) {
+  if (isWhatsAppInitializing && !shouldForceReopen) {
     return waClient;
   }
 
-  if (waClient && lastQrString && currentClientSessionId === requestedSessionId) {
+  if (waClient && lastQrString && currentClientSessionId === requestedSessionId && !shouldForceReopen) {
     return waClient;
   }
 
@@ -979,8 +1030,10 @@ async function initWhatsAppClient(options = {}) {
         account,
         sessions: getWhatsAppSessionsSummary(),
       });
-      // Pre-warm screencast agar langsung siap saat dibuka
-      startScreencast().catch(() => {});
+      if (!currentClientVisible) {
+        // Pre-warm screencast agar langsung siap saat dibuka
+        startScreencast().catch(() => {});
+      }
     });
 
     waClient.on("authenticated", () => {
@@ -1550,12 +1603,45 @@ app.post("/api/open-whatsapp-browser", async (req, res) => {
       lastUsedAt: new Date().toISOString(),
     });
 
-    await initWhatsAppClient({
-      sessionId: requestedSessionId,
-      label: sessionMeta.label || requestedSessionId,
-      visible: true,
-      browser,
-    });
+    const browserCandidates =
+      browser === "auto"
+        ? ["auto", "chrome", "edge", "builtin"]
+        : [browser];
+
+    let openedBrowserTarget = browser;
+    let browserWindowReady = false;
+    let lastOpenError = null;
+
+    for (const candidateBrowser of browserCandidates) {
+      try {
+        await initWhatsAppClient({
+          sessionId: requestedSessionId,
+          label: sessionMeta.label || requestedSessionId,
+          visible: true,
+          browser: candidateBrowser,
+          forceReopen: true,
+        });
+
+        browserWindowReady = await focusWhatsAppBrowserWindow(12000);
+        if (browserWindowReady) {
+          openedBrowserTarget = candidateBrowser;
+          break;
+        }
+      } catch (error) {
+        lastOpenError = error;
+      }
+    }
+
+    await waitForWhatsAppState(4000);
+
+    if (!browserWindowReady) {
+      return res.status(500).json({
+        success: false,
+        message:
+          lastOpenError?.message ||
+          "Browser WhatsApp gagal dimunculkan. Coba pastikan Chrome atau Edge terpasang dan backend dijalankan dari user desktop aktif.",
+      });
+    }
 
     return res.json(
       buildWhatsAppStatusResponse({
@@ -1565,7 +1651,7 @@ app.post("/api/open-whatsapp-browser", async (req, res) => {
           : "Browser WhatsApp dibuka. Jika perlu, lanjutkan scan QR di window browser.",
         meta: {
           browserMode: "visible",
-          browserTarget: browser,
+          browserTarget: openedBrowserTarget,
         },
       })
     );
