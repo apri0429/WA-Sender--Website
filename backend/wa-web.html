@@ -96,6 +96,15 @@
     socket.on('wa-ready', (d) => setReady(true, d?.account?.name || ''));
     socket.on('wa-disconnected', () => setReady(false));
 
+    // Set viewport langsung saat socket connect agar stream langsung pas
+    socket.on('connect', () => {
+      const w = area.clientWidth, h = area.clientHeight;
+      if (w > 0 && h > 0) {
+        socket.emit('wa-set-viewport', { width: w, height: h });
+        vp = { w, h };
+      }
+    });
+
     // Resize viewport saat window resize
     let rDebounce;
     window.addEventListener('resize', () => {

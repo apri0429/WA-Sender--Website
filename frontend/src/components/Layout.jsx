@@ -5,7 +5,6 @@ import { BarChartSquare02, Settings01 } from "@untitledui/icons";
 import TemplateSidebar from "../templateComponents/Sidebar";
 import TemplateHeader from "../templateComponents/Header";
 import BackgroundMain from "../templateComponents/BackgroundMain";
-import api from "../services/api";
 import socket from "../services/socket";
 
 const FONT = "'Plus Jakarta Sans', 'Inter', sans-serif";
@@ -59,7 +58,6 @@ function MainFooter() {
 
 function WaFloatingButton() {
   const [waReady, setWaReady] = useState(false);
-  const [isOpening, setIsOpening] = useState(false);
 
   useEffect(() => {
     const onReady = () => setWaReady(true);
@@ -72,34 +70,10 @@ function WaFloatingButton() {
     };
   }, []);
 
-  const handleOpenWhatsAppBrowser = async () => {
-    if (isOpening) return;
-
-    try {
-      setIsOpening(true);
-      await api.post("/open-whatsapp-browser", {
-        browser: "auto",
-      });
-    } catch (error) {
-      const message =
-        error?.response?.data?.message ||
-        "Gagal membuka ulang browser WhatsApp untuk session aktif";
-      window.alert(message);
-    } finally {
-      setIsOpening(false);
-    }
-  };
-
   return (
     <button
-      onClick={handleOpenWhatsAppBrowser}
-      title={
-        isOpening
-          ? "Membuka browser WhatsApp..."
-          : waReady
-            ? "Buka WhatsApp di browser"
-            : "Buka browser WhatsApp untuk session aktif"
-      }
+      onClick={() => window.open("/wa-web", "_blank", "noopener,noreferrer")}
+      title={waReady ? "Buka WhatsApp Web" : "WhatsApp belum terhubung"}
       style={{
         position: "fixed",
         bottom: 28,
@@ -109,7 +83,7 @@ function WaFloatingButton() {
         borderRadius: "50%",
         background: waReady ? "#25d366" : "#94a3b8",
         border: "none",
-        cursor: isOpening ? "wait" : "pointer",
+        cursor: "pointer",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -119,10 +93,9 @@ function WaFloatingButton() {
         zIndex: 1000,
         transition: "transform 0.15s, background 0.3s, box-shadow 0.3s",
         color: "#fff",
-        opacity: isOpening ? 0.8 : 1,
       }}
       onMouseEnter={(e) => {
-        if (!isOpening) e.currentTarget.style.transform = "scale(1.12)";
+        e.currentTarget.style.transform = "scale(1.12)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "scale(1)";

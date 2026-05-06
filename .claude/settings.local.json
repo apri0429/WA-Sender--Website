@@ -8,7 +8,14 @@
       "Bash(git push *)",
       "Bash(ping -n 8 127.0.0.1)",
       "Read(//c//**)",
-      "Bash(ls /c/ 2>&1 | head -30)"
+      "Bash(ls /c/ 2>&1 | head -30)",
+      "Read(//c/nginx/**)",
+      "Read(//c/nginx/conf/**)",
+      "Bash(./nginx.exe -t)",
+      "Bash(./nginx.exe -s reload)"
+    ],
+    "additionalDirectories": [
+      "c:\\nginx\\nginx\\conf"
     ]
   }
 }
