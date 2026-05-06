@@ -1,9 +1,9 @@
 # install-startup.ps1
-# Jalankan script ini SEKALI sebagai Administrator untuk daftarkan PM2 ke Windows startup
-# Cara: klik kanan > "Run with PowerShell" ATAU lewat terminal admin
+# Jalankan SEKALI sebagai Administrator untuk daftarkan PM2 ke Windows startup
+# Cara: klik kanan file ini > "Run with PowerShell"
 
 $taskName = "WA-Sender PM2 Startup"
-$vbsPath  = 'c:\Users\IT\Documents\WEBSITE\WA-Sender  Website\start-pm2-silent.vbs'
+$vbsPath  = "C:\WA-Sender--Website\start-pm2-silent.vbs"
 $action   = New-ScheduledTaskAction -Execute "wscript.exe" -Argument "`"$vbsPath`""
 $trigger  = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $settings = New-ScheduledTaskSettingsSet `
@@ -25,10 +25,8 @@ Register-ScheduledTask `
     -Force
 
 Write-Host ""
-Write-Host "✅ Task Scheduler berhasil dibuat!" -ForegroundColor Green
-Write-Host "   Nama task : $taskName"           -ForegroundColor Cyan
-Write-Host "   Script    : $vbsPath"            -ForegroundColor Cyan
+Write-Host "BERHASIL! Task Scheduler sudah dibuat." -ForegroundColor Green
+Write-Host "Nama task : $taskName"                  -ForegroundColor Cyan
+Write-Host "Script    : $vbsPath"                   -ForegroundColor Cyan
 Write-Host ""
-Write-Host "PM2 akan otomatis start setiap kali Windows login." -ForegroundColor Yellow
-Write-Host ""
-Write-Host "Untuk cek: buka Task Scheduler > Task Scheduler Library" -ForegroundColor Gray
+Write-Host "PM2 (backend + frontend) akan otomatis start setiap login Windows." -ForegroundColor Yellow

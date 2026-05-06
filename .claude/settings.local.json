@@ -6,7 +6,9 @@
       "Bash(Sort-Object FullName)",
       "Bash(npm ls *)",
       "Bash(git push *)",
-      "Bash(ping -n 8 127.0.0.1)"
+      "Bash(ping -n 8 127.0.0.1)",
+      "Read(//c//**)",
+      "Bash(ls /c/ 2>&1 | head -30)"
     ]
   }
 }

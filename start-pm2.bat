@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set "PROJECT_DIR=c:\Users\IT\Documents\WEBSITE\WA-Sender  Website"
+set "PROJECT_DIR=C:\WA-Sender--Website"
 
 echo ========================================
 echo  WA Sender - Starting PM2 Services
@@ -22,6 +22,6 @@ pm2 save
 
 echo.
 echo ========================================
-echo  Selesai! PM2 sudah running.
+echo  Selesai! Backend + Frontend sudah running.
 echo ========================================
 pm2 list
