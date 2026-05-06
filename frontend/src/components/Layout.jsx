@@ -72,7 +72,7 @@ function WaFloatingButton() {
 
   return (
     <button
-      onClick={() => window.open("/#/wa-fullscreen", "_blank")}
+      onClick={() => window.open("/wa-web", "_blank", "noopener,noreferrer")}
       title={waReady ? "Buka WhatsApp Web" : "WhatsApp belum login"}
       style={{
         position: "fixed",

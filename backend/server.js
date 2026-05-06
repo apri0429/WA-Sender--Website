@@ -394,10 +394,10 @@ async function startScreencast() {
     const vp = waClient.pupPage.viewport() || { width: 1280, height: 800 };
     await cdpSession.send("Page.startScreencast", {
       format: "jpeg",
-      quality: 60,
+      quality: 85,
       maxWidth: vp.width,
       maxHeight: vp.height,
-      everyNthFrame: 2,
+      everyNthFrame: 1,
     });
     cdpSession.on("Page.screencastFrame", async ({ data, sessionId, metadata }) => {
       const buf = Buffer.from(data, "base64");
@@ -916,6 +916,8 @@ async function initWhatsAppClient(options = {}) {
         account,
         sessions: getWhatsAppSessionsSummary(),
       });
+      // Pre-warm screencast agar langsung siap saat dibuka
+      startScreencast().catch(() => {});
     });
 
     waClient.on("authenticated", () => {
@@ -1823,6 +1825,11 @@ app.post("/api/chats/:chatId/reply", async (req, res) => {
   }
 });
 
+// Halaman WA Web ringan (tanpa React)
+app.get("/wa-web", (req, res) => {
+  res.sendFile(path.join(__dirname, "wa-web.html"));
+});
+
 // MJPEG stream — browser render native, jauh lebih ringan dari WebSocket base64
 app.get("/api/wa-stream", async (req, res) => {
   if (!waClient?.pupPage || !isWhatsAppReady) {
@@ -1834,20 +1841,19 @@ app.get("/api/wa-stream", async (req, res) => {
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
 
+  // Pastikan screencast sudah jalan
+  await startScreencast();
+
   mjpegResponses.add(res);
   screencastViewers++;
-  if (screencastViewers === 1) await startScreencast();
 
   // Kirim frame terakhir langsung agar tidak blank
   if (latestJpegBuffer) pushMjpegFrame(latestJpegBuffer);
 
-  req.on("close", async () => {
+  req.on("close", () => {
     mjpegResponses.delete(res);
     screencastViewers = Math.max(0, screencastViewers - 1);
-    if (screencastViewers === 0) {
-      latestJpegBuffer = null;
-      await stopScreencast();
-    }
+    // Screencast tetap jalan agar next open langsung dapat frame
   });
 });
 
@@ -1906,17 +1912,16 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Tutup screencast — keluarkan dari room, stop kalau tidak ada viewer
-  socket.on("wa-screen-close", async () => {
+  socket.on("wa-screen-close", () => {
     socket.leave("screencast");
     screencastViewers = Math.max(0, screencastViewers - 1);
-    if (screencastViewers === 0) await stopScreencast();
+    // Screencast tetap jalan, stop hanya saat WA disconnect
   });
 
-  socket.on("disconnect", async () => {
+  socket.on("disconnect", () => {
     socket.leave("screencast");
     screencastViewers = Math.max(0, screencastViewers - 1);
-    if (screencastViewers === 0) await stopScreencast();
+    // Screencast tetap jalan selama WA ready
   });
 
   // Klik — frontend sudah scale ke koordinat Puppeteer

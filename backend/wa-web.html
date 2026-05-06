@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp Web</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #111b21; }
+    body { display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    #bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 5px 14px; background: #075e54;
+      flex-shrink: 0; user-select: none;
+    }
+    #bar-title { color: #fff; font-weight: 600; font-size: 13px; flex: 1; }
+    #dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #f59e0b; flex-shrink: 0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    #dot.ready { background: #22c55e; box-shadow: 0 0 5px #22c55e; }
+    #dot-label { font-size: 11px; color: rgba(255,255,255,0.65); }
+
+    #area {
+      flex: 1; position: relative; overflow: hidden; outline: none;
+    }
+    #overlay {
+      position: absolute; inset: 0; z-index: 2;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px;
+      background: #f0f2f5;
+    }
+    #overlay-icon { font-size: 56px; }
+    #overlay-title { font-size: 15px; font-weight: 700; color: #111b21; }
+    #overlay-sub { font-size: 12.5px; color: #667781; text-align: center; max-width: 260px; line-height: 1.6; }
+    #stream {
+      display: block; width: 100%; height: 100%;
+      object-fit: fill; user-select: none;
+      cursor: default; -webkit-user-drag: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="bar">
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="#fff" style="flex-shrink:0">
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.38 1.26 4.79L2.05 22l5.45-1.43c1.36.73 2.9 1.15 4.54 1.15 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.18c-1.49 0-2.9-.4-4.12-1.1l-.3-.17-3.08.81.82-3.01-.19-.32a8.24 8.24 0 01-1.28-4.39c0-4.54 3.7-8.23 8.25-8.23s8.25 3.69 8.25 8.23-3.71 8.18-8.25 8.18m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.78.97-.14.17-.29.19-.54.07-.25-.12-1.05-.39-2-.12-1.36-.72-1.56-1.6-1.56-1.6-.11-.19-.01-.29.08-.39.08-.08.17-.21.26-.32.08-.1.11-.19.17-.32.05-.12.03-.23-.02-.32s-.56-1.35-.77-1.84c-.2-.48-.4-.41-.56-.42h-.48c-.17 0-.43.06-.66.31s-.86.84-.86 2.05.88 2.38 1 2.54c.12.17 1.72 2.63 4.17 3.69.58.25 1.04.4 1.39.51.58.19 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.21-.57.21-1.06.14-1.16-.07-.1-.23-.16-.48-.28"/>
+    </svg>
+    <span id="bar-title">WhatsApp Web</span>
+    <span id="dot"></span>
+    <span id="dot-label">Menunggu...</span>
+  </div>
+
+  <div id="area" tabindex="0">
+    <div id="overlay">
+      <div id="overlay-icon">📱</div>
+      <div id="overlay-title">Menghubungkan WhatsApp...</div>
+      <div id="overlay-sub">Pastikan WhatsApp sudah login di Dashboard, halaman ini akan otomatis tampil.</div>
+    </div>
+    <img id="stream" src="/api/wa-stream" alt="WhatsApp Web" draggable="false" />
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const dot      = document.getElementById('dot');
+    const dotLabel = document.getElementById('dot-label');
+    const barTitle = document.getElementById('bar-title');
+    const overlay  = document.getElementById('overlay');
+    const stream   = document.getElementById('stream');
+    const area     = document.getElementById('area');
+    let vp = { w: 1280, h: 800 };
+
+    function setReady(v, name) {
+      dot.className = v ? 'ready' : '';
+      dotLabel.textContent = v ? 'Terhubung' : 'Menunggu...';
+      overlay.style.display = v ? 'none' : 'flex';
+      if (name) barTitle.textContent = 'WhatsApp Web — ' + name;
+    }
+
+    // Cek status awal
+    fetch('/api/status')
+      .then(r => r.json())
+      .then(d => {
+        if (d.whatsappReady) setReady(true, d.account?.name || '');
+        if (d.meta?.viewport) vp = { w: d.meta.viewport.width, h: d.meta.viewport.height };
+      })
+      .catch(() => {});
+
+    fetch('/api/wa-viewport')
+      .then(r => r.json())
+      .then(({ width, height }) => { vp = { w: width, h: height }; })
+      .catch(() => {});
+
+    socket.on('wa-ready', (d) => setReady(true, d?.account?.name || ''));
+    socket.on('wa-disconnected', () => setReady(false));
+
+    // Resize viewport saat window resize
+    let rDebounce;
+    window.addEventListener('resize', () => {
+      clearTimeout(rDebounce);
+      rDebounce = setTimeout(() => {
+        const w = area.clientWidth, h = area.clientHeight;
+        if (w > 0 && h > 0) {
+          socket.emit('wa-set-viewport', { width: w, height: h });
+          vp = { w, h };
+        }
+      }, 300);
+    });
+
+    // Click
+    stream.addEventListener('click', (e) => {
+      area.focus();
+      const rect = stream.getBoundingClientRect();
+      socket.emit('wa-click', {
+        x: Math.max(0, Math.min(vp.w, (e.clientX - rect.left) * (vp.w / rect.width))),
+        y: Math.max(0, Math.min(vp.h, (e.clientY - rect.top) * (vp.h / rect.height))),
+      });
+    });
+
+    // Scroll
+    area.addEventListener('wheel', (e) => {
+      if (e.ctrlKey) { e.preventDefault(); return; }
+      e.preventDefault();
+      const rect = stream.getBoundingClientRect();
+      socket.emit('wa-scroll', {
+        x: (e.clientX - rect.left) * (vp.w / rect.width),
+        y: (e.clientY - rect.top) * (vp.h / rect.height),
+        deltaY: e.deltaY,
+      });
+    }, { passive: false });
+
+    // Blokir Ctrl+Wheel zoom browser
+    document.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+
+    // Keyboard
+    let buf = '', kTimer;
+    const flush = () => { if (buf) { socket.emit('wa-type', { text: buf }); buf = ''; } kTimer = null; };
+    area.addEventListener('keydown', (e) => {
+      const specials = ['Enter','Backspace','Delete','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab','Escape'];
+      if (specials.includes(e.key)) {
+        e.preventDefault(); flush();
+        socket.emit('wa-key', { key: e.key });
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+        buf += e.key;
+        clearTimeout(kTimer);
+        kTimer = setTimeout(flush, 30);
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      socket.emit('wa-set-viewport', { width: 1280, height: 800 });
+    });
+  </script>
+</body>
+</html>
