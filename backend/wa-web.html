@@ -7,160 +7,410 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #111b21; }
-    body { display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
 
-    #bar {
+    /* ── Topbar ───────────────────────────────────────────────── */
+    #topbar {
       display: flex; align-items: center; gap: 10px;
-      padding: 5px 14px; background: #075e54;
+      padding: 0 16px; height: 42px;
+      background: #202c33;
       flex-shrink: 0; user-select: none;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     }
-    #bar-title { color: #fff; font-weight: 600; font-size: 13px; flex: 1; }
-    #dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: #f59e0b; flex-shrink: 0;
-      transition: background 0.3s, box-shadow 0.3s;
+    #topbar-logo {
+      display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
     }
-    #dot.ready { background: #22c55e; box-shadow: 0 0 5px #22c55e; }
-    #dot-label { font-size: 11px; color: rgba(255,255,255,0.65); }
+    #wa-icon { color: #25d366; flex-shrink: 0; }
+    #topbar-name {
+      font-size: 13px; font-weight: 600; color: #e9edef;
+      white-space: nowrap;
+    }
+    #topbar-sep {
+      width: 1px; height: 14px; background: rgba(255,255,255,0.15); flex-shrink: 0;
+    }
+    #topbar-account {
+      font-size: 12px; color: #8696a0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: 200px;
+    }
+    #status-area { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    #status-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 3px 10px 3px 7px; border-radius: 20px;
+      font-size: 11.5px; font-weight: 500;
+      transition: background 0.35s, color 0.35s;
+      white-space: nowrap;
+    }
+    #status-pill.ready   { background: rgba(37,211,102,0.15); color: #25d366; }
+    #status-pill.waiting { background: rgba(134,150,160,0.1); color: #8696a0; }
+    #status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor; flex-shrink: 0;
+    }
+    #status-pill.ready #status-dot { animation: pulse-dot 2s ease-in-out infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.45} }
 
+    #btn-refresh {
+      width: 30px; height: 30px; border-radius: 7px;
+      background: transparent; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #8696a0; transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    #btn-refresh:hover { background: rgba(255,255,255,0.07); color: #e9edef; }
+
+    /* ── Main area ────────────────────────────────────────────── */
     #area {
       flex: 1; position: relative; overflow: hidden; outline: none;
+      background: #111b21;
     }
+
+    /* ── Connection banner ────────────────────────────────────── */
+    #conn-banner {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+      background: #d97706;
+      padding: 7px 16px;
+      font-size: 12px; font-weight: 500; color: #fff;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      transform: translateY(-100%);
+      transition: transform 0.25s ease;
+    }
+    #conn-banner.visible { transform: translateY(0); }
+
+    /* ── Loading overlay ──────────────────────────────────────── */
     #overlay {
-      position: absolute; inset: 0; z-index: 2;
+      position: absolute; inset: 0; z-index: 10;
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 14px;
+      align-items: center; justify-content: center;
       background: #f0f2f5;
+      transition: opacity 0.4s ease;
     }
-    #overlay-icon { font-size: 56px; }
-    #overlay-title { font-size: 15px; font-weight: 700; color: #111b21; }
-    #overlay-sub { font-size: 12.5px; color: #667781; text-align: center; max-width: 260px; line-height: 1.6; }
+    #overlay.hiding  { opacity: 0; pointer-events: none; }
+    #overlay.hidden  { display: none; }
+
+    .ov-logo {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: #25d366;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 22px;
+      box-shadow: 0 6px 28px rgba(37,211,102,0.35);
+    }
+    .ov-title {
+      font-size: 16px; font-weight: 700; color: #111b21; margin-bottom: 8px;
+    }
+    .ov-sub {
+      font-size: 13px; color: #667781;
+      text-align: center; max-width: 280px; line-height: 1.7; margin-bottom: 28px;
+    }
+    .ov-spinner {
+      width: 26px; height: 26px;
+      border: 2.5px solid rgba(37,211,102,0.2);
+      border-top-color: #25d366;
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Stream ───────────────────────────────────────────────── */
     #stream {
       display: block; width: 100%; height: 100%;
       object-fit: fill; user-select: none;
-      cursor: default; -webkit-user-drag: none;
+      -webkit-user-drag: none; cursor: default;
+    }
+
+    /* ── Keyboard hint ────────────────────────────────────────── */
+    #kbd-hint {
+      position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+      padding: 5px 14px; border-radius: 20px;
+      background: rgba(17,27,33,0.82); backdrop-filter: blur(8px);
+      font-size: 11px; color: rgba(255,255,255,0.65);
+      white-space: nowrap; pointer-events: none; z-index: 5;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    #kbd-hint.visible { opacity: 1; }
+
+    /* ── Click ripple ─────────────────────────────────────────── */
+    .ripple {
+      position: absolute; border-radius: 50%;
+      border: 2px solid rgba(37,211,102,0.75);
+      pointer-events: none; z-index: 9;
+      animation: ripple-out 0.45s ease-out forwards;
+      transform: translate(-50%, -50%);
+    }
+    @keyframes ripple-out {
+      0%   { opacity: 1; width: 8px; height: 8px; }
+      100% { opacity: 0; width: 40px; height: 40px; }
     }
   </style>
 </head>
 <body>
-  <div id="bar">
-    <svg viewBox="0 0 24 24" width="17" height="17" fill="#fff" style="flex-shrink:0">
+
+<div id="topbar">
+  <div id="topbar-logo">
+    <svg id="wa-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
       <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.38 1.26 4.79L2.05 22l5.45-1.43c1.36.73 2.9 1.15 4.54 1.15 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.18c-1.49 0-2.9-.4-4.12-1.1l-.3-.17-3.08.81.82-3.01-.19-.32a8.24 8.24 0 01-1.28-4.39c0-4.54 3.7-8.23 8.25-8.23s8.25 3.69 8.25 8.23-3.71 8.18-8.25 8.18m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.78.97-.14.17-.29.19-.54.07-.25-.12-1.05-.39-2-.12-1.36-.72-1.56-1.6-1.56-1.6-.11-.19-.01-.29.08-.39.08-.08.17-.21.26-.32.08-.1.11-.19.17-.32.05-.12.03-.23-.02-.32s-.56-1.35-.77-1.84c-.2-.48-.4-.41-.56-.42h-.48c-.17 0-.43.06-.66.31s-.86.84-.86 2.05.88 2.38 1 2.54c.12.17 1.72 2.63 4.17 3.69.58.25 1.04.4 1.39.51.58.19 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.21-.57.21-1.06.14-1.16-.07-.1-.23-.16-.48-.28"/>
     </svg>
-    <span id="bar-title">WhatsApp Web</span>
-    <span id="dot"></span>
-    <span id="dot-label">Menunggu...</span>
+    <span id="topbar-name">WhatsApp Web</span>
+    <div id="topbar-sep"></div>
+    <span id="topbar-account"></span>
   </div>
 
-  <div id="area" tabindex="0">
-    <div id="overlay">
-      <div id="overlay-icon">📱</div>
-      <div id="overlay-title">Menghubungkan WhatsApp...</div>
-      <div id="overlay-sub">Pastikan WhatsApp sudah login di Dashboard, halaman ini akan otomatis tampil.</div>
+  <div id="status-area">
+    <div id="status-pill" class="waiting">
+      <span id="status-dot"></span>
+      <span id="status-text">Menunggu...</span>
     </div>
-    <img id="stream" src="/api/wa-stream" alt="WhatsApp Web" draggable="false" />
+    <button id="btn-refresh" title="Reload halaman" onclick="location.reload()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<div id="area" tabindex="0">
+  <div id="conn-banner">
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r=".5" fill="currentColor"/>
+    </svg>
+    Koneksi terputus — mencoba menghubungkan kembali...
   </div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const dot      = document.getElementById('dot');
-    const dotLabel = document.getElementById('dot-label');
-    const barTitle = document.getElementById('bar-title');
-    const overlay  = document.getElementById('overlay');
-    const stream   = document.getElementById('stream');
-    const area     = document.getElementById('area');
-    let vp = { w: 1280, h: 800 };
+  <div id="overlay">
+    <div class="ov-logo">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="white">
+        <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.38 1.26 4.79L2.05 22l5.45-1.43c1.36.73 2.9 1.15 4.54 1.15 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.18c-1.49 0-2.9-.4-4.12-1.1l-.3-.17-3.08.81.82-3.01-.19-.32a8.24 8.24 0 01-1.28-4.39c0-4.54 3.7-8.23 8.25-8.23s8.25 3.69 8.25 8.23-3.71 8.18-8.25 8.18m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.78.97-.14.17-.29.19-.54.07-.25-.12-1.05-.39-2-.12-1.36-.72-1.56-1.6-1.56-1.6-.11-.19-.01-.29.08-.39.08-.08.17-.21.26-.32.08-.1.11-.19.17-.32.05-.12.03-.23-.02-.32s-.56-1.35-.77-1.84c-.2-.48-.4-.41-.56-.42h-.48c-.17 0-.43.06-.66.31s-.86.84-.86 2.05.88 2.38 1 2.54c.12.17 1.72 2.63 4.17 3.69.58.25 1.04.4 1.39.51.58.19 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.21-.57.21-1.06.14-1.16-.07-.1-.23-.16-.48-.28"/>
+      </svg>
+    </div>
+    <div class="ov-title">Menghubungkan WhatsApp...</div>
+    <div class="ov-sub">Pastikan WhatsApp sudah login di Dashboard. Halaman ini akan otomatis tampil ketika terhubung.</div>
+    <div class="ov-spinner"></div>
+  </div>
 
-    function setReady(v, name) {
-      dot.className = v ? 'ready' : '';
-      dotLabel.textContent = v ? 'Terhubung' : 'Menunggu...';
-      overlay.style.display = v ? 'none' : 'flex';
-      if (name) barTitle.textContent = 'WhatsApp Web — ' + name;
+  <img id="stream" src="" alt="" draggable="false" />
+  <div id="kbd-hint">Klik untuk fokus &nbsp;&middot;&nbsp; Ctrl+V untuk paste</div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket    = io();
+  const overlay   = document.getElementById('overlay');
+  const stream    = document.getElementById('stream');
+  const area      = document.getElementById('area');
+  const pill      = document.getElementById('status-pill');
+  const pillText  = document.getElementById('status-text');
+  const accountEl = document.getElementById('topbar-account');
+  const sepEl     = document.getElementById('topbar-sep');
+  const banner    = document.getElementById('conn-banner');
+  const kbdHint   = document.getElementById('kbd-hint');
+
+  let vp = { w: 1280, h: 800 };
+  let moveRaf      = null;
+  let hintTimer    = null;
+  let streamLoaded = false;
+
+  function loadStream() {
+    if (streamLoaded) return;
+    streamLoaded = true;
+    stream.src = '/api/wa-stream';
+  }
+
+  // Fallback: jika wa-viewport tidak diterima dalam 2 detik, tetap load stream
+  const streamFallback = setTimeout(loadStream, 2000);
+
+  // ── Status helpers ──────────────────────────────────────────
+  function setReady(ready, name) {
+    pill.className = 'status-pill ' + (ready ? 'ready' : 'waiting');
+    pillText.textContent = ready ? 'Terhubung' : 'Menunggu...';
+    if (name) {
+      accountEl.textContent = name;
+      sepEl.style.display = '';
+    }
+    if (ready) {
+      overlay.classList.add('hiding');
+      setTimeout(() => overlay.classList.add('hidden'), 420);
+    } else {
+      overlay.classList.remove('hidden', 'hiding');
+    }
+  }
+
+  // ── Initial status ──────────────────────────────────────────
+  fetch('/api/status')
+    .then(r => r.json())
+    .then(d => {
+      if (d.whatsappReady) setReady(true, d.account?.name || '');
+      if (d.meta?.viewport) vp = { w: d.meta.viewport.width, h: d.meta.viewport.height };
+    }).catch(() => {});
+
+  fetch('/api/wa-viewport')
+    .then(r => r.json())
+    .then(({ width, height }) => { vp = { w: width, h: height }; })
+    .catch(() => {});
+
+  // ── Socket events ───────────────────────────────────────────
+  socket.on('connect', () => {
+    banner.classList.remove('visible');
+    sendViewport();
+  });
+  socket.on('disconnect',    () => banner.classList.add('visible'));
+  socket.on('connect_error', () => banner.classList.add('visible'));
+
+  socket.on('wa-ready', d => {
+    banner.classList.remove('visible');
+    setReady(true, d?.account?.name || '');
+  });
+  socket.on('wa-disconnected', () => setReady(false));
+  socket.on('wa-viewport', ({ width, height }) => {
+    vp = { w: width, h: height };
+    clearTimeout(streamFallback);
+    loadStream();
+  });
+
+  // ── Coordinate mapping ──────────────────────────────────────
+  function mapCoords(cx, cy) {
+    const r = stream.getBoundingClientRect();
+    return {
+      x: Math.max(0, Math.min(vp.w, (cx - r.left) * (vp.w / r.width))),
+      y: Math.max(0, Math.min(vp.h, (cy - r.top)  * (vp.h / r.height))),
+    };
+  }
+
+  // ── Click ripple ────────────────────────────────────────────
+  function spawnRipple(cx, cy) {
+    const aRect = area.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = 'ripple';
+    el.style.left = (cx - aRect.left) + 'px';
+    el.style.top  = (cy - aRect.top)  + 'px';
+    area.appendChild(el);
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+  }
+
+  // ── Mouse events ────────────────────────────────────────────
+  stream.addEventListener('click', e => {
+    area.focus();
+    showHint();
+    const { x, y } = mapCoords(e.clientX, e.clientY);
+    socket.emit('wa-click', { x, y });
+    spawnRipple(e.clientX, e.clientY);
+  });
+
+  stream.addEventListener('dblclick', e => {
+    area.focus();
+    const { x, y } = mapCoords(e.clientX, e.clientY);
+    socket.emit('wa-dblclick', { x, y });
+  });
+
+  stream.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    const { x, y } = mapCoords(e.clientX, e.clientY);
+    socket.emit('wa-rightclick', { x, y });
+  });
+
+  // Mouse move throttled with rAF for hover effects in WA
+  stream.addEventListener('mousemove', e => {
+    if (moveRaf) return;
+    moveRaf = requestAnimationFrame(() => {
+      moveRaf = null;
+      const { x, y } = mapCoords(e.clientX, e.clientY);
+      socket.emit('wa-mousemove', { x, y });
+    });
+  });
+
+  // ── Wheel / scroll ──────────────────────────────────────────
+  area.addEventListener('wheel', e => {
+    e.preventDefault();
+    if (e.ctrlKey) return;
+    const { x, y } = mapCoords(e.clientX, e.clientY);
+    socket.emit('wa-scroll', { x, y, deltaY: e.deltaY });
+  }, { passive: false });
+
+  document.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+
+  // ── Keyboard ────────────────────────────────────────────────
+  let typeBuf = '', typeTimer;
+  const flushType = () => {
+    if (typeBuf) { socket.emit('wa-type', { text: typeBuf }); typeBuf = ''; }
+    typeTimer = null;
+  };
+
+  const SPECIALS = new Set([
+    'Enter', 'Backspace', 'Delete', 'Tab', 'Escape',
+    'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+    'Home', 'End', 'PageUp', 'PageDown', 'Insert',
+    'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
+  ]);
+
+  area.addEventListener('keydown', async e => {
+    // Ctrl/Cmd + V → paste clipboard
+    if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+      e.preventDefault();
+      flushType();
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) socket.emit('wa-type', { text });
+      } catch { /* permission denied */ }
+      return;
     }
 
-    // Cek status awal
-    fetch('/api/status')
-      .then(r => r.json())
-      .then(d => {
-        if (d.whatsappReady) setReady(true, d.account?.name || '');
-        if (d.meta?.viewport) vp = { w: d.meta.viewport.width, h: d.meta.viewport.height };
-      })
-      .catch(() => {});
-
-    fetch('/api/wa-viewport')
-      .then(r => r.json())
-      .then(({ width, height }) => { vp = { w: width, h: height }; })
-      .catch(() => {});
-
-    socket.on('wa-ready', (d) => setReady(true, d?.account?.name || ''));
-    socket.on('wa-disconnected', () => setReady(false));
-
-    // Set viewport langsung saat socket connect agar stream langsung pas
-    socket.on('connect', () => {
-      const w = area.clientWidth, h = area.clientHeight;
-      if (w > 0 && h > 0) {
-        socket.emit('wa-set-viewport', { width: w, height: h });
-        vp = { w, h };
-      }
-    });
-
-    // Resize viewport saat window resize
-    let rDebounce;
-    window.addEventListener('resize', () => {
-      clearTimeout(rDebounce);
-      rDebounce = setTimeout(() => {
-        const w = area.clientWidth, h = area.clientHeight;
-        if (w > 0 && h > 0) {
-          socket.emit('wa-set-viewport', { width: w, height: h });
-          vp = { w, h };
-        }
-      }, 300);
-    });
-
-    // Click
-    stream.addEventListener('click', (e) => {
-      area.focus();
-      const rect = stream.getBoundingClientRect();
-      socket.emit('wa-click', {
-        x: Math.max(0, Math.min(vp.w, (e.clientX - rect.left) * (vp.w / rect.width))),
-        y: Math.max(0, Math.min(vp.h, (e.clientY - rect.top) * (vp.h / rect.height))),
-      });
-    });
-
-    // Scroll
-    area.addEventListener('wheel', (e) => {
-      if (e.ctrlKey) { e.preventDefault(); return; }
+    // Ctrl/Cmd + single key → chord (Ctrl+A, C, Z, Y, B, I, etc.)
+    if ((e.ctrlKey || e.metaKey) && e.key.length === 1) {
       e.preventDefault();
-      const rect = stream.getBoundingClientRect();
-      socket.emit('wa-scroll', {
-        x: (e.clientX - rect.left) * (vp.w / rect.width),
-        y: (e.clientY - rect.top) * (vp.h / rect.height),
-        deltaY: e.deltaY,
-      });
-    }, { passive: false });
+      flushType();
+      socket.emit('wa-chord', { ctrl: e.ctrlKey, meta: e.metaKey, shift: e.shiftKey, key: e.key });
+      return;
+    }
 
-    // Blokir Ctrl+Wheel zoom browser
-    document.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+    // Special keys
+    if (SPECIALS.has(e.key)) {
+      e.preventDefault();
+      flushType();
+      socket.emit('wa-key', { key: e.key, shift: e.shiftKey });
+      return;
+    }
 
-    // Keyboard
-    let buf = '', kTimer;
-    const flush = () => { if (buf) { socket.emit('wa-type', { text: buf }); buf = ''; } kTimer = null; };
-    area.addEventListener('keydown', (e) => {
-      const specials = ['Enter','Backspace','Delete','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab','Escape'];
-      if (specials.includes(e.key)) {
-        e.preventDefault(); flush();
-        socket.emit('wa-key', { key: e.key });
-      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-        buf += e.key;
-        clearTimeout(kTimer);
-        kTimer = setTimeout(flush, 30);
-      }
-    });
+    // Printable characters — batch and flush
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      typeBuf += e.key;
+      clearTimeout(typeTimer);
+      typeTimer = setTimeout(flushType, 25);
+    }
+  });
 
-    window.addEventListener('beforeunload', () => {
-      socket.emit('wa-set-viewport', { width: 1280, height: 800 });
-    });
-  </script>
+  // Paste event (middle-click or right-click → Paste in some browsers)
+  area.addEventListener('paste', e => {
+    e.preventDefault();
+    const text = e.clipboardData?.getData('text') || '';
+    if (text) { flushType(); socket.emit('wa-type', { text }); }
+  });
+
+  // ── Viewport resize ─────────────────────────────────────────
+  let resizeTimer;
+  function sendViewport() {
+    const w = area.clientWidth, h = area.clientHeight;
+    if (w > 0 && h > 0) {
+      socket.emit('wa-set-viewport', { width: w, height: h });
+      vp = { w, h };
+    }
+  }
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(sendViewport, 300);
+  });
+
+  // ── Hint ────────────────────────────────────────────────────
+  function showHint() {
+    kbdHint.classList.add('visible');
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => kbdHint.classList.remove('visible'), 2800);
+  }
+
+  // ── Cleanup ─────────────────────────────────────────────────
+  window.addEventListener('beforeunload', () => {
+    socket.emit('wa-set-viewport', { width: 1280, height: 800 });
+  });
+</script>
 </body>
 </html>

@@ -426,19 +426,17 @@ async function startScreencast() {
   if (!waClient?.pupPage || cdpSession) return;
   try {
     cdpSession = await waClient.pupPage.target().createCDPSession();
-    const vp = waClient.pupPage.viewport() || { width: 1280, height: 800 };
     await cdpSession.send("Page.startScreencast", {
       format: "jpeg",
-      quality: 85,
-      maxWidth: vp.width,
-      maxHeight: vp.height,
+      quality: 80,
       everyNthFrame: 1,
     });
-    cdpSession.on("Page.screencastFrame", async ({ data, sessionId, metadata }) => {
+    cdpSession.on("Page.screencastFrame", ({ data, sessionId }) => {
+      // Ack segera agar Chrome langsung capture frame berikutnya (max frame rate)
+      cdpSession.send("Page.screencastFrameAck", { sessionId }).catch(() => {});
       const buf = Buffer.from(data, "base64");
       latestJpegBuffer = buf;
       pushMjpegFrame(buf);
-      try { await cdpSession.send("Page.screencastFrameAck", { sessionId }); } catch {}
     });
   } catch (e) {
     console.error("startScreencast error:", e.message);
@@ -886,6 +884,7 @@ function buildWhatsAppClient(sessionId, options = {}) {
   const executablePath = resolveBrowserExecutablePath(browserTarget);
   const puppeteerOptions = {
     headless: !visible,
+    defaultViewport: { width: 1920, height: 1080 },
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
@@ -2134,16 +2133,61 @@ io.on("connection", (socket) => {
     } catch {}
   });
 
+  // Double-click — untuk seleksi kata di text area
+  socket.on("wa-dblclick", async ({ x, y }) => {
+    if (!waClient?.pupPage || !isWhatsAppReady) return;
+    try {
+      await waClient.pupPage.mouse.move(Math.round(x), Math.round(y));
+      await waClient.pupPage.mouse.click(Math.round(x), Math.round(y), { clickCount: 2 });
+    } catch {}
+  });
+
+  // Right-click — context menu
+  socket.on("wa-rightclick", async ({ x, y }) => {
+    if (!waClient?.pupPage || !isWhatsAppReady) return;
+    try {
+      await waClient.pupPage.mouse.move(Math.round(x), Math.round(y));
+      await waClient.pupPage.mouse.click(Math.round(x), Math.round(y), { button: "right" });
+    } catch {}
+  });
+
+  // Mouse move — untuk efek hover (tombol highlight, tooltip, dll)
+  socket.on("wa-mousemove", async ({ x, y }) => {
+    if (!waClient?.pupPage || !isWhatsAppReady) return;
+    try { await waClient.pupPage.mouse.move(Math.round(x), Math.round(y)); } catch {}
+  });
+
   // Ketik teks
   socket.on("wa-type", async ({ text }) => {
     if (!waClient?.pupPage || !isWhatsAppReady) return;
     try { await waClient.pupPage.keyboard.type(text, { delay: 20 }); } catch {}
   });
 
-  // Tombol spesial (Enter, Backspace, dll)
-  socket.on("wa-key", async ({ key }) => {
+  // Tombol spesial (Enter, Backspace, dll) — dengan dukungan Shift
+  socket.on("wa-key", async ({ key, shift }) => {
     if (!waClient?.pupPage || !isWhatsAppReady) return;
-    try { await waClient.pupPage.keyboard.press(key); } catch {}
+    try {
+      if (shift) {
+        await waClient.pupPage.keyboard.down("Shift");
+        await waClient.pupPage.keyboard.press(key);
+        await waClient.pupPage.keyboard.up("Shift");
+      } else {
+        await waClient.pupPage.keyboard.press(key);
+      }
+    } catch {}
+  });
+
+  // Chord (Ctrl+A, Ctrl+C, Ctrl+Z, dll)
+  socket.on("wa-chord", async ({ ctrl, meta, shift, key }) => {
+    if (!waClient?.pupPage || !isWhatsAppReady) return;
+    try {
+      const modifier = meta ? "Meta" : "Control";
+      await waClient.pupPage.keyboard.down(modifier);
+      if (shift) await waClient.pupPage.keyboard.down("Shift");
+      await waClient.pupPage.keyboard.press(key.toUpperCase());
+      if (shift) await waClient.pupPage.keyboard.up("Shift");
+      await waClient.pupPage.keyboard.up(modifier);
+    } catch {}
   });
 
   // Scroll — pakai mouse.wheel agar bekerja di container scroll WA Web
@@ -2168,6 +2212,9 @@ io.on("connection", (socket) => {
       }
       await waClient.pupPage.setViewport({ width: w, height: h });
       socket.emit("wa-viewport", { width: w, height: h });
+      // Restart screencast agar resolusi frame ikut viewport baru
+      await stopScreencast();
+      await startScreencast();
     } catch (e) {
       console.error("wa-set-viewport error:", e.message);
     }

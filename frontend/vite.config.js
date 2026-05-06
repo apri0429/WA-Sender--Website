@@ -20,6 +20,10 @@ export default defineConfig({
         ws: true,
         changeOrigin: true,
       },
+      "/wa-web": {
+        target: "http://localhost:8090",
+        changeOrigin: true,
+      },
     },
   },
 });
