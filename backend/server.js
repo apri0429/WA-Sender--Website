@@ -370,6 +370,22 @@ function resetWhatsAppRuntimeState() {
 }
 
 let screencastViewers = 0;
+let latestJpegBuffer = null;
+const mjpegResponses = new Set();
+
+function pushMjpegFrame(buf) {
+  if (!buf || mjpegResponses.size === 0) return;
+  const header = `--mjpeg\r\nContent-Type: image/jpeg\r\nContent-Length: ${buf.length}\r\n\r\n`;
+  for (const res of mjpegResponses) {
+    try {
+      res.write(header);
+      res.write(buf);
+      res.write("\r\n");
+    } catch {
+      mjpegResponses.delete(res);
+    }
+  }
+}
 
 async function startScreencast() {
   if (!waClient?.pupPage || cdpSession) return;
@@ -378,18 +394,15 @@ async function startScreencast() {
     const vp = waClient.pupPage.viewport() || { width: 1280, height: 800 };
     await cdpSession.send("Page.startScreencast", {
       format: "jpeg",
-      quality: 55,
+      quality: 60,
       maxWidth: vp.width,
       maxHeight: vp.height,
-      everyNthFrame: 2, // ~15fps, cukup smooth tapi tidak berat
+      everyNthFrame: 2,
     });
     cdpSession.on("Page.screencastFrame", async ({ data, sessionId, metadata }) => {
-      // Kirim hanya ke viewer aktif, bukan broadcast semua client
-      io.to("screencast").emit("wa-screen", {
-        data,
-        width: metadata.deviceWidth || vp.width,
-        height: metadata.deviceHeight || vp.height,
-      });
+      const buf = Buffer.from(data, "base64");
+      latestJpegBuffer = buf;
+      pushMjpegFrame(buf);
       try { await cdpSession.send("Page.screencastFrameAck", { sessionId }); } catch {}
     });
   } catch (e) {
@@ -1808,6 +1821,39 @@ app.post("/api/chats/:chatId/reply", async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+});
+
+// MJPEG stream — browser render native, jauh lebih ringan dari WebSocket base64
+app.get("/api/wa-stream", async (req, res) => {
+  if (!waClient?.pupPage || !isWhatsAppReady) {
+    return res.status(503).send("WhatsApp not ready");
+  }
+
+  res.setHeader("Content-Type", "multipart/x-mixed-replace; boundary=mjpeg");
+  res.setHeader("Cache-Control", "no-cache, no-store");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  mjpegResponses.add(res);
+  screencastViewers++;
+  if (screencastViewers === 1) await startScreencast();
+
+  // Kirim frame terakhir langsung agar tidak blank
+  if (latestJpegBuffer) pushMjpegFrame(latestJpegBuffer);
+
+  req.on("close", async () => {
+    mjpegResponses.delete(res);
+    screencastViewers = Math.max(0, screencastViewers - 1);
+    if (screencastViewers === 0) {
+      latestJpegBuffer = null;
+      await stopScreencast();
+    }
+  });
+});
+
+app.get("/api/wa-viewport", (req, res) => {
+  const vp = waClient?.pupPage?.viewport() || { width: 1280, height: 800 };
+  res.json({ width: vp.width, height: vp.height });
 });
 
 app.get("*", (req, res, next) => {

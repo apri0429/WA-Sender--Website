@@ -1,48 +1,55 @@
 import { useEffect, useRef, useState } from "react";
 import socket from "../services/socket";
 
+const STREAM_URL = "/api/wa-stream";
+
 export default function WaWebFullscreen() {
-  const canvasRef = useRef(null);
+  const imgRef = useRef(null);
   const containerRef = useRef(null);
   const vpRef = useRef({ w: 1280, h: 800 });
-  const pendingRef = useRef(null);
-  const [connected, setConnected] = useState(false);
   const [waReady, setWaReady] = useState(false);
+  const [streamKey, setStreamKey] = useState(0); // untuk reload stream
 
   useEffect(() => { document.title = "WhatsApp Web"; }, []);
 
-  // Blokir Ctrl+Wheel agar browser tidak zoom
+  // Status WA via socket
   useEffect(() => {
-    const block = (e) => { if (e.ctrlKey) e.preventDefault(); };
-    document.addEventListener("wheel", block, { passive: false });
-    return () => document.removeEventListener("wheel", block);
-  }, []);
-
-  // Resize canvas saat container berubah ukuran
-  useEffect(() => {
-    const resize = () => {
-      const el = containerRef.current;
-      const canvas = canvasRef.current;
-      if (!el || !canvas) return;
-      canvas.width = el.clientWidth;
-      canvas.height = el.clientHeight;
+    const onReady = () => setWaReady(true);
+    const onDisconnect = () => setWaReady(false);
+    socket.on("wa-ready", onReady);
+    socket.on("wa-disconnected", onDisconnect);
+    return () => {
+      socket.off("wa-ready", onReady);
+      socket.off("wa-disconnected", onDisconnect);
     };
-    resize();
-    const ro = new ResizeObserver(resize);
-    if (containerRef.current) ro.observe(containerRef.current);
-    return () => ro.disconnect();
   }, []);
 
-  // Kirim ukuran layar ke backend → resize viewport Puppeteer → tidak ada garis hitam
+  // Ambil viewport size + status awal
+  useEffect(() => {
+    fetch("/api/status").then(r => r.json()).then(d => {
+      if (d.whatsappReady) setWaReady(true);
+    }).catch(() => {});
+
+    fetch("/api/wa-viewport").then(r => r.json()).then(({ width, height }) => {
+      vpRef.current = { w: width, h: height };
+    }).catch(() => {});
+  }, []);
+
+  // Resize viewport Puppeteer agar pas dengan layar (tidak ada garis hitam)
   useEffect(() => {
     const send = () => {
       const el = containerRef.current;
       if (!el) return;
       const w = el.clientWidth;
       const h = el.clientHeight;
-      if (w > 0 && h > 0) socket.emit("wa-set-viewport", { width: w, height: h });
+      if (w > 0 && h > 0) {
+        socket.emit("wa-set-viewport", { width: w, height: h });
+        vpRef.current = { w, h };
+        // Reload stream karena resolusi berubah
+        setTimeout(() => setStreamKey(k => k + 1), 500);
+      }
     };
-    const t = setTimeout(send, 200);
+    const t = setTimeout(send, 300);
     window.addEventListener("resize", send);
     return () => {
       clearTimeout(t);
@@ -51,53 +58,14 @@ export default function WaWebFullscreen() {
     };
   }, []);
 
-  // RAF render loop — gambar frame terbaru ke canvas
+  // Blokir Ctrl+Wheel agar browser tidak zoom
   useEffect(() => {
-    let rafId;
-    const loop = () => {
-      const frame = pendingRef.current;
-      const canvas = canvasRef.current;
-      if (frame && canvas) {
-        pendingRef.current = null;
-        const ctx = canvas.getContext("2d");
-        const img = new Image();
-        img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        img.src = `data:image/jpeg;base64,${frame}`;
-      }
-      rafId = requestAnimationFrame(loop);
-    };
-    rafId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafId);
+    const block = (e) => { if (e.ctrlKey) e.preventDefault(); };
+    document.addEventListener("wheel", block, { passive: false });
+    return () => document.removeEventListener("wheel", block);
   }, []);
 
-  // Socket screencast
-  useEffect(() => {
-    socket.emit("wa-screen-open");
-
-    const onViewport = ({ width, height }) => { vpRef.current = { w: width, h: height }; };
-    const onScreen = ({ data, width, height }) => {
-      pendingRef.current = data;
-      if (width && height) vpRef.current = { w: width, h: height };
-      setConnected(true);
-    };
-    const onReady = () => setWaReady(true);
-    const onDisconnect = () => { setWaReady(false); setConnected(false); };
-
-    socket.on("wa-viewport", onViewport);
-    socket.on("wa-screen", onScreen);
-    socket.on("wa-ready", onReady);
-    socket.on("wa-disconnected", onDisconnect);
-
-    return () => {
-      socket.emit("wa-screen-close");
-      socket.off("wa-viewport", onViewport);
-      socket.off("wa-screen", onScreen);
-      socket.off("wa-ready", onReady);
-      socket.off("wa-disconnected", onDisconnect);
-    };
-  }, []);
-
-  // Scroll — non-passive, throttle 16ms
+  // Scroll — non-passive di container
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -108,9 +76,9 @@ export default function WaWebFullscreen() {
       const now = Date.now();
       if (now - last < 16) return;
       last = now;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
+      const img = imgRef.current;
+      if (!img) return;
+      const rect = img.getBoundingClientRect();
       const { w, h } = vpRef.current;
       socket.emit("wa-scroll", {
         x: (e.clientX - rect.left) * (w / rect.width),
@@ -122,22 +90,19 @@ export default function WaWebFullscreen() {
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  const toVp = (clientX, clientY) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    const { w, h } = vpRef.current;
-    return {
-      x: Math.max(0, Math.min(w, (clientX - rect.left) * (w / rect.width))),
-      y: Math.max(0, Math.min(h, (clientY - rect.top) * (h / rect.height))),
-    };
-  };
-
   const handleClick = (e) => {
-    if (!connected) return;
     containerRef.current?.focus();
-    socket.emit("wa-click", toVp(e.clientX, e.clientY));
+    const img = imgRef.current;
+    if (!img) return;
+    const rect = img.getBoundingClientRect();
+    const { w, h } = vpRef.current;
+    socket.emit("wa-click", {
+      x: Math.max(0, Math.min(w, (e.clientX - rect.left) * (w / rect.width))),
+      y: Math.max(0, Math.min(h, (e.clientY - rect.top) * (h / rect.height))),
+    });
   };
 
-  // Keyboard batching
+  // Keyboard
   const buf = useRef("");
   const timer = useRef(null);
   const flush = () => {
@@ -156,7 +121,7 @@ export default function WaWebFullscreen() {
     }
   };
 
-  const dot = waReady ? "#22c55e" : connected ? "#f59e0b" : "#94a3b8";
+  const dot = waReady ? "#22c55e" : "#94a3b8";
 
   return (
     <div style={{ width: "100vw", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", background: "#000" }}>
@@ -167,8 +132,8 @@ export default function WaWebFullscreen() {
         </svg>
         <span style={{ color: "#fff", fontWeight: 600, fontSize: 13, flex: 1 }}>WhatsApp Web</span>
         <span style={{ width: 8, height: 8, borderRadius: "50%", background: dot, boxShadow: waReady ? `0 0 6px ${dot}` : "none", flexShrink: 0 }} />
-        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>
-          {waReady ? "Aktif" : connected ? "Memuat..." : "Belum login"}
+        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.75)" }}>
+          {waReady ? "Aktif" : "Belum login"}
         </span>
       </div>
 
@@ -179,30 +144,38 @@ export default function WaWebFullscreen() {
         onKeyDown={handleKeyDown}
         style={{ flex: 1, overflow: "hidden", position: "relative", outline: "none", background: "#f0f2f5" }}
       >
-        {!connected && (
+        {!waReady && (
           <div style={{
-            position: "absolute", inset: 0,
+            position: "absolute", inset: 0, zIndex: 1,
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14,
           }}>
             <div style={{ fontSize: 60 }}>📱</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#374151" }}>
-              {waReady ? "Memuat tampilan..." : "WhatsApp belum login"}
-            </div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#374151" }}>WhatsApp belum login</div>
             <div style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", maxWidth: 300 }}>
-              {waReady ? "Harap tunggu..." : "Login dulu di halaman Dashboard, lalu buka halaman ini kembali."}
+              Login dulu di halaman Dashboard, lalu buka kembali halaman ini.
             </div>
           </div>
         )}
-        <canvas
-          ref={canvasRef}
-          onClick={handleClick}
-          style={{
-            display: connected ? "block" : "none",
-            position: "absolute", top: 0, left: 0,
-            width: "100%", height: "100%",
-            cursor: "default",
-          }}
-        />
+
+        {/* MJPEG stream — browser render native, ringan */}
+        {waReady && (
+          <img
+            key={streamKey}
+            ref={imgRef}
+            src={STREAM_URL}
+            alt="WhatsApp Web"
+            onClick={handleClick}
+            draggable={false}
+            style={{
+              display: "block",
+              width: "100%",
+              height: "100%",
+              objectFit: "fill",
+              userSelect: "none",
+              cursor: "default",
+            }}
+          />
+        )}
       </div>
     </div>
   );
