@@ -71,6 +71,8 @@ const upload = multer({
 let waClient = null;
 let activeSessionId = null;
 let currentClientSessionId = null;
+let currentClientVisible = false;
+let currentClientBrowser = "auto";
 let isWhatsAppReady = false;
 let cdpSession = null;
 let isWhatsAppInitializing = false;
@@ -161,6 +163,39 @@ function normalizeSessionId(value = "") {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
+}
+
+function normalizeBrowserTarget(value = "auto") {
+  const normalizedValue = String(value || "auto").trim().toLowerCase();
+  if (["auto", "chrome", "edge", "builtin"].includes(normalizedValue)) {
+    return normalizedValue;
+  }
+  return "auto";
+}
+
+function resolveBrowserExecutablePath(target = "auto") {
+  const normalizedTarget = normalizeBrowserTarget(target);
+  const chromePaths = [
+    process.env.CHROME_PATH,
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+  ].filter(Boolean);
+  const edgePaths = [
+    process.env.EDGE_PATH,
+    "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  ].filter(Boolean);
+
+  const candidates =
+    normalizedTarget === "chrome"
+      ? chromePaths
+      : normalizedTarget === "edge"
+        ? edgePaths
+        : normalizedTarget === "builtin"
+          ? []
+          : [...chromePaths, ...edgePaths];
+
+  return candidates.find((candidatePath) => fs.existsSync(candidatePath)) || null;
 }
 
 function getWhatsAppSessionsConfig() {
@@ -425,8 +460,11 @@ async function destroyWhatsAppClient() {
   const clientToDestroy = waClient;
   waClient = null;
   currentClientSessionId = null;
+  currentClientVisible = false;
+  currentClientBrowser = "auto";
 
   try {
+    await stopScreencast();
     await clientToDestroy.destroy();
   } catch (error) {
     console.error("Gagal destroy WhatsApp client:", error.message);
@@ -789,30 +827,39 @@ function cleanupBrowserLockFiles(sessionId) {
   }
 }
 
-function buildWhatsAppClient(sessionId) {
+function buildWhatsAppClient(sessionId, options = {}) {
   killOrphanedBrowserProcesses(sessionId);
   cleanupBrowserLockFiles(sessionId);
+
+  const visible = options.visible === true;
+  const browserTarget = normalizeBrowserTarget(options.browser);
+  const executablePath = resolveBrowserExecutablePath(browserTarget);
+  const puppeteerOptions = {
+    headless: !visible,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-accelerated-2d-canvas",
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-zygote",
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
+    ],
+  };
+
+  if (executablePath) {
+    puppeteerOptions.executablePath = executablePath;
+  }
 
   return new Client({
     authStrategy: new LocalAuth({
       dataPath: SESSION_DIR,
       clientId: `wa-sender-${sessionId}`,
     }),
-    puppeteer: {
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--disable-gpu",
-        "--no-first-run",
-        "--no-zygote",
-        "--disable-background-timer-throttling",
-        "--disable-backgrounding-occluded-windows",
-        "--disable-renderer-backgrounding",
-      ],
-    },
+    puppeteer: puppeteerOptions,
   });
 }
 
@@ -825,11 +872,22 @@ async function initWhatsAppClient(options = {}) {
   const requestedLabel =
     String(options.label || getWhatsAppSessionMeta(requestedSessionId)?.label || "").trim() ||
     requestedSessionId;
+  const requestedVisible =
+    typeof options.visible === "boolean" ? options.visible : currentClientVisible;
+  const requestedBrowser =
+    options.browser !== undefined
+      ? normalizeBrowserTarget(options.browser)
+      : currentClientBrowser;
 
   const shouldSwitchSession =
     currentClientSessionId && currentClientSessionId !== requestedSessionId;
+  const shouldRebuildForBrowserMode =
+    !!waClient &&
+    currentClientSessionId === requestedSessionId &&
+    (currentClientVisible !== requestedVisible ||
+      (requestedVisible && currentClientBrowser !== requestedBrowser));
 
-  if (shouldSwitchSession) {
+  if (shouldSwitchSession || shouldRebuildForBrowserMode) {
     await destroyWhatsAppClient();
     resetWhatsAppRuntimeState();
   }
@@ -865,8 +923,13 @@ async function initWhatsAppClient(options = {}) {
   lastWhatsAppEvent = "initializing";
 
   if (!waClient) {
-    waClient = buildWhatsAppClient(requestedSessionId);
+    waClient = buildWhatsAppClient(requestedSessionId, {
+      visible: requestedVisible,
+      browser: requestedBrowser,
+    });
     currentClientSessionId = requestedSessionId;
+    currentClientVisible = requestedVisible;
+    currentClientBrowser = requestedBrowser;
 
     let qrRefreshCount = 0;
 
@@ -1462,6 +1525,58 @@ app.post("/api/select-whatsapp-session", async (req, res) => {
   }
 });
 
+app.post("/api/open-whatsapp-browser", async (req, res) => {
+  try {
+    const requestedSessionId = normalizeSessionId(req.body?.sessionId || activeSessionId || "");
+    const browser = normalizeBrowserTarget(req.body?.browser || "auto");
+
+    if (!requestedSessionId) {
+      return res.status(400).json({
+        success: false,
+        message: "Pilih akun WhatsApp dulu di dashboard",
+      });
+    }
+
+    const sessionMeta = getWhatsAppSessionMeta(requestedSessionId);
+    if (!sessionMeta) {
+      return res.status(404).json({
+        success: false,
+        message: "Sesi WhatsApp tidak ditemukan",
+      });
+    }
+
+    setActiveWhatsAppSession(requestedSessionId, {
+      label: sessionMeta.label || requestedSessionId,
+      lastUsedAt: new Date().toISOString(),
+    });
+
+    await initWhatsAppClient({
+      sessionId: requestedSessionId,
+      label: sessionMeta.label || requestedSessionId,
+      visible: true,
+      browser,
+    });
+
+    return res.json(
+      buildWhatsAppStatusResponse({
+        activeSessionId: requestedSessionId,
+        message: isWhatsAppReady
+          ? "WhatsApp dibuka di browser aktif"
+          : "Browser WhatsApp dibuka. Jika perlu, lanjutkan scan QR di window browser.",
+        meta: {
+          browserMode: "visible",
+          browserTarget: browser,
+        },
+      })
+    );
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Gagal membuka browser WhatsApp",
+    });
+  }
+});
+
 app.post("/api/logout-whatsapp", async (req, res) => {
   try {
     if (isSending) {
@@ -1966,8 +2081,6 @@ io.on("connection", (socket) => {
         return;
       }
       await waClient.pupPage.setViewport({ width: w, height: h });
-      await stopScreencast();
-      await startScreencast();
       socket.emit("wa-viewport", { width: w, height: h });
     } catch (e) {
       console.error("wa-set-viewport error:", e.message);

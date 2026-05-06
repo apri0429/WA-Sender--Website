@@ -325,8 +325,8 @@ function Header({
                 <button
                   type="button"
                   className="header-icon-button header-icon-button--compact"
-                  aria-label="Refresh dashboard"
-                  title="Refresh dashboard"
+                  aria-label="Refresh halaman"
+                  title="Refresh halaman"
                   onClick={onRefresh}
                 >
                   <RefreshCw05 size={16} />
