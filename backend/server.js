@@ -1960,6 +1960,11 @@ io.on("connection", (socket) => {
     try {
       const w = Math.round(Math.max(800, Math.min(2560, width)));
       const h = Math.round(Math.max(500, Math.min(1440, height)));
+      const currentViewport = waClient.pupPage.viewport() || {};
+      if (currentViewport.width === w && currentViewport.height === h) {
+        socket.emit("wa-viewport", { width: w, height: h });
+        return;
+      }
       await waClient.pupPage.setViewport({ width: w, height: h });
       await stopScreencast();
       await startScreencast();

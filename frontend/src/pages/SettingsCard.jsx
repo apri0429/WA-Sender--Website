@@ -23,7 +23,6 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 
 // ─────────────────────────────────────────────
 // Design Tokens (disamakan dengan Code 1)
@@ -345,118 +344,6 @@ function DataRow({ label, value, mono = false }) {
   );
 }
 
-function StatCard({ icon, label, value, accent = "gray" }) {
-  const accentMap = {
-    green: {
-      color: T.brand,
-      gradient: "linear-gradient(135deg, #233971 0%, #2e5bba 100%)",
-      bg: "linear-gradient(135deg, #eaeff7 0%, #dce5f5 100%)",
-      border: T.brandBorder,
-      glow: "0 4px 14px rgba(35,57,113,0.15)",
-    },
-    blue: {
-      color: T.blue,
-      gradient: "linear-gradient(135deg, #233971 0%, #2e5bba 100%)",
-      bg: "linear-gradient(135deg, #eef2f9 0%, #dce5f5 100%)",
-      border: T.blueBorder,
-      glow: "0 4px 14px rgba(35,57,113,0.15)",
-    },
-    violet: {
-      color: T.violet,
-      gradient: "linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%)",
-      bg: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)",
-      border: T.violetBorder,
-      glow: "0 4px 14px rgba(124,58,237,0.15)",
-    },
-    amber: {
-      color: T.amber,
-      gradient: "linear-gradient(135deg, #d97706 0%, #f59e0b 100%)",
-      bg: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
-      border: T.amberBorder,
-      glow: "0 4px 14px rgba(217,119,6,0.15)",
-    },
-    gray: {
-      color: T.muted,
-      gradient: "linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)",
-      bg: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
-      border: T.ghost,
-      glow: "0 4px 14px rgba(107,114,128,0.10)",
-    },
-  };
-
-  const s = accentMap[accent] || accentMap.gray;
-
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1.5,
-        width: "100%",
-        minHeight: 74,
-        px: 2,
-        py: 1.5,
-        background: s.bg,
-        border: `1px solid ${s.border}`,
-        borderLeft: `3px solid ${s.color}`,
-        borderRadius: "12px",
-        minWidth: 0,
-        boxShadow: s.glow,
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        "&:hover": {
-          transform: "translateY(-1px)",
-        },
-      }}
-    >
-      <Box
-        sx={{
-          width: 36,
-          height: 36,
-          borderRadius: "10px",
-          background: s.gradient,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          boxShadow: `0 2px 8px ${s.color}33`,
-          "& svg": { fontSize: 18, color: "#fff" },
-        }}
-      >
-        {icon}
-      </Box>
-      <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Typography
-          sx={{
-            fontFamily: FONT_SANS,
-            fontSize: 11,
-            color: T.subtle,
-            fontWeight: 500,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {label}
-        </Typography>
-        <Typography
-          sx={{
-            fontFamily: FONT_SANS,
-            fontSize: 14,
-            fontWeight: 700,
-            color: T.ink,
-            letterSpacing: "-0.02em",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {value}
-        </Typography>
-      </Box>
-    </Box>
-  );
-}
-
 const fieldStyle = {
   "& .MuiOutlinedInput-root": {
     borderRadius: "8px",
@@ -618,27 +505,6 @@ export default function SettingsCard({
     setEditingUrl(false);
   };
 
-  const stats = [
-    {
-      icon: <AccessTimeRoundedIcon sx={{ fontSize: 15 }} />,
-      label: "Jeda",
-      value: `${currentDelay} ms`,
-      accent: "blue",
-    },
-    {
-      icon: <DescriptionRoundedIcon sx={{ fontSize: 15 }} />,
-      label: "Template",
-      value: localTemplate ? "Sudah diisi" : "Belum diisi",
-      accent: localTemplate ? "green" : "gray",
-    },
-    {
-      icon: <TableChartRoundedIcon sx={{ fontSize: 15 }} />,
-      label: "Google Sheet",
-      value: localGsheet ? "Terhubung" : "Belum diisi",
-      accent: localGsheet ? "green" : "amber",
-    },
-  ];
-
   return (
     <Box
       sx={{
@@ -651,113 +517,6 @@ export default function SettingsCard({
         },
       }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: { xs: "flex-start", md: "center" },
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: "14px",
-              background: "linear-gradient(135deg, #233971 0%, #1c2f5c 60%, #172649 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              boxShadow: "0 6px 20px rgba(35,57,113,0.4), 0 2px 6px rgba(35,57,113,0.2)",
-              position: "relative",
-              overflow: "hidden",
-              "&::after": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                height: "50%",
-                background:
-                  "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%)",
-                borderRadius: "14px 14px 0 0",
-              },
-            }}
-          >
-            <Box
-              component="img"
-              src="/piagam.ico"
-              alt="Logo"
-              sx={{
-                width: 32,
-                height: 32,
-                objectFit: "contain",
-                position: "relative",
-                zIndex: 1,
-              }}
-            />
-          </Box>
-
-          <Box>
-            <Typography
-              sx={{
-                fontFamily: FONT_SANS,
-                fontSize: 22,
-                fontWeight: 800,
-                color: "#233971",
-                background: "linear-gradient(135deg, #172649 0%, #233971 50%, #3a5ca8 100%)",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                lineHeight: 1.2,
-                letterSpacing: "-0.03em",
-                display: "inline-block",
-              }}
-            >
-              Pengaturan
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: FONT_SANS,
-                fontSize: 12.5,
-                color: T.muted,
-                fontWeight: 500,
-              }}
-            >
-              Atur jeda, template pesan, dan Google Sheet
-            </Typography>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "repeat(1, minmax(0, 1fr))",
-              sm: "repeat(3, minmax(0, 1fr))",
-            },
-            gap: 1,
-            alignItems: "stretch",
-            width: "100%",
-            maxWidth: { md: 560 },
-          }}
-        >
-          {stats.map((item, index) => (
-            <StatCard
-              key={index}
-              icon={item.icon}
-              label={item.label}
-              value={item.value}
-              accent={item.accent}
-            />
-          ))}
-        </Box>
-      </Box>
-
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <Panel>
           <SectionTitle
