@@ -437,6 +437,8 @@ async function startScreencast() {
       const buf = Buffer.from(data, "base64");
       latestJpegBuffer = buf;
       pushMjpegFrame(buf);
+      // volatile: drop frame jika socket sibuk — selalu tampilkan frame terbaru, bukan antrian stale
+      io.to("screencast").volatile.emit("wa-frame", buf);
     });
   } catch (e) {
     console.error("startScreencast error:", e.message);
@@ -2104,12 +2106,8 @@ io.on("connection", (socket) => {
     if (screencastViewers === 1) await startScreencast();
     const vp = waClient?.pupPage?.viewport() || { width: 1280, height: 800 };
     socket.emit("wa-viewport", { width: vp.width, height: vp.height });
-    // Screenshot pertama agar tidak kosong saat buka
-    if (waClient?.pupPage) {
-      waClient.pupPage.screenshot({ type: "jpeg", quality: 55, encoding: "base64" })
-        .then((data) => socket.emit("wa-screen", { data, width: vp.width, height: vp.height }))
-        .catch(() => {});
-    }
+    // Kirim frame terakhir langsung — tidak perlu screenshot baru
+    if (latestJpegBuffer) socket.emit("wa-frame", latestJpegBuffer);
   });
 
   socket.on("wa-screen-close", () => {

@@ -112,12 +112,11 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Stream ───────────────────────────────────────────────── */
+    /* ── Stream canvas ────────────────────────────────────────── */
     #stream {
       display: block; width: 100%; height: 100%;
-      object-fit: fill; user-select: none;
-      -webkit-user-drag: none; cursor: default;
-      will-change: contents;
+      user-select: none; cursor: default;
+      will-change: transform;
     }
 
     /* ── Keyboard hint ────────────────────────────────────────── */
@@ -190,12 +189,13 @@
     <div class="ov-spinner"></div>
   </div>
 
-  <img id="stream" src="" alt="" draggable="false" decoding="async" />
+  <canvas id="stream"></canvas>
   <div id="kbd-hint">Klik untuk fokus &nbsp;&middot;&nbsp; Ctrl+V untuk paste</div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
+  // Force WebSocket from the start — skip HTTP polling handshake
   const socket    = io({ transports: ['websocket'], upgrade: false });
   const overlay   = document.getElementById('overlay');
   const stream    = document.getElementById('stream');
@@ -206,26 +206,22 @@
   const sepEl     = document.getElementById('topbar-sep');
   const banner    = document.getElementById('conn-banner');
   const kbdHint   = document.getElementById('kbd-hint');
+  const ctx       = stream.getContext('2d');
 
-  let vp = { w: 1280, h: 800 };
+  let vp           = { w: 1280, h: 800 };
   let streamRect   = null;
   let moveRaf      = null;
   let scrollRaf    = null;
   let pendingScroll = null;
   let hintTimer    = null;
-  let streamLoaded = false;
-  let lastMoveX = -1, lastMoveY = -1;
+  let framePending = false;
+  let lastMoveX    = -1, lastMoveY = -1;
+
+  // Init canvas to default size
+  stream.width  = vp.w;
+  stream.height = vp.h;
 
   function updateRect() { streamRect = stream.getBoundingClientRect(); }
-
-  function loadStream() {
-    if (streamLoaded) return;
-    streamLoaded = true;
-    stream.src = '/api/wa-stream';
-  }
-
-  // Fallback: jika wa-viewport tidak diterima dalam 2 detik, tetap load stream
-  const streamFallback = setTimeout(loadStream, 2000);
 
   // ── Status helpers ──────────────────────────────────────────
   function setReady(ready, name) {
@@ -243,12 +239,11 @@
     }
   }
 
-  // ── Initial status ──────────────────────────────────────────
+  // ── Initial status (single fetch, no viewport fetch — socket handles it) ──
   fetch('/api/status')
     .then(r => r.json())
     .then(d => {
       if (d.whatsappReady) setReady(true, d.account?.name || '');
-      if (d.meta?.viewport) vp = { w: d.meta.viewport.width, h: d.meta.viewport.height };
     }).catch(() => {});
 
   // ── Socket events ───────────────────────────────────────────
@@ -256,6 +251,7 @@
     banner.classList.remove('visible');
     updateRect();
     sendViewport();
+    socket.emit('wa-screen-open'); // join screencast room → server sends wa-viewport + first frame
   });
   socket.on('disconnect',    () => banner.classList.add('visible'));
   socket.on('connect_error', () => banner.classList.add('visible'));
@@ -265,13 +261,29 @@
     setReady(true, d?.account?.name || '');
   });
   socket.on('wa-disconnected', () => setReady(false));
+
   socket.on('wa-viewport', ({ width, height }) => {
     vp = { w: width, h: height };
-    clearTimeout(streamFallback);
-    loadStream();
+    stream.width  = width;
+    stream.height = height;
+    updateRect();
   });
 
-  // ── Coordinate mapping ──────────────────────────────────────
+  // ── Frame rendering — binary JPEG via socket.io volatile emit ──────────
+  // volatile on server = stale frames are dropped, we always get the latest.
+  // createImageBitmap decodes JPEG off the main thread (no jank).
+  socket.on('wa-frame', (data) => {
+    if (framePending) return;
+    framePending = true;
+    createImageBitmap(new Blob([data], { type: 'image/jpeg' }))
+      .then(bmp => {
+        ctx.drawImage(bmp, 0, 0, stream.width, stream.height);
+        bmp.close();
+      })
+      .finally(() => { framePending = false; });
+  });
+
+  // ── Coordinate mapping (uses cached rect, no forced layout) ────────────
   function mapCoords(cx, cy) {
     const r = streamRect || (streamRect = stream.getBoundingClientRect());
     return {
@@ -312,7 +324,7 @@
     socket.emit('wa-rightclick', { x, y });
   });
 
-  // Mouse move throttled with rAF; skip if moved < 4px to cut socket traffic
+  // Mouse move — rAF throttle + 4px minimum distance
   stream.addEventListener('mousemove', e => {
     if (moveRaf) return;
     moveRaf = requestAnimationFrame(() => {
@@ -359,34 +371,27 @@
   ]);
 
   area.addEventListener('keydown', async e => {
-    // Ctrl/Cmd + V → paste clipboard
     if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
       e.preventDefault();
       flushType();
       try {
         const text = await navigator.clipboard.readText();
         if (text) socket.emit('wa-type', { text });
-      } catch { /* permission denied */ }
+      } catch {}
       return;
     }
-
-    // Ctrl/Cmd + single key → chord (Ctrl+A, C, Z, Y, B, I, etc.)
     if ((e.ctrlKey || e.metaKey) && e.key.length === 1) {
       e.preventDefault();
       flushType();
       socket.emit('wa-chord', { ctrl: e.ctrlKey, meta: e.metaKey, shift: e.shiftKey, key: e.key });
       return;
     }
-
-    // Special keys
     if (SPECIALS.has(e.key)) {
       e.preventDefault();
       flushType();
       socket.emit('wa-key', { key: e.key, shift: e.shiftKey });
       return;
     }
-
-    // Printable characters — batch and flush
     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
       typeBuf += e.key;
       clearTimeout(typeTimer);
@@ -394,7 +399,6 @@
     }
   });
 
-  // Paste event (middle-click or right-click → Paste in some browsers)
   area.addEventListener('paste', e => {
     e.preventDefault();
     const text = e.clipboardData?.getData('text') || '';
@@ -424,6 +428,7 @@
 
   // ── Cleanup ─────────────────────────────────────────────────
   window.addEventListener('beforeunload', () => {
+    socket.emit('wa-screen-close');
     socket.emit('wa-set-viewport', { width: 1280, height: 800 });
   });
 </script>
