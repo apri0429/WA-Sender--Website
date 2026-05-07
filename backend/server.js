@@ -74,8 +74,6 @@ let currentClientSessionId = null;
 let currentClientVisible = false;
 let currentClientBrowser = "auto";
 let isWhatsAppReady = false;
-let cdpSession = null;
-let inputCdpSession = null; // CDP session terpisah untuk input — tidak antri di belakang frame acks
 let isWhatsAppInitializing = false;
 let isSending = false;
 let lastQrString = null;
@@ -405,66 +403,6 @@ function resetWhatsAppRuntimeState() {
   lastQrAt = null;
 }
 
-let screencastViewers = 0;
-let latestJpegBuffer = null;
-const mjpegResponses = new Set();
-
-function pushMjpegFrame(buf) {
-  if (!buf || mjpegResponses.size === 0) return;
-  const header = `--mjpeg\r\nContent-Type: image/jpeg\r\nContent-Length: ${buf.length}\r\n\r\n`;
-  for (const res of mjpegResponses) {
-    try {
-      res.write(header);
-      res.write(buf);
-      res.write("\r\n");
-    } catch {
-      mjpegResponses.delete(res);
-    }
-  }
-}
-
-async function startScreencast() {
-  if (!waClient?.pupPage || cdpSession) return;
-  try {
-    cdpSession = await waClient.pupPage.target().createCDPSession();
-    // Input session terpisah — kalau belum ada
-    if (!inputCdpSession) {
-      inputCdpSession = await waClient.pupPage.target().createCDPSession();
-    }
-    await cdpSession.send("Page.startScreencast", {
-      format: "jpeg",
-      quality: 65,
-      everyNthFrame: 1,
-    });
-    cdpSession.on("Page.screencastFrame", ({ data, sessionId }) => {
-      // Ack segera agar Chrome langsung capture frame berikutnya (max frame rate)
-      cdpSession.send("Page.screencastFrameAck", { sessionId }).catch(() => {});
-      const buf = Buffer.from(data, "base64");
-      latestJpegBuffer = buf;
-      pushMjpegFrame(buf);
-      // volatile: drop frame jika socket sibuk — selalu tampilkan frame terbaru, bukan antrian stale
-      io.to("screencast").volatile.emit("wa-frame", buf);
-    });
-  } catch (e) {
-    console.error("startScreencast error:", e.message);
-    cdpSession = null;
-  }
-}
-
-async function stopScreencast() {
-  if (!cdpSession) return;
-  const sess = cdpSession;
-  cdpSession = null;
-  try { await sess.send("Page.stopScreencast"); } catch {}
-  try { await sess.detach(); } catch {}
-  // Bersihkan input session juga
-  if (inputCdpSession) {
-    const inp = inputCdpSession;
-    inputCdpSession = null;
-    try { await inp.detach(); } catch {}
-  }
-}
-
 async function focusWhatsAppBrowserWindow(timeoutMs = 15000) {
   const startedAt = Date.now();
 
@@ -518,7 +456,6 @@ async function destroyWhatsAppClient() {
   currentClientBrowser = "auto";
 
   try {
-    await stopScreencast();
     await clientToDestroy.destroy();
   } catch (error) {
     console.error("Gagal destroy WhatsApp client:", error.message);
@@ -1042,16 +979,6 @@ async function initWhatsAppClient(options = {}) {
         account,
         sessions: getWhatsAppSessionsSummary(),
       });
-      if (!currentClientVisible) {
-        // Pre-warm screencast agar langsung siap saat dibuka
-        startScreencast().catch(() => {});
-      }
-      // Buat CDP session terpisah untuk input events
-      if (!inputCdpSession && waClient?.pupPage) {
-        waClient.pupPage.target().createCDPSession()
-          .then(s => { inputCdpSession = s; })
-          .catch(() => {});
-      }
     });
 
     waClient.on("authenticated", () => {
@@ -1078,7 +1005,6 @@ async function initWhatsAppClient(options = {}) {
     });
 
     waClient.on("disconnected", (reason) => {
-      stopScreencast();
       const disconnectedClient = waClient;
       waClient = null;
       currentClientSessionId = null;
@@ -2044,42 +1970,6 @@ app.post("/api/chats/:chatId/reply", async (req, res) => {
   }
 });
 
-// Halaman WA Web ringan (tanpa React)
-app.get("/wa-web", (req, res) => {
-  res.sendFile(path.join(__dirname, "wa-web.html"));
-});
-
-// MJPEG stream — browser render native, jauh lebih ringan dari WebSocket base64
-app.get("/api/wa-stream", async (req, res) => {
-  if (!waClient?.pupPage || !isWhatsAppReady) {
-    return res.status(503).send("WhatsApp not ready");
-  }
-
-  res.setHeader("Content-Type", "multipart/x-mixed-replace; boundary=mjpeg");
-  res.setHeader("Cache-Control", "no-cache, no-store");
-  res.setHeader("Connection", "keep-alive");
-  res.flushHeaders();
-
-  // Pastikan screencast sudah jalan
-  await startScreencast();
-
-  mjpegResponses.add(res);
-  screencastViewers++;
-
-  // Kirim frame terakhir langsung agar tidak blank
-  if (latestJpegBuffer) pushMjpegFrame(latestJpegBuffer);
-
-  req.on("close", () => {
-    mjpegResponses.delete(res);
-    screencastViewers = Math.max(0, screencastViewers - 1);
-    // Screencast tetap jalan agar next open langsung dapat frame
-  });
-});
-
-app.get("/api/wa-viewport", (req, res) => {
-  const vp = waClient?.pupPage?.viewport() || { width: 1280, height: 800 };
-  res.json({ width: vp.width, height: vp.height });
-});
 
 app.get("*", (req, res, next) => {
   if (
@@ -2116,163 +2006,8 @@ io.on("connection", (socket) => {
     });
   }
 
-  // Buka screencast — masukkan socket ke room "screencast"
-  socket.on("wa-screen-open", async () => {
-    socket.join("screencast");
-    screencastViewers++;
-    if (screencastViewers === 1) await startScreencast();
-    const vp = waClient?.pupPage?.viewport() || { width: 1280, height: 800 };
-    socket.emit("wa-viewport", { width: vp.width, height: vp.height });
-    // Kirim frame terakhir langsung — tidak perlu screenshot baru
-    if (latestJpegBuffer) socket.emit("wa-frame", latestJpegBuffer);
-  });
-
-  socket.on("wa-screen-close", () => {
-    socket.leave("screencast");
-    screencastViewers = Math.max(0, screencastViewers - 1);
-    // Screencast tetap jalan, stop hanya saat WA disconnect
-  });
-
   socket.on("disconnect", () => {
-    socket.leave("screencast");
-    screencastViewers = Math.max(0, screencastViewers - 1);
-    // Screencast tetap jalan selama WA ready
-  });
-
-  // Klik — direct CDP: move + press + release dalam 3 command tanpa overhead Puppeteer
-  socket.on("wa-click", async ({ x, y }) => {
-    if (!isWhatsAppReady) return;
-    const px = Math.round(x), py = Math.round(y);
-    try {
-      if (inputCdpSession) {
-        await inputCdpSession.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: px, y: py, buttons: 0 });
-        await inputCdpSession.send("Input.dispatchMouseEvent", { type: "mousePressed", x: px, y: py, button: "left", clickCount: 1, buttons: 1 });
-        await inputCdpSession.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: px, y: py, button: "left", clickCount: 1, buttons: 0 });
-      } else if (waClient?.pupPage) {
-        await waClient.pupPage.mouse.move(px, py);
-        await waClient.pupPage.mouse.click(px, py);
-      }
-    } catch {}
-  });
-
-  // Double-click
-  socket.on("wa-dblclick", async ({ x, y }) => {
-    if (!isWhatsAppReady) return;
-    const px = Math.round(x), py = Math.round(y);
-    try {
-      if (inputCdpSession) {
-        await inputCdpSession.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: px, y: py, buttons: 0 });
-        await inputCdpSession.send("Input.dispatchMouseEvent", { type: "mousePressed", x: px, y: py, button: "left", clickCount: 2, buttons: 1 });
-        await inputCdpSession.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: px, y: py, button: "left", clickCount: 2, buttons: 0 });
-      } else if (waClient?.pupPage) {
-        await waClient.pupPage.mouse.move(px, py);
-        await waClient.pupPage.mouse.click(px, py, { clickCount: 2 });
-      }
-    } catch {}
-  });
-
-  // Right-click
-  socket.on("wa-rightclick", async ({ x, y }) => {
-    if (!isWhatsAppReady) return;
-    const px = Math.round(x), py = Math.round(y);
-    try {
-      if (inputCdpSession) {
-        await inputCdpSession.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: px, y: py, buttons: 0 });
-        await inputCdpSession.send("Input.dispatchMouseEvent", { type: "mousePressed", x: px, y: py, button: "right", clickCount: 1, buttons: 2 });
-        await inputCdpSession.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: px, y: py, button: "right", clickCount: 1, buttons: 0 });
-      } else if (waClient?.pupPage) {
-        await waClient.pupPage.mouse.move(px, py);
-        await waClient.pupPage.mouse.click(px, py, { button: "right" });
-      }
-    } catch {}
-  });
-
-  // Mouse move — latest-wins via direct CDP (skip Puppeteer abstraction)
-  let movePending = false;
-  socket.on("wa-mousemove", ({ x, y }) => {
-    if (!isWhatsAppReady || movePending) return;
-    if (!inputCdpSession && !waClient?.pupPage) return;
-    movePending = true;
-    const px = Math.round(x), py = Math.round(y);
-    const cmd = inputCdpSession
-      ? inputCdpSession.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: px, y: py, buttons: 0 })
-      : waClient.pupPage.mouse.move(px, py);
-    cmd.catch(() => {}).finally(() => { movePending = false; });
-  });
-
-  // Ketik teks — Input.insertText = 1 CDP command untuk semua teks (vs 3 per karakter)
-  socket.on("wa-type", async ({ text }) => {
-    if (!isWhatsAppReady) return;
-    try {
-      if (inputCdpSession) {
-        await inputCdpSession.send("Input.insertText", { text });
-      } else if (waClient?.pupPage) {
-        await waClient.pupPage.keyboard.type(text);
-      }
-    } catch {}
-  });
-
-  // Tombol spesial (Enter, Backspace, dll) — dengan dukungan Shift
-  socket.on("wa-key", async ({ key, shift }) => {
-    if (!waClient?.pupPage || !isWhatsAppReady) return;
-    try {
-      if (shift) {
-        await waClient.pupPage.keyboard.down("Shift");
-        await waClient.pupPage.keyboard.press(key);
-        await waClient.pupPage.keyboard.up("Shift");
-      } else {
-        await waClient.pupPage.keyboard.press(key);
-      }
-    } catch {}
-  });
-
-  // Chord (Ctrl+A, Ctrl+C, Ctrl+Z, dll)
-  socket.on("wa-chord", async ({ ctrl, meta, shift, key }) => {
-    if (!waClient?.pupPage || !isWhatsAppReady) return;
-    try {
-      const modifier = meta ? "Meta" : "Control";
-      await waClient.pupPage.keyboard.down(modifier);
-      if (shift) await waClient.pupPage.keyboard.down("Shift");
-      await waClient.pupPage.keyboard.press(key.toUpperCase());
-      if (shift) await waClient.pupPage.keyboard.up("Shift");
-      await waClient.pupPage.keyboard.up(modifier);
-    } catch {}
-  });
-
-  // Scroll — 1 CDP command langsung (vs 2 Puppeteer commands)
-  socket.on("wa-scroll", async ({ x, y, deltaY }) => {
-    if (!isWhatsAppReady) return;
-    try {
-      if (inputCdpSession) {
-        await inputCdpSession.send("Input.dispatchMouseEvent", {
-          type: "mouseWheel", x: Math.round(x), y: Math.round(y), deltaX: 0, deltaY,
-        });
-      } else if (waClient?.pupPage) {
-        await waClient.pupPage.mouse.move(Math.round(x), Math.round(y));
-        await waClient.pupPage.mouse.wheel({ deltaY });
-      }
-    } catch {}
-  });
-
-  // Resize viewport Puppeteer agar pas dengan ukuran layar user (hilangkan garis hitam)
-  socket.on("wa-set-viewport", async ({ width, height }) => {
-    if (!waClient?.pupPage) return;
-    try {
-      const w = Math.round(Math.max(800, Math.min(2560, width)));
-      const h = Math.round(Math.max(500, Math.min(1440, height)));
-      const currentViewport = waClient.pupPage.viewport() || {};
-      if (currentViewport.width === w && currentViewport.height === h) {
-        socket.emit("wa-viewport", { width: w, height: h });
-        return;
-      }
-      await waClient.pupPage.setViewport({ width: w, height: h });
-      socket.emit("wa-viewport", { width: w, height: h });
-      // Restart screencast agar resolusi frame ikut viewport baru
-      await stopScreencast();
-      await startScreencast();
-    } catch (e) {
-      console.error("wa-set-viewport error:", e.message);
-    }
+    console.log("Client disconnected:", socket.id);
   });
 });
 
