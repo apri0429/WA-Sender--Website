@@ -3,7 +3,8 @@
     "allow": [
       "Bash(ls /c/WA-Sender--Website/ 2>&1)",
       "Read(//c//**)",
-      "Bash(cmd /c \"dir C:\\\\WA-Sender--Website /b\")"
+      "Bash(cmd /c \"dir C:\\\\WA-Sender--Website /b\")",
+      "Bash(Remove-Item \"c:\\\\Users\\\\IT\\\\Documents\\\\WEBSITE\\\\WA-Sender  Website\\\\frontend\\\\src\\\\pages\\\\GSheetPage.jsx\")"
     ]
   }
 }

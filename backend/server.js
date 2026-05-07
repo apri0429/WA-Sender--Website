@@ -9,6 +9,7 @@ const https = require("https");
 const dotenv = require("dotenv");
 const { Server } = require("socket.io");
 const qrcode = require("qrcode-terminal");
+const puppeteer = require("puppeteer");
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const { execSync } = require("child_process");
 
@@ -32,12 +33,20 @@ const BASE_DIR = __dirname;
 const SESSION_DIR = path.join(BASE_DIR, "sessions");
 const DATA_DIR = path.join(BASE_DIR, "data");
 const FRONTEND_DIST_DIR = path.join(BASE_DIR, "frontend_dist");
+const GENERATED_DIR = path.join(BASE_DIR, "generated");
+const PDF_OUTPUT_DIR = path.join(GENERATED_DIR, "pdfs");
 const TEMPLATE_FILE = path.join(DATA_DIR, "template.json");
 const GSHEET_FILE = path.join(DATA_DIR, "gsheet.json");
 const WA_SESSIONS_FILE = path.join(DATA_DIR, "wa-sessions.json");
+const PDF_TEMPORARY_FILE = path.join(DATA_DIR, "pdf-temporary.json");
+const PDF_LOG_FILE = path.join(DATA_DIR, "pdf-log.json");
+const PDF_PROGRESS_FILE = path.join(DATA_DIR, "pdf-progress.json");
+const PDF_LOGO_FILE = path.join(DATA_DIR, "pdf-logo.json");
 
 if (!fs.existsSync(SESSION_DIR)) fs.mkdirSync(SESSION_DIR, { recursive: true });
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!fs.existsSync(GENERATED_DIR)) fs.mkdirSync(GENERATED_DIR, { recursive: true });
+if (!fs.existsSync(PDF_OUTPUT_DIR)) fs.mkdirSync(PDF_OUTPUT_DIR, { recursive: true });
 
 app.use(
   cors({
@@ -48,6 +57,7 @@ app.use(
 
 app.use(express.json());
 app.use(express.static(FRONTEND_DIST_DIR));
+app.use("/generated", express.static(GENERATED_DIR));
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -64,6 +74,20 @@ const upload = multer({
       cb(null, true);
     } else {
       cb(new Error("File harus Excel .xlsx atau .xls"));
+    }
+  },
+});
+
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 1024 * 1024,
+  },
+  fileFilter: (req, file, cb) => {
+    if (/^image\/(png|jpeg|jpg|webp|gif)$/i.test(file.mimetype || "")) {
+      cb(null, true);
+    } else {
+      cb(new Error("File logo harus berupa gambar png/jpg/webp/gif"));
     }
   },
 });
@@ -86,6 +110,7 @@ let currentSendProgress = {
   total: 0,
   customer: null,
 };
+let isPdfGenerating = false;
 
 // Chat inbox - in-memory store
 const chatHistory = new Map(); // chatId -> { id, name, phone, unread, messages[] }
@@ -520,6 +545,111 @@ function writeJsonFile(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
 }
 
+function ensureDir(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+}
+
+function sanitizeFileName(value = "", fallback = "file") {
+  const cleaned = String(value || "")
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || fallback;
+}
+
+function getPdfLogo() {
+  return readJsonFile(PDF_LOGO_FILE, {
+    name: "",
+    mimeType: "",
+    base64: "",
+  });
+}
+
+function savePdfLogo({ name = "", mimeType = "", base64 = "" } = {}) {
+  const payload = {
+    name: String(name || "").trim(),
+    mimeType: String(mimeType || "").trim(),
+    base64: String(base64 || "").trim(),
+  };
+  writeJsonFile(PDF_LOGO_FILE, payload);
+  return payload;
+}
+
+function deletePdfLogo() {
+  if (fs.existsSync(PDF_LOGO_FILE)) {
+    fs.unlinkSync(PDF_LOGO_FILE);
+  }
+}
+
+function hasPdfLogo() {
+  const logo = getPdfLogo();
+  return !!(logo.base64 && logo.mimeType);
+}
+
+function getPdfTemporaryData() {
+  return readJsonFile(PDF_TEMPORARY_FILE, {
+    headers: [],
+    rows: [],
+    generatedAt: null,
+    sourceSheet: "INPUT",
+  });
+}
+
+function savePdfTemporaryData(data = {}) {
+  const payload = {
+    headers: Array.isArray(data.headers) ? data.headers : [],
+    rows: Array.isArray(data.rows) ? data.rows : [],
+    generatedAt: data.generatedAt || new Date().toISOString(),
+    sourceSheet: data.sourceSheet || "INPUT",
+  };
+  writeJsonFile(PDF_TEMPORARY_FILE, payload);
+  return payload;
+}
+
+function getPdfLogData() {
+  return readJsonFile(PDF_LOG_FILE, {
+    rows: [],
+    generatedAt: null,
+  });
+}
+
+function savePdfLogData(data = {}) {
+  const payload = {
+    rows: Array.isArray(data.rows) ? data.rows : [],
+    generatedAt: data.generatedAt || new Date().toISOString(),
+  };
+  writeJsonFile(PDF_LOG_FILE, payload);
+  return payload;
+}
+
+function getPdfProgress() {
+  return readJsonFile(PDF_PROGRESS_FILE, {
+    running: false,
+    current: 0,
+    total: 0,
+    ptName: "",
+    status: "idle",
+    step: 0,
+    complete: false,
+    error: "",
+    updatedAt: null,
+  });
+}
+
+function savePdfProgress(nextData = {}) {
+  const current = getPdfProgress();
+  const payload = {
+    ...current,
+    ...nextData,
+    updatedAt: new Date().toISOString(),
+  };
+  writeJsonFile(PDF_PROGRESS_FILE, payload);
+  io.emit("pdf-progress", payload);
+  return payload;
+}
+
 function getTemplate() {
   const data = readJsonFile(TEMPLATE_FILE, {
     template:
@@ -717,6 +847,54 @@ async function getGoogleSheetNames(sheetUrl) {
   return workbook.SheetNames || [];
 }
 
+function buildSheetPreviewFromWorkbook(workbook, selectedSheet = "") {
+  const sheetNames = workbook?.SheetNames || [];
+
+  if (!sheetNames.length) {
+    throw new Error("Google Sheet kosong / sheet tidak ditemukan");
+  }
+
+  const finalSheetName = sheetNames.includes(selectedSheet) ? selectedSheet : sheetNames[0];
+  const sheet = workbook.Sheets[finalSheetName];
+
+  if (!sheet) {
+    throw new Error(`Sheet "${finalSheetName}" tidak ditemukan`);
+  }
+
+  const matrix = XLSX.utils.sheet_to_json(sheet, {
+    header: 1,
+    defval: "",
+    blankrows: false,
+  });
+
+  const headers = Array.isArray(matrix[0]) ? matrix[0].map((cell) => String(cell ?? "")) : [];
+  const rows = matrix.slice(1).map((row, rowIndex) => {
+    const values = Array.isArray(row) ? row : [];
+    const length = Math.max(headers.length, values.length);
+    const cells = Array.from({ length }, (_, index) => {
+      if (!headers[index]) {
+        headers[index] = `Kolom ${index + 1}`;
+      }
+      return values[index] ?? "";
+    });
+
+    return {
+      id: `${finalSheetName}-${rowIndex + 1}`,
+      rowNumber: rowIndex + 2,
+      cells,
+    };
+  });
+
+  return {
+    selectedSheet: finalSheetName,
+    sheetNames,
+    headers: headers.map((header, index) => header || `Kolom ${index + 1}`),
+    rows,
+    totalRows: rows.length,
+    totalColumns: headers.length,
+  };
+}
+
 async function loadCustomersFromGoogleSheet({
   url = "",
   selectedSheet = "",
@@ -768,6 +946,513 @@ async function loadCustomersFromGoogleSheet({
     sheetNames,
     config: savedConfig,
   };
+}
+
+function getSheetMatrix(workbook, sheetName) {
+  const sheet = workbook?.Sheets?.[sheetName];
+  if (!sheet) {
+    throw new Error(`Sheet "${sheetName}" tidak ditemukan`);
+  }
+  return XLSX.utils.sheet_to_json(sheet, {
+    header: 1,
+    defval: "",
+    blankrows: false,
+  });
+}
+
+function getCellValue(row = [], index = 0) {
+  return Array.isArray(row) ? row[index] ?? "" : "";
+}
+
+function parseExcelDate(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (typeof value === "number") {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    return new Date(excelEpoch.getTime() + value * 86400000);
+  }
+  const text = String(value || "").trim();
+  if (!text) return null;
+
+  const ddmmyyyy = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (ddmmyyyy) {
+    return new Date(
+      Number(ddmmyyyy[3]),
+      Number(ddmmyyyy[2]) - 1,
+      Number(ddmmyyyy[1])
+    );
+  }
+
+  const ymd = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (ymd) {
+    return new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]));
+  }
+
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function formatDateId(value) {
+  const date = parseExcelDate(value);
+  if (!date || Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "Asia/Bangkok",
+  }).format(date);
+}
+
+function formatMonthId(value) {
+  const date = parseExcelDate(value);
+  if (!date || Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("id-ID", {
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Bangkok",
+  }).format(date);
+}
+
+function parseNumberish(val) {
+  if (val === null || val === undefined || val === "") return null;
+  if (typeof val === "number") return Number.isNaN(val) ? null : val;
+
+  let s = String(val).trim();
+  if (!s) return null;
+  s = s.replace(/\s/g, "").replace(/Rp/gi, "").replace(/[^0-9,.\-]/g, "");
+  if (!s || s === "-" || s === "." || s === ",") return null;
+
+  const commaCount = (s.match(/,/g) || []).length;
+  const dotCount = (s.match(/\./g) || []).length;
+
+  if (dotCount >= 1 && commaCount === 1 && s.lastIndexOf(",") > s.lastIndexOf(".")) {
+    s = s.replace(/\./g, "").replace(",", ".");
+    const n = Number(s);
+    return Number.isNaN(n) ? null : n;
+  }
+
+  if (commaCount >= 1 && dotCount === 1 && s.lastIndexOf(".") > s.lastIndexOf(",")) {
+    s = s.replace(/,/g, "");
+    const n = Number(s);
+    return Number.isNaN(n) ? null : n;
+  }
+
+  if (dotCount > 1 && commaCount === 0) {
+    s = s.replace(/\./g, "");
+  } else if (commaCount > 1 && dotCount === 0) {
+    s = s.replace(/,/g, "");
+  } else if (dotCount === 1 && commaCount === 0) {
+    const parts = s.split(".");
+    if (parts[1] && parts[1].length === 3) s = parts[0] + parts[1];
+  } else if (commaCount === 1 && dotCount === 0) {
+    const parts = s.split(",");
+    s = parts[1] && parts[1].length === 3 ? parts[0] + parts[1] : s.replace(",", ".");
+  }
+
+  const n = Number(s);
+  return Number.isNaN(n) ? null : n;
+}
+
+function formatCurrency(value) {
+  const amount = Number(value) || 0;
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function normalizeCompanyName(name) {
+  if (!name) return "";
+  let normalized = String(name).trim().toLowerCase();
+  normalized = normalized.replace(/\s+/g, " ").replace(/[.,]/g, "");
+  const prefixes = ["pt", "cv", "ud", "fa", "tb", "pn", "perum", "perumnas"];
+  const words = normalized.split(" ");
+  const lastWord = words[words.length - 1];
+  if (prefixes.includes(lastWord) && words.length > 1) {
+    normalized = `${lastWord} ${words.slice(0, -1).join(" ")}`;
+  }
+  return normalized;
+}
+
+function buildTemporaryRowsFromWorkbook(workbook) {
+  const matrix = getSheetMatrix(workbook, "INPUT");
+  if (!matrix.length || matrix.length < 2) {
+    throw new Error('Sheet "INPUT" kosong atau tidak ada data');
+  }
+
+  const rows = matrix.slice(1).map((row, index) => ({
+    noInvoice: getCellValue(row, 0),
+    tanggalInvoice: getCellValue(row, 1),
+    termin: getCellValue(row, 2),
+    tempo: getCellValue(row, 13),
+    customer: getCellValue(row, 4),
+    tagihan: getCellValue(row, 6),
+    penagih: getCellValue(row, 15),
+    sourceRow: index + 2,
+  }));
+
+  return rows.filter((row) =>
+    [row.noInvoice, row.customer, row.tagihan].some((value) => String(value || "").trim())
+  );
+}
+
+function buildMasterDataLookup(workbook) {
+  if (!workbook?.Sheets?.["MASTER DATA"]) return new Map();
+  const matrix = getSheetMatrix(workbook, "MASTER DATA");
+  if (matrix.length < 2) return new Map();
+  const first = String(getCellValue(matrix[0], 0)).toLowerCase();
+  const startIndex =
+    first.includes("tax") || first.includes("company") || first.includes("nama") ? 1 : 0;
+  const map = new Map();
+
+  matrix.slice(startIndex).forEach((row) => {
+    const name = String(getCellValue(row, 0) || "").trim();
+    if (!name) return;
+    map.set(normalizeCompanyName(name), {
+      phone: String(getCellValue(row, 1) || "").trim() || "KOSONG",
+      wilayah: String(getCellValue(row, 2) || "").trim() || "KOSONG",
+    });
+  });
+
+  return map;
+}
+
+function findMasterData(masterMap, companyName) {
+  const normalized = normalizeCompanyName(companyName);
+  if (masterMap.has(normalized)) return masterMap.get(normalized);
+  const core = normalized.replace(/^(pt|cv|ud|fa|tb|pn|perum|perumnas)\s+/g, "");
+  for (const [key, value] of masterMap.entries()) {
+    const keyCore = key.replace(/^(pt|cv|ud|fa|tb|pn|perum|perumnas)\s+/g, "");
+    if (core && keyCore && (core === keyCore || core.includes(keyCore) || keyCore.includes(core))) {
+      return value;
+    }
+  }
+  return { phone: "TIDAK DITEMUKAN", wilayah: "CEK" };
+}
+
+function buildPeriodeSummaryMap(workbook) {
+  if (!workbook?.Sheets?.["PERIODE"]) return new Map();
+  const matrix = getSheetMatrix(workbook, "PERIODE");
+  if (matrix.length < 2) return new Map();
+  const result = new Map();
+
+  matrix.slice(1).forEach((row) => {
+    const customer = String(getCellValue(row, 1) || "").trim();
+    const periode = formatMonthId(getCellValue(row, 3));
+    const amount = parseNumberish(getCellValue(row, 7)) || 0;
+    if (!customer || !periode) return;
+
+    const key = normalizeCompanyName(customer);
+    const current = result.get(key) || {};
+    current[periode] = (current[periode] || 0) + amount;
+    result.set(key, current);
+  });
+
+  return result;
+}
+
+function getPeriodeRows(periodeMap, companyName) {
+  const normalized = normalizeCompanyName(companyName);
+  let summary = periodeMap.get(normalized);
+  if (!summary) {
+    const core = normalized.replace(/^(pt|cv|ud|fa|tb|pn|perum|perumnas)\s+/g, "");
+    for (const [key, value] of periodeMap.entries()) {
+      const keyCore = key.replace(/^(pt|cv|ud|fa|tb|pn|perum|perumnas)\s+/g, "");
+      if (core && keyCore && (core === keyCore || core.includes(keyCore) || keyCore.includes(core))) {
+        summary = value;
+        break;
+      }
+    }
+  }
+  if (!summary) return [];
+  return Object.keys(summary)
+    .sort()
+    .map((periode) => ({
+      periode,
+      amount: summary[periode] || 0,
+      amountText: formatCurrency(summary[periode] || 0),
+    }));
+}
+
+function groupTemporaryRowsByCustomer(rows = []) {
+  const grouped = new Map();
+  rows.forEach((row) => {
+    const customer = String(row.customer || "").trim();
+    const amount = parseNumberish(row.tagihan) || 0;
+    if (!customer || amount <= 0) return;
+    if (!grouped.has(customer)) grouped.set(customer, []);
+    grouped.get(customer).push({
+      noInvoice: row.noInvoice || "-",
+      tanggalInvoice: row.tanggalInvoice,
+      termin: row.termin || "-",
+      tempo: row.tempo,
+      tagihan: amount,
+      penagih: row.penagih || "-",
+    });
+  });
+  return grouped;
+}
+
+function getClosestTempo(invoices = []) {
+  let closest = null;
+  invoices.forEach((invoice) => {
+    const date = parseExcelDate(invoice.tempo);
+    if (!date || Number.isNaN(date.getTime())) return;
+    if (!closest || date.getTime() < closest.getTime()) {
+      closest = date;
+    }
+  });
+  return closest;
+}
+
+function buildLogoDataUrl() {
+  const logo = getPdfLogo();
+  if (!logo.base64 || !logo.mimeType) return "";
+  return `data:${logo.mimeType};base64,${logo.base64}`;
+}
+
+function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
+  const total = invoices.reduce((sum, item) => sum + (item.tagihan || 0), 0);
+  const printDate = formatTime(new Date().toISOString());
+  const invoiceRowsHtml = invoices
+    .map(
+      (invoice, index) => `
+        <tr>
+          <td class="center">${index + 1}</td>
+          <td>${escapeHtml(invoice.noInvoice)}</td>
+          <td class="center">${escapeHtml(formatDateId(invoice.tanggalInvoice))}</td>
+          <td class="center">${escapeHtml(invoice.termin)}</td>
+          <td class="center">${escapeHtml(formatDateId(invoice.tempo))}</td>
+          <td class="right strong">${escapeHtml(formatCurrency(invoice.tagihan))}</td>
+        </tr>`
+    )
+    .join("");
+
+  const periodeRowsHtml = (periodeRows.length ? periodeRows : [{ periode: "Tidak ada data periode", amountText: "-" }])
+    .map(
+      (item) => `
+        <tr>
+          <td>${escapeHtml(item.periode)}</td>
+          <td class="right strong">${escapeHtml(item.amountText)}</td>
+        </tr>`
+    )
+    .join("");
+
+  return `<!doctype html>
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; color: #1f2937; margin: 24px; font-size: 12px; }
+        .header { display: grid; grid-template-columns: 110px 1fr; border: 1px solid #dfe5dc; }
+        .logo { min-height: 82px; background: #f3f7f2; display: flex; align-items: center; justify-content: center; border-right: 1px solid #dfe5dc; }
+        .logo img { max-width: 92px; max-height: 60px; object-fit: contain; }
+        .title { padding: 16px 18px; text-align: right; }
+        .title h1 { margin: 0; font-size: 21px; }
+        .title p { margin: 6px 0 0; font-size: 11px; color: #6b7280; }
+        .bar { height: 5px; background: #9ca3af; margin: 18px 0; }
+        .section-title { background: #4b5563; color: #fff; font-weight: 700; padding: 8px 12px; margin-top: 14px; }
+        .amount-box { display: grid; grid-template-columns: 1fr 220px; border: 1px solid #86efac; border-top: 0; }
+        .amount-box .label { background: #1f5f45; color: #fff; padding: 12px; font-weight: 700; }
+        .amount-box .value { background: #ecfdf5; color: #166534; padding: 12px; text-align: right; font-size: 16px; font-weight: 700; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #dfe5dc; padding: 8px 10px; vertical-align: top; overflow-wrap: anywhere; }
+        th { background: #6b7280; color: #fff; font-size: 11px; text-align: left; }
+        tr:nth-child(even) td { background: #fafcf9; }
+        .center { text-align: center; }
+        .right { text-align: right; }
+        .strong { font-weight: 700; }
+        .footer { margin-top: 20px; font-size: 11px; color: #6b7280; display: flex; justify-content: space-between; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo">${logoDataUrl ? `<img src="${logoDataUrl}" alt="logo" />` : ""}</div>
+        <div class="title">
+          <h1>RINGKASAN TAGIHAN</h1>
+          <p>Tanggal Cetak: ${escapeHtml(printDate)}</p>
+        </div>
+      </div>
+      <div style="margin-top: 18px;">
+        <div style="font-size: 11px; color: #6b7280;">Kepada Yth.</div>
+        <div style="font-size: 18px; font-weight: 700; margin-top: 4px;">${escapeHtml(customer)}</div>
+      </div>
+      <div class="bar"></div>
+      <div class="amount-box">
+        <div class="label">JUMLAH YANG HARUS DIBAYAR</div>
+        <div class="value">${escapeHtml(formatCurrency(total))}</div>
+      </div>
+      <div class="section-title">DETAIL INVOICE</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 42px;" class="center">No</th>
+            <th>Nomor Invoice</th>
+            <th style="width: 110px;" class="center">Tgl. Invoice</th>
+            <th style="width: 80px;" class="center">Termin</th>
+            <th style="width: 110px;" class="center">Jatuh Tempo</th>
+            <th style="width: 140px;" class="right">Jumlah Tagihan</th>
+          </tr>
+        </thead>
+        <tbody>${invoiceRowsHtml}</tbody>
+      </table>
+      <div class="section-title">RIWAYAT TAGIHAN PER PERIODE</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Periode</th>
+            <th style="width: 180px;" class="right">Jumlah</th>
+          </tr>
+        </thead>
+        <tbody>${periodeRowsHtml}</tbody>
+      </table>
+      <div class="footer">
+        <div>Dokumen ini dibuat otomatis oleh sistem.</div>
+        <div>${escapeHtml(printDate)}</div>
+      </div>
+    </body>
+  </html>`;
+}
+
+async function renderPdfFile(outputPath, html) {
+  ensureDir(path.dirname(outputPath));
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.pdf({
+      path: outputPath,
+      format: "A4",
+      printBackground: true,
+      margin: { top: "10mm", right: "8mm", bottom: "10mm", left: "8mm" },
+    });
+  } finally {
+    await browser.close();
+  }
+}
+
+async function buildPdfTemporaryFromGoogleSheet() {
+  const config = getGSheetConfig();
+  if (!config.url) throw new Error("URL Google Sheet belum disimpan");
+  const workbook = await loadWorkbookFromGoogleSheet(config.url);
+  const rows = buildTemporaryRowsFromWorkbook(workbook);
+  return savePdfTemporaryData({
+    headers: [
+      "No Invoice",
+      "Tanggal Invoice",
+      "Termin",
+      "Tempo",
+      "Customer",
+      "Tagihan",
+      "Penagih",
+    ],
+    rows: rows.map((row) => ({
+      noInvoice: row.noInvoice || "",
+      tanggalInvoice: formatDateId(row.tanggalInvoice),
+      termin: row.termin || "",
+      tempo: formatDateId(row.tempo),
+      customer: row.customer || "",
+      tagihan: parseNumberish(row.tagihan) || 0,
+      penagih: row.penagih || "",
+      sourceRow: row.sourceRow,
+    })),
+    sourceSheet: "INPUT",
+  });
+}
+
+async function generatePdfPerPtJob() {
+  const config = getGSheetConfig();
+  if (!config.url) throw new Error("URL Google Sheet belum disimpan");
+
+  const workbook = await loadWorkbookFromGoogleSheet(config.url);
+  const temporaryRows = buildTemporaryRowsFromWorkbook(workbook);
+  const grouped = groupTemporaryRowsByCustomer(temporaryRows);
+  const masterMap = buildMasterDataLookup(workbook);
+  const periodeMap = buildPeriodeSummaryMap(workbook);
+  const logoDataUrl = buildLogoDataUrl();
+  const customers = [...grouped.keys()];
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const logRows = [];
+
+  savePdfTemporaryData({
+    headers: ["No Invoice", "Tanggal Invoice", "Termin", "Tempo", "Customer", "Tagihan", "Penagih"],
+    rows: temporaryRows,
+    sourceSheet: "INPUT",
+  });
+
+  savePdfProgress({
+    running: true,
+    current: 0,
+    total: customers.length,
+    ptName: "Menyiapkan generate PDF",
+    status: "Menyiapkan data",
+    step: 1,
+    complete: false,
+    error: "",
+  });
+
+  for (let index = 0; index < customers.length; index += 1) {
+    const customer = customers[index];
+    const invoices = grouped.get(customer) || [];
+    const periodRows = getPeriodeRows(periodeMap, customer);
+    const totalTagihan = invoices.reduce((sum, item) => sum + (item.tagihan || 0), 0);
+    const master = findMasterData(masterMap, customer);
+    const outputFolderName = sanitizeFileName(customer, "UNKNOWN");
+    const outputDir = path.join(PDF_OUTPUT_DIR, outputFolderName);
+    const fileName = `Tagihan_${outputFolderName}_${timestamp}.pdf`;
+    const outputPath = path.join(outputDir, fileName);
+
+    savePdfProgress({
+      running: true,
+      current: index + 1,
+      total: customers.length,
+      ptName: customer,
+      status: "Membuat PDF",
+      step: 3,
+      complete: false,
+      error: "",
+    });
+
+    const html = buildPdfHtml({
+      customer,
+      invoices,
+      periodeRows: periodRows,
+      logoDataUrl,
+    });
+    await renderPdfFile(outputPath, html);
+
+    const closestTempo = getClosestTempo(invoices);
+    logRows.push({
+      nama: customer,
+      total: formatCurrency(totalTagihan),
+      tempo: closestTempo ? formatDateId(closestTempo) : "-",
+      pdf: `/generated/pdfs/${encodeURIComponent(outputFolderName)}/${encodeURIComponent(fileName)}`,
+      nomor: master.phone,
+      wilayah: master.wilayah,
+    });
+  }
+
+  savePdfLogData({
+    rows: logRows,
+  });
+
+  savePdfProgress({
+    running: false,
+    current: customers.length,
+    total: customers.length,
+    ptName: "Selesai",
+    status: "Semua PDF berhasil dibuat",
+    step: 4,
+    complete: true,
+    error: "",
+  });
+
+  return logRows;
 }
 
 function killOrphanedBrowserProcesses(sessionId) {
@@ -1233,6 +1918,43 @@ app.get("/api/gsheet/sheets", async (req, res) => {
   }
 });
 
+app.get("/api/gsheet/preview", async (req, res) => {
+  try {
+    const config = getGSheetConfig();
+    const requestedSheet = String(req.query.selectedSheet || "").trim();
+
+    if (!config.url) {
+      return res.status(400).json({
+        success: false,
+        message: "URL Google Sheet belum disimpan",
+      });
+    }
+
+    const workbook = await loadWorkbookFromGoogleSheet(config.url);
+    const preview = buildSheetPreviewFromWorkbook(
+      workbook,
+      requestedSheet || config.selectedSheet || ""
+    );
+
+    const saved = saveGSheetConfig({
+      selectedSheet: preview.selectedSheet,
+    });
+
+    return res.json({
+      success: true,
+      url: config.url,
+      autoSync: config.autoSync,
+      lastSyncAt: saved.lastSyncAt || config.lastSyncAt || null,
+      ...preview,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 app.post("/api/gsheet/select-sheet", async (req, res) => {
   try {
     const { selectedSheet } = req.body;
@@ -1340,6 +2062,141 @@ app.post("/api/load-customers", async (req, res) => {
       url: result.config.url,
     });
   } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+app.get("/api/pdf/status", (req, res) => {
+  res.json({
+    success: true,
+    hasLogo: hasPdfLogo(),
+    progress: getPdfProgress(),
+  });
+});
+
+app.get("/api/pdf/temporary", (req, res) => {
+  res.json({
+    success: true,
+    ...getPdfTemporaryData(),
+  });
+});
+
+app.get("/api/pdf/log", (req, res) => {
+  const data = getPdfLogData();
+  res.json({
+    success: true,
+    rows: data.rows || [],
+    generatedAt: data.generatedAt || null,
+  });
+});
+
+app.post("/api/pdf/logo", imageUpload.single("logo"), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "File logo tidak ditemukan",
+      });
+    }
+
+    savePdfLogo({
+      name: req.file.originalname || "logo",
+      mimeType: req.file.mimetype || "image/png",
+      base64: req.file.buffer.toString("base64"),
+    });
+
+    return res.json({
+      success: true,
+      message: "Logo berhasil disimpan",
+      hasLogo: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+app.delete("/api/pdf/logo", (req, res) => {
+  try {
+    deletePdfLogo();
+    return res.json({
+      success: true,
+      message: "Logo berhasil dihapus",
+      hasLogo: false,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+app.post("/api/pdf/generate-temporary", async (req, res) => {
+  try {
+    const data = await buildPdfTemporaryFromGoogleSheet();
+    return res.json({
+      success: true,
+      message: `${data.rows.length} baris berhasil dimuat ke temporary`,
+      ...data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+app.post("/api/pdf/generate-per-pt", async (req, res) => {
+  try {
+    if (isPdfGenerating) {
+      return res.status(409).json({
+        success: false,
+        message: "Generate PDF sedang berjalan",
+      });
+    }
+
+    isPdfGenerating = true;
+    savePdfProgress({
+      running: true,
+      current: 0,
+      total: 0,
+      ptName: "Menyiapkan proses",
+      status: "Memulai generate PDF",
+      step: 1,
+      complete: false,
+      error: "",
+    });
+
+    setImmediate(async () => {
+      try {
+        await generatePdfPerPtJob();
+      } catch (error) {
+        savePdfProgress({
+          running: false,
+          complete: true,
+          status: "Generate PDF gagal",
+          error: error.message,
+        });
+        emitLog("error", `Generate PDF gagal: ${error.message}`);
+      } finally {
+        isPdfGenerating = false;
+      }
+    });
+
+    return res.json({
+      success: true,
+      message: "Generate PDF dimulai",
+      progress: getPdfProgress(),
+    });
+  } catch (error) {
+    isPdfGenerating = false;
     return res.status(500).json({
       success: false,
       message: error.message,
