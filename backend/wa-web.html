@@ -117,13 +117,14 @@
       display: block; width: 100%; height: 100%;
       object-fit: fill; user-select: none;
       -webkit-user-drag: none; cursor: default;
+      will-change: contents;
     }
 
     /* ── Keyboard hint ────────────────────────────────────────── */
     #kbd-hint {
       position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
       padding: 5px 14px; border-radius: 20px;
-      background: rgba(17,27,33,0.82); backdrop-filter: blur(8px);
+      background: rgba(17,27,33,0.92);
       font-size: 11px; color: rgba(255,255,255,0.65);
       white-space: nowrap; pointer-events: none; z-index: 5;
       opacity: 0; transition: opacity 0.3s;
@@ -189,13 +190,13 @@
     <div class="ov-spinner"></div>
   </div>
 
-  <img id="stream" src="" alt="" draggable="false" />
+  <img id="stream" src="" alt="" draggable="false" decoding="async" />
   <div id="kbd-hint">Klik untuk fokus &nbsp;&middot;&nbsp; Ctrl+V untuk paste</div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  const socket    = io();
+  const socket    = io({ transports: ['websocket'], upgrade: false });
   const overlay   = document.getElementById('overlay');
   const stream    = document.getElementById('stream');
   const area      = document.getElementById('area');
@@ -207,9 +208,15 @@
   const kbdHint   = document.getElementById('kbd-hint');
 
   let vp = { w: 1280, h: 800 };
+  let streamRect   = null;
   let moveRaf      = null;
+  let scrollRaf    = null;
+  let pendingScroll = null;
   let hintTimer    = null;
   let streamLoaded = false;
+  let lastMoveX = -1, lastMoveY = -1;
+
+  function updateRect() { streamRect = stream.getBoundingClientRect(); }
 
   function loadStream() {
     if (streamLoaded) return;
@@ -244,14 +251,10 @@
       if (d.meta?.viewport) vp = { w: d.meta.viewport.width, h: d.meta.viewport.height };
     }).catch(() => {});
 
-  fetch('/api/wa-viewport')
-    .then(r => r.json())
-    .then(({ width, height }) => { vp = { w: width, h: height }; })
-    .catch(() => {});
-
   // ── Socket events ───────────────────────────────────────────
   socket.on('connect', () => {
     banner.classList.remove('visible');
+    updateRect();
     sendViewport();
   });
   socket.on('disconnect',    () => banner.classList.add('visible'));
@@ -270,7 +273,7 @@
 
   // ── Coordinate mapping ──────────────────────────────────────
   function mapCoords(cx, cy) {
-    const r = stream.getBoundingClientRect();
+    const r = streamRect || (streamRect = stream.getBoundingClientRect());
     return {
       x: Math.max(0, Math.min(vp.w, (cx - r.left) * (vp.w / r.width))),
       y: Math.max(0, Math.min(vp.h, (cy - r.top)  * (vp.h / r.height))),
@@ -309,22 +312,34 @@
     socket.emit('wa-rightclick', { x, y });
   });
 
-  // Mouse move throttled with rAF for hover effects in WA
+  // Mouse move throttled with rAF; skip if moved < 4px to cut socket traffic
   stream.addEventListener('mousemove', e => {
     if (moveRaf) return;
     moveRaf = requestAnimationFrame(() => {
       moveRaf = null;
       const { x, y } = mapCoords(e.clientX, e.clientY);
+      const dx = x - lastMoveX, dy = y - lastMoveY;
+      if (dx * dx + dy * dy < 16) return;
+      lastMoveX = x; lastMoveY = y;
       socket.emit('wa-mousemove', { x, y });
     });
   });
 
-  // ── Wheel / scroll ──────────────────────────────────────────
+  // ── Wheel / scroll — rAF throttle, accumulate deltaY within one frame ──
   area.addEventListener('wheel', e => {
     e.preventDefault();
     if (e.ctrlKey) return;
     const { x, y } = mapCoords(e.clientX, e.clientY);
-    socket.emit('wa-scroll', { x, y, deltaY: e.deltaY });
+    if (scrollRaf) {
+      pendingScroll.deltaY += e.deltaY;
+      return;
+    }
+    pendingScroll = { x, y, deltaY: e.deltaY };
+    scrollRaf = requestAnimationFrame(() => {
+      scrollRaf = null;
+      socket.emit('wa-scroll', pendingScroll);
+      pendingScroll = null;
+    });
   }, { passive: false });
 
   document.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
@@ -375,7 +390,7 @@
     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
       typeBuf += e.key;
       clearTimeout(typeTimer);
-      typeTimer = setTimeout(flushType, 25);
+      typeTimer = setTimeout(flushType, 16);
     }
   });
 
@@ -397,7 +412,7 @@
   }
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(sendViewport, 300);
+    resizeTimer = setTimeout(() => { updateRect(); sendViewport(); }, 300);
   });
 
   // ── Hint ────────────────────────────────────────────────────

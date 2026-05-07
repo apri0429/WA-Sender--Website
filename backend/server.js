@@ -428,7 +428,7 @@ async function startScreencast() {
     cdpSession = await waClient.pupPage.target().createCDPSession();
     await cdpSession.send("Page.startScreencast", {
       format: "jpeg",
-      quality: 80,
+      quality: 65,
       everyNthFrame: 1,
     });
     cdpSession.on("Page.screencastFrame", ({ data, sessionId }) => {
@@ -2151,16 +2151,20 @@ io.on("connection", (socket) => {
     } catch {}
   });
 
-  // Mouse move — untuk efek hover (tombol highlight, tooltip, dll)
-  socket.on("wa-mousemove", async ({ x, y }) => {
-    if (!waClient?.pupPage || !isWhatsAppReady) return;
-    try { await waClient.pupPage.mouse.move(Math.round(x), Math.round(y)); } catch {}
+  // Mouse move — latest-wins: drop event if previous move still in flight
+  let movePending = false;
+  socket.on("wa-mousemove", ({ x, y }) => {
+    if (!waClient?.pupPage || !isWhatsAppReady || movePending) return;
+    movePending = true;
+    waClient.pupPage.mouse.move(Math.round(x), Math.round(y))
+      .catch(() => {})
+      .finally(() => { movePending = false; });
   });
 
   // Ketik teks
   socket.on("wa-type", async ({ text }) => {
     if (!waClient?.pupPage || !isWhatsAppReady) return;
-    try { await waClient.pupPage.keyboard.type(text, { delay: 20 }); } catch {}
+    try { await waClient.pupPage.keyboard.type(text); } catch {}
   });
 
   // Tombol spesial (Enter, Backspace, dll) — dengan dukungan Shift
