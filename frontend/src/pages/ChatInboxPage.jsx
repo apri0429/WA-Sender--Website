@@ -20,6 +20,9 @@ import socket from "../services/socket";
 
 const FONT_SANS = "'Plus Jakarta Sans', 'Inter', sans-serif";
 const FONT_MONO = "'JetBrains Mono', 'Fira Code', monospace";
+const MESSAGE_PAGE_SIZE = 50;
+const MESSAGE_INITIAL_LIMIT = 100;
+const MESSAGE_MAX_LIMIT = 300;
 
 const T = {
   brand: "#233971",
@@ -122,6 +125,9 @@ export default function ChatInboxPage() {
   const [selectedChatId, setSelectedChatId] = useState("");
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState("");
+  const [messageLimit, setMessageLimit] = useState(MESSAGE_INITIAL_LIMIT);
+  const [hasMoreHistory, setHasMoreHistory] = useState(false);
+  const [historyNote, setHistoryNote] = useState("");
   const [search, setSearch] = useState("");
   const [loadingChats, setLoadingChats] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -175,13 +181,17 @@ export default function ChatInboxPage() {
     }
   };
 
-  const fetchMessages = async (chatId) => {
+  const fetchMessages = async (chatId, limit = messageLimit) => {
     if (!chatId) return;
     try {
       setLoadingMessages(true);
-      const res = await api.get(`/chats/${encodeURIComponent(chatId)}/messages`);
+      const res = await api.get(`/chats/${encodeURIComponent(chatId)}/messages`, {
+        params: { limit },
+      });
       const list = Array.isArray(res?.data?.messages) ? res.data.messages : [];
       setMessages(list.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)));
+      setHasMoreHistory(!!res?.data?.hasMore && limit < MESSAGE_MAX_LIMIT);
+      setHistoryNote(res?.data?.note || "");
       setChats((prev) =>
         prev.map((chat) => (chat.id === chatId ? { ...chat, unread: 0 } : chat))
       );
@@ -198,11 +208,13 @@ export default function ChatInboxPage() {
 
   useEffect(() => {
     if (selectedChatId) {
-      fetchMessages(selectedChatId);
+      fetchMessages(selectedChatId, messageLimit);
     } else {
       setMessages([]);
+      setHasMoreHistory(false);
+      setHistoryNote("");
     }
-  }, [selectedChatId]);
+  }, [selectedChatId, messageLimit]);
 
   useEffect(() => {
     listBottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -245,10 +257,15 @@ export default function ChatInboxPage() {
   }, [selectedChatId]);
 
   const handleSelectChat = (chatId) => {
+    setMessageLimit(MESSAGE_INITIAL_LIMIT);
     setSelectedChatId(chatId);
     setChats((prev) =>
       prev.map((chat) => (chat.id === chatId ? { ...chat, unread: 0 } : chat))
     );
+  };
+
+  const handleLoadOlder = () => {
+    setMessageLimit((prev) => Math.min(MESSAGE_MAX_LIMIT, prev + MESSAGE_PAGE_SIZE));
   };
 
   const handleSend = async () => {
@@ -260,7 +277,7 @@ export default function ChatInboxPage() {
       await api.post(`/chats/${encodeURIComponent(selectedChatId)}/reply`, { message: text });
       setMessageText("");
       showToast("Pesan terkirim", "success");
-      await fetchMessages(selectedChatId);
+      await fetchMessages(selectedChatId, messageLimit);
       await fetchChats();
     } catch (error) {
       showToast(error?.response?.data?.message || "Gagal mengirim balasan", "error");
@@ -582,6 +599,37 @@ export default function ChatInboxPage() {
                       <Typography sx={{ fontSize: 13 }}>
                         Percakapan terbaru akan muncul di panel ini.
                       </Typography>
+                    </Box>
+                  ) : null}
+
+                  {!loadingMessages && messages.length > 0 ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", mb: 1.5 }}>
+                      <Stack spacing={1} alignItems="center">
+                        {hasMoreHistory ? (
+                          <Button
+                            onClick={handleLoadOlder}
+                            variant="outlined"
+                            size="small"
+                            sx={{
+                              borderRadius: "999px",
+                              textTransform: "none",
+                              fontFamily: FONT_SANS,
+                              fontWeight: 700,
+                              borderColor: T.brandBorder,
+                              color: T.brand,
+                              background: "rgba(255,255,255,0.78)",
+                            }}
+                          >
+                            Lihat pesan lebih lama
+                          </Button>
+                        ) : null}
+
+                        {historyNote ? (
+                          <Typography sx={{ fontSize: 11.5, color: T.subtle, textAlign: "center" }}>
+                            {historyNote}
+                          </Typography>
+                        ) : null}
+                      </Stack>
                     </Box>
                   ) : null}
 

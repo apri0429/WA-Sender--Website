@@ -111,6 +111,9 @@ let currentSendProgress = {
   customer: null,
 };
 let isPdfGenerating = false;
+const CHAT_HISTORY_MEMORY_LIMIT = 1000;
+const CHAT_MESSAGES_PAGE_SIZE = 50;
+const CHAT_MESSAGES_MAX_LIMIT = 300;
 
 // Chat inbox - in-memory store
 const chatHistory = new Map(); // chatId -> { id, name, phone, unread, messages[] }
@@ -137,8 +140,10 @@ function storeMessage(chatId, name, phone, msg) {
   // Hindari duplikat
   if (!chat.messages.find((m) => m.id === entry.id)) {
     chat.messages.push(entry);
-    // Batasi 200 pesan per chat
-    if (chat.messages.length > 200) chat.messages.splice(0, chat.messages.length - 200);
+    // Batasi cache agar inbox tetap ringan tapi riwayat masih cukup panjang
+    if (chat.messages.length > CHAT_HISTORY_MEMORY_LIMIT) {
+      chat.messages.splice(0, chat.messages.length - CHAT_HISTORY_MEMORY_LIMIT);
+    }
   }
   if (!msg.fromMe) chat.unread += 1;
   return entry;
@@ -2777,11 +2782,16 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
   try {
     await ensureWhatsAppStable();
     const chatId = decodeURIComponent(req.params.chatId);
+    const requestedLimit = Number(req.query?.limit) || CHAT_MESSAGES_PAGE_SIZE;
+    const limit = Math.max(
+      CHAT_MESSAGES_PAGE_SIZE,
+      Math.min(CHAT_MESSAGES_MAX_LIMIT, requestedLimit)
+    );
 
     // Coba fetchMessages dari WA langsung
     try {
       const chat = await waClient.getChatById(chatId);
-      const msgs = await chat.fetchMessages({ limit: 50 });
+      const msgs = await chat.fetchMessages({ limit });
       const messages = msgs.map(serializeMessage);
 
       // Simpan ke memory sekalian agar sinkron
@@ -2796,8 +2806,17 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
         if (!stored.messages.find((s) => s.id === m.id)) stored.messages.push(m);
       });
       stored.messages.sort((a, b) => a.timestamp - b.timestamp);
+      if (stored.messages.length > CHAT_HISTORY_MEMORY_LIMIT) {
+        stored.messages.splice(0, stored.messages.length - CHAT_HISTORY_MEMORY_LIMIT);
+      }
 
-      return res.json({ success: true, messages: stored.messages, source: "wa" });
+      return res.json({
+        success: true,
+        messages: stored.messages,
+        source: "wa",
+        limit,
+        hasMore: messages.length >= limit && limit < CHAT_MESSAGES_MAX_LIMIT,
+      });
     } catch (fetchErr) {
       // fetchMessages gagal — kembalikan dari memori
       console.warn("fetchMessages failed, using memory:", fetchErr.message);
@@ -2806,6 +2825,8 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
         success: true,
         messages: stored?.messages || [],
         source: "memory",
+        limit,
+        hasMore: false,
         note: "Riwayat terbatas pada sesi ini (fetchMessages tidak tersedia)",
       });
     }
