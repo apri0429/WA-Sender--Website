@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { BarChartSquare02, Settings01 } from "@untitledui/icons";
+import { BarChartSquare02, MessageChatSquare, Settings01 } from "@untitledui/icons";
 
 import TemplateSidebar from "../templateComponents/Sidebar";
 import TemplateHeader from "../templateComponents/Header";
@@ -10,11 +10,13 @@ const FONT = "'Plus Jakarta Sans', 'Inter', sans-serif";
 
 const waPrimaryItems = [
   { label: "Dashboard", href: "/", icon: BarChartSquare02 },
+  { label: "Chat Inbox", href: "/chats", icon: MessageChatSquare },
   { label: "Settings", href: "/settings", icon: Settings01 },
 ];
 
 const pageBreadcrumbs = {
   "/": [{ label: "Dashboard", active: true }],
+  "/chats": [{ label: "Chat Inbox", active: true }],
   "/settings": [{ label: "Settings", active: true }],
 };
 

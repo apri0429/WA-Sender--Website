@@ -42,6 +42,7 @@ const PDF_TEMPORARY_FILE = path.join(DATA_DIR, "pdf-temporary.json");
 const PDF_LOG_FILE = path.join(DATA_DIR, "pdf-log.json");
 const PDF_PROGRESS_FILE = path.join(DATA_DIR, "pdf-progress.json");
 const PDF_LOGO_FILE = path.join(DATA_DIR, "pdf-logo.json");
+const WWEBJS_CACHE_DIR = path.join(BASE_DIR, ".wwebjs_cache");
 
 if (!fs.existsSync(SESSION_DIR)) fs.mkdirSync(SESSION_DIR, { recursive: true });
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -114,15 +115,23 @@ let isPdfGenerating = false;
 
 // Chat inbox - in-memory store
 const chatHistory = new Map(); // chatId -> { id, name, phone, unread, messages[] }
+const CHAT_LIST_LIMIT = 500;
+const CHAT_MESSAGE_LIMIT = 1500;
+
+function clearChatHistory() {
+  chatHistory.clear();
+}
 
 function serializeMessage(msg) {
   return {
     id: msg.id?.id || String(Date.now()),
+    serializedId: msg.id?._serialized || null,
     from: msg.fromMe ? "me" : "them",
     body: msg.body || "",
     timestamp: msg.timestamp ? msg.timestamp * 1000 : Date.now(),
     type: msg.type || "chat",
     hasMedia: msg.hasMedia || false,
+    filename: msg.filename || null,
   };
 }
 
@@ -137,11 +146,28 @@ function storeMessage(chatId, name, phone, msg) {
   // Hindari duplikat
   if (!chat.messages.find((m) => m.id === entry.id)) {
     chat.messages.push(entry);
-    // Batasi 200 pesan per chat
-    if (chat.messages.length > 200) chat.messages.splice(0, chat.messages.length - 200);
+    // Batasi memory agar tetap aman tapi history recent tetap cukup panjang
+    if (chat.messages.length > CHAT_MESSAGE_LIMIT) {
+      chat.messages.splice(0, chat.messages.length - CHAT_MESSAGE_LIMIT);
+    }
   }
   if (!msg.fromMe) chat.unread += 1;
   return entry;
+}
+
+function mergeStoredMessages(storedChat, messages = []) {
+  messages.forEach((message) => {
+    if (!storedChat.messages.find((storedMessage) => storedMessage.id === message.id)) {
+      storedChat.messages.push(message);
+    }
+  });
+
+  storedChat.messages.sort((a, b) => a.timestamp - b.timestamp);
+  if (storedChat.messages.length > CHAT_MESSAGE_LIMIT) {
+    storedChat.messages.splice(0, storedChat.messages.length - CHAT_MESSAGE_LIMIT);
+  }
+
+  return storedChat.messages;
 }
 
 function getWhatsAppAccountInfo() {
@@ -346,6 +372,9 @@ function resolveSessionId(requestedSessionId = "") {
 
 function setActiveWhatsAppSession(sessionId, patch = {}, options = {}) {
   if (!sessionId) return null;
+  if (activeSessionId && activeSessionId !== sessionId) {
+    clearChatHistory();
+  }
   activeSessionId = sessionId;
   if (!options.skipPersist) {
     persistWhatsAppSessionMeta(sessionId, {
@@ -365,6 +394,16 @@ function deleteWhatsAppSessionFiles(sessionId) {
   const sessionDir = getWhatsAppSessionDir(sessionId);
   if (fs.existsSync(sessionDir)) {
     fs.rmSync(sessionDir, { recursive: true, force: true });
+  }
+}
+
+function clearWhatsAppWebCache() {
+  try {
+    if (fs.existsSync(WWEBJS_CACHE_DIR)) {
+      fs.rmSync(WWEBJS_CACHE_DIR, { recursive: true, force: true });
+    }
+  } catch (error) {
+    console.warn(`Gagal membersihkan .wwebjs_cache: ${error.message}`);
   }
 }
 
@@ -1543,6 +1582,9 @@ function buildWhatsAppClient(sessionId, options = {}) {
       dataPath: SESSION_DIR,
       clientId: `wa-sender-${sessionId}`,
     }),
+    webVersionCache: {
+      type: "none",
+    },
     puppeteer: puppeteerOptions,
   });
 }
@@ -1733,17 +1775,18 @@ async function initWhatsAppClient(options = {}) {
       await waClient.initialize();
     } catch (error) {
       console.error("WhatsApp initialize() failed:", error.message);
-      try {
-        await destroyWhatsAppClient();
-      } catch (destroyErr) {
-        console.error("Failed to destroy client after init error:", destroyErr.message);
-        waClient = null;
-        currentClientSessionId = null;
-      }
-      resetWhatsAppRuntimeState();
-      lastWhatsAppEvent = "error";
-      throw error;
+    try {
+      await destroyWhatsAppClient();
+    } catch (destroyErr) {
+      console.error("Failed to destroy client after init error:", destroyErr.message);
+      waClient = null;
+      currentClientSessionId = null;
     }
+    clearWhatsAppWebCache();
+    resetWhatsAppRuntimeState();
+    lastWhatsAppEvent = "error";
+    throw error;
+  }
   }
 
   return waClient;
@@ -2750,7 +2793,14 @@ app.get("/api/chats", async (req, res) => {
   try {
     await ensureWhatsAppStable();
     const waChats = await waClient.getChats();
-    const list = waChats.slice(0, 50).map((c) => {
+    const list = waChats
+      .sort((a, b) => {
+        const aTime = a?.lastMessage?.timestamp || 0;
+        const bTime = b?.lastMessage?.timestamp || 0;
+        return bTime - aTime;
+      })
+      .slice(0, CHAT_LIST_LIMIT)
+      .map((c) => {
       const lastMsg = c.lastMessage;
       return {
         id: c.id._serialized,
@@ -2766,8 +2816,9 @@ app.get("/api/chats", async (req, res) => {
           type: lastMsg.type,
         } : null,
       };
-    });
-    res.json({ success: true, chats: list });
+      });
+
+    res.json({ success: true, chats: list, source: "wa" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -2777,40 +2828,38 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
   try {
     await ensureWhatsAppStable();
     const chatId = decodeURIComponent(req.params.chatId);
+    const requestedLimit = Number(req.query.limit) || CHAT_MESSAGE_LIMIT;
+    const limit = Math.min(Math.max(requestedLimit, 100), CHAT_MESSAGE_LIMIT);
+    const chat = await waClient.getChatById(chatId);
 
-    // Coba fetchMessages dari WA langsung
-    try {
-      const chat = await waClient.getChatById(chatId);
-      const msgs = await chat.fetchMessages({ limit: 50 });
-      const messages = msgs.map(serializeMessage);
+    await chat.syncHistory().catch(() => false);
+    const msgs = await chat.fetchMessages({ limit });
+    const messages = msgs.map(serializeMessage);
 
-      // Simpan ke memory sekalian agar sinkron
-      const contact = await waClient.getContactById(chatId).catch(() => null);
-      const name = contact?.pushname || contact?.name || chatId.replace("@c.us", "");
-      const phone = chatId.replace("@c.us", "").replace("@g.us", "");
-      if (!chatHistory.has(chatId)) {
-        chatHistory.set(chatId, { id: chatId, name, phone, unread: 0, messages: [] });
-      }
-      const stored = chatHistory.get(chatId);
-      messages.forEach((m) => {
-        if (!stored.messages.find((s) => s.id === m.id)) stored.messages.push(m);
-      });
-      stored.messages.sort((a, b) => a.timestamp - b.timestamp);
-
-      return res.json({ success: true, messages: stored.messages, source: "wa" });
-    } catch (fetchErr) {
-      // fetchMessages gagal — kembalikan dari memori
-      console.warn("fetchMessages failed, using memory:", fetchErr.message);
-      const stored = chatHistory.get(chatId);
-      return res.json({
-        success: true,
-        messages: stored?.messages || [],
-        source: "memory",
-        note: "Riwayat terbatas pada sesi ini (fetchMessages tidak tersedia)",
-      });
+    const contact = await waClient.getContactById(chatId).catch(() => null);
+    const name = contact?.pushname || contact?.name || chatId.replace("@c.us", "");
+    const phone = chatId.replace("@c.us", "").replace("@g.us", "");
+    if (!chatHistory.has(chatId)) {
+      chatHistory.set(chatId, { id: chatId, name, phone, unread: 0, messages: [] });
     }
+
+    const stored = chatHistory.get(chatId);
+    stored.name = name;
+    stored.phone = phone;
+    stored.unread = 0;
+    mergeStoredMessages(stored, messages);
+
+    return res.json({
+      success: true,
+      messages: stored.messages,
+      source: "wa",
+      limit,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: `Gagal mengambil history chat dari WhatsApp Web: ${error.message}`,
+    });
   }
 });
 
@@ -2827,6 +2876,60 @@ app.post("/api/chats/:chatId/reply", async (req, res) => {
   }
 });
 
+
+const mediaCache = new Map();
+const MEDIA_TTL = 30 * 60 * 1000;
+
+app.get("/api/messages/:serializedId/media", async (req, res) => {
+  const serializedId = decodeURIComponent(req.params.serializedId);
+  try {
+    const cached = mediaCache.get(serializedId);
+    if (cached && Date.now() < cached.expiry) {
+      res.setHeader("Content-Type", cached.mimetype);
+      res.setHeader("Cache-Control", "public, max-age=1800");
+      if (cached.filename) res.setHeader("Content-Disposition", `inline; filename="${cached.filename}"`);
+      return res.send(Buffer.from(cached.data, "base64"));
+    }
+    await ensureWhatsAppStable();
+    const msg = await waClient.getMessageById(serializedId);
+    if (!msg) return res.status(404).json({ error: "Pesan tidak ditemukan" });
+    const media = await msg.downloadMedia();
+    if (!media) return res.status(404).json({ error: "Media tidak tersedia" });
+    mediaCache.set(serializedId, {
+      mimetype: media.mimetype,
+      data: media.data,
+      filename: media.filename || null,
+      expiry: Date.now() + MEDIA_TTL,
+    });
+    const buf = Buffer.from(media.data, "base64");
+    res.setHeader("Content-Type", media.mimetype);
+    res.setHeader("Cache-Control", "public, max-age=1800");
+    if (media.filename) res.setHeader("Content-Disposition", `inline; filename="${media.filename}"`);
+    res.send(buf);
+  } catch (err) {
+    res.status(500).json({ error: "Gagal mengunduh media" });
+  }
+});
+
+const profilePicCache = new Map();
+const PROFILE_PIC_TTL = 10 * 60 * 1000;
+
+app.get("/api/profile-pic/:chatId", async (req, res) => {
+  const chatId = decodeURIComponent(req.params.chatId);
+  try {
+    const cached = profilePicCache.get(chatId);
+    if (cached !== undefined && Date.now() < cached.expiry) {
+      return res.json({ url: cached.url });
+    }
+    await ensureWhatsAppStable();
+    const url = await waClient.getProfilePicUrl(chatId).catch(() => null);
+    profilePicCache.set(chatId, { url: url || null, expiry: Date.now() + PROFILE_PIC_TTL });
+    res.json({ url: url || null });
+  } catch {
+    profilePicCache.set(chatId, { url: null, expiry: Date.now() + PROFILE_PIC_TTL });
+    res.json({ url: null });
+  }
+});
 
 app.get("*", (req, res, next) => {
   if (
@@ -2870,7 +2973,20 @@ io.on("connection", (socket) => {
 
 server.listen(PORT, "0.0.0.0", () => {
   activeSessionId = getPreferredWhatsAppSessionId();
+  clearWhatsAppWebCache();
   console.log(`Backend running on http://192.168.1.254:${PORT}`);
+
+  if (activeSessionId) {
+    initWhatsAppClient({ sessionId: activeSessionId }).catch((error) => {
+      isWhatsAppReady = false;
+      isWhatsAppInitializing = false;
+      lastWhatsAppEvent = "startup_error";
+      emitLog(
+        "error",
+        `Auto reconnect sesi WhatsApp gagal (${activeSessionId}): ${error.message}`
+      );
+    });
+  }
 });
 
 process.on("SIGINT", async () => {
