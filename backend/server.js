@@ -2825,16 +2825,35 @@ app.get("/api/chats", async (req, res) => {
 });
 
 app.get("/api/chats/:chatId/messages", async (req, res) => {
+  const chatId = decodeURIComponent(req.params.chatId);
+  const requestedLimit = Number(req.query.limit) || CHAT_MESSAGE_LIMIT;
+  const limit = Math.min(Math.max(requestedLimit, 100), CHAT_MESSAGE_LIMIT);
+
   try {
     await ensureWhatsAppStable();
-    const chatId = decodeURIComponent(req.params.chatId);
-    const requestedLimit = Number(req.query.limit) || CHAT_MESSAGE_LIMIT;
-    const limit = Math.min(Math.max(requestedLimit, 100), CHAT_MESSAGE_LIMIT);
     const chat = await waClient.getChatById(chatId);
 
-    await chat.syncHistory().catch(() => false);
-    const msgs = await chat.fetchMessages({ limit });
-    const messages = msgs.map(serializeMessage);
+    // syncHistory can fail when WA Web internal API changes — always ignore errors
+    try { await chat.syncHistory(); } catch (_) {}
+
+    let messages;
+    try {
+      const msgs = await chat.fetchMessages({ limit });
+      messages = msgs.map(serializeMessage);
+    } catch (_fetchErr) {
+      // fetchMessages failed (e.g. waitForChatLoading undefined) — return cache if available
+      if (chatHistory.has(chatId)) {
+        const stored = chatHistory.get(chatId);
+        return res.json({
+          success: true,
+          messages: stored.messages.slice(-limit),
+          source: "cache",
+          note: "Menggunakan pesan tersimpan (WhatsApp Web tidak dapat memuat riwayat baru)",
+          limit: stored.messages.length,
+        });
+      }
+      throw _fetchErr;
+    }
 
     const contact = await waClient.getContactById(chatId).catch(() => null);
     const name = contact?.pushname || contact?.name || chatId.replace("@c.us", "");
@@ -2856,6 +2875,17 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
       limit,
     });
   } catch (error) {
+    // Final fallback: serve cached messages rather than showing an error
+    if (chatHistory.has(chatId)) {
+      const stored = chatHistory.get(chatId);
+      return res.json({
+        success: true,
+        messages: stored.messages.slice(-limit),
+        source: "cache",
+        note: "Menggunakan pesan tersimpan",
+        limit: stored.messages.length,
+      });
+    }
     res.status(500).json({
       success: false,
       message: `Gagal mengambil history chat dari WhatsApp Web: ${error.message}`,
