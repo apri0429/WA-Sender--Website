@@ -508,9 +508,8 @@ export default function SettingsCard({
   return (
     <Box
       sx={{
-        minHeight: "100vh",
         fontFamily: FONT_SANS,
-        p: { xs: 1.5, sm: 2.5, lg: 3 },
+        p: 2,
         boxSizing: "border-box",
         "&, & *": {
           boxSizing: "border-box",

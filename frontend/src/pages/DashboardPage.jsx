@@ -564,7 +564,6 @@ export default function DashboardPage() {
   const [waSessions, setWaSessions] = useState([]);
   const [activeWaSessionId, setActiveWaSessionId] = useState("");
   const [pendingWaSessionId, setPendingWaSessionId] = useState("");
-  const [openingWaBrowser, setOpeningWaBrowser] = useState(false);
   const [waAccount, setWaAccount] = useState({ name: "", number: "", wid: "", platform: "" });
   const lastWhatsappLogRef = useRef("");
   const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
@@ -1088,38 +1087,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleOpenWhatsappBrowser = async () => {
-    if (!activeWaSessionId) {
-      showToast("Pilih akun WhatsApp dulu", "warning");
-      return;
-    }
-
-    const session = waSessions.find((item) => item.id === activeWaSessionId);
-    addLog("info", `Membuka WhatsApp Web untuk ${session?.label || activeWaSessionId}`);
-
-    try {
-      setOpeningWaBrowser(true);
-      const res = await api.post("/open-whatsapp-browser", {
-        sessionId: activeWaSessionId,
-        browser: "auto",
-      });
-      const data = res?.data || {};
-      applyWhatsappState(data);
-      addLog("success", data.message || "WhatsApp Web dibuka");
-      showToast(
-        data.message ||
-          "WhatsApp Web dibuka di browser pada komputer yang menjalankan backend",
-        "success"
-      );
-    } catch (err) {
-      const m = err?.response?.data?.message || "Gagal membuka WhatsApp Web";
-      addLog("error", m);
-      showToast(m, "error");
-    } finally {
-      setOpeningWaBrowser(false);
-    }
-  };
-
   const handleSend = async () => {
     try {
       if (sending) return;
@@ -1285,9 +1252,8 @@ export default function DashboardPage() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
         fontFamily: FONT_SANS,
-        p: { xs: 1.5, sm: 2.5, lg: 3 },
+        p: 2,
         boxSizing: "border-box",
         "&, & *": {
           boxSizing: "border-box",
@@ -1794,17 +1760,6 @@ export default function DashboardPage() {
                   </Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
-                    <ActionBtn
-                      variant="outline"
-                      color="brand"
-                      size="md"
-                      fullWidth
-                      startIcon={<OpenInNewRoundedIcon sx={{ fontSize: "15px !important" }} />}
-                      onClick={handleOpenWhatsappBrowser}
-                      disabled={!activeWaSessionId || sending || waInitializing || openingWaBrowser}
-                    >
-                      {openingWaBrowser ? "Membuka WA..." : "Buka WhatsApp Web"}
-                    </ActionBtn>
                     <ActionBtn
                       color="slate"
                       size="md"

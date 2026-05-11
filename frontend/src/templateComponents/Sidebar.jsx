@@ -338,6 +338,39 @@ function Sidebar({
           expandedGroups={expandedGroups}
           onToggleGroup={handleToggleGroup}
         />
+
+        {!collapsed && (
+          <div style={{
+            padding: '10px 16px 0',
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+            marginTop: 8,
+            marginBottom: 4,
+            textAlign: 'center',
+          }}>
+            <p style={{
+              margin: '0 0 2px',
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.3)',
+              lineHeight: 1.6,
+              letterSpacing: '0.02em',
+              userSelect: 'none',
+            }}>
+              &copy; 2026 PT Pilar Niaga Makmur
+            </p>
+            <p style={{
+              margin: 0,
+              fontSize: 9.5,
+              fontWeight: 400,
+              color: 'rgba(255,255,255,0.2)',
+              lineHeight: 1.5,
+              letterSpacing: '0.01em',
+              userSelect: 'none',
+            }}>
+              Developed by IT Team PT Pilar Niaga Makmur
+            </p>
+          </div>
+        )}
       </div>
     </aside>
   )

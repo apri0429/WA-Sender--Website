@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Alert,
   Box,
   Button,
-  Chip,
   CircularProgress,
   Dialog,
+  Divider,
   IconButton,
   InputAdornment,
+  Menu,
+  MenuItem,
   Snackbar,
   TextField,
   Tooltip,
@@ -38,6 +41,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import FlashOnIcon from "@mui/icons-material/FlashOn";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import api from "../services/api";
 import socket from "../services/socket";
 
@@ -375,6 +379,12 @@ export default function ChatInboxPage() {
   const [messageDraft, setMessageDraft] = useState("");
   const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
   const messageListRef = useRef(null);
+  const [headerSlotEl, setHeaderSlotEl] = useState(null);
+  const [sessionMenuAnchor, setSessionMenuAnchor] = useState(null);
+
+  useEffect(() => {
+    setHeaderSlotEl(document.getElementById("header-wa-slot"));
+  }, []);
 
   const showToast = (message, severity = "success") =>
     setToast({ open: true, message, severity });
@@ -591,186 +601,165 @@ export default function ChatInboxPage() {
       .some((v) => String(v).toLowerCase().includes(kw));
   });
 
-  const statusDotColor = whatsappReady ? "#22C55E" : waQr ? "#F59E0B" : waInitializing ? "#60A5FA" : "#94A3B8";
-  const statusLabel = whatsappReady ? "Terhubung" : waQr ? "Scan QR" : waInitializing ? "Menghubungkan..." : "Offline";
+  const headerPortalContent = (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "nowrap" }}>
+      {/* Session dropdown */}
+      {waSessions.length > 0 && (() => {
+        const activeSession = waSessions.find((s) => s.id === activeWaSessionId);
+        const sessionLabel = activeSession?.lastKnownNumber || activeSession?.label || "Pilih Sesi";
+        return (
+          <>
+            <Button
+              size="small"
+              onClick={(e) => setSessionMenuAnchor(e.currentTarget)}
+              endIcon={<KeyboardArrowDownRoundedIcon sx={{ fontSize: 16 }} />}
+              sx={{
+                textTransform: "none", borderRadius: "8px",
+                fontFamily: FONT_SANS, fontWeight: 500, fontSize: 12,
+                color: "rgba(255,255,255,0.9)",
+                bgcolor: "rgba(255,255,255,0.1)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                px: 1.25, py: 0.5,
+                gap: 0.5,
+                "&:hover": { bgcolor: "rgba(255,255,255,0.18)", borderColor: "rgba(255,255,255,0.35)" },
+              }}
+            >
+              <Box sx={{ width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                bgcolor: whatsappReady ? "#22C55E" : "rgba(255,255,255,0.3)" }} />
+              {sessionLabel}
+            </Button>
+            <Menu
+              anchorEl={sessionMenuAnchor}
+              open={Boolean(sessionMenuAnchor)}
+              onClose={() => setSessionMenuAnchor(null)}
+              PaperProps={{
+                sx: { borderRadius: "12px", mt: 0.75, minWidth: 220,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.15)" },
+              }}
+            >
+              <Box sx={{ px: 2, py: 1, pb: 0.5 }}>
+                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11, fontWeight: 700,
+                  color: "#667781", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  Pilih Sesi
+                </Typography>
+              </Box>
+              <Divider sx={{ my: 0.5 }} />
+              {waSessions.map((s) => (
+                <MenuItem
+                  key={s.id}
+                  selected={s.id === activeWaSessionId}
+                  onClick={() => { handleSelectSession(s.id); setSessionMenuAnchor(null); }}
+                  sx={{
+                    fontFamily: FONT_SANS, fontSize: 13, py: 1, px: 2,
+                    "&.Mui-selected": { bgcolor: "#E7F8F4", "&:hover": { bgcolor: "#D3F2EB" } },
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, width: "100%" }}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+                      bgcolor: s.id === activeWaSessionId && whatsappReady ? "#22C55E" : "#CBD5E1" }} />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13,
+                        fontWeight: s.id === activeWaSessionId ? 600 : 400, color: "#111B21" }}>
+                        {s.label}
+                      </Typography>
+                      {s.lastKnownNumber && (
+                        <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: "#667781" }}>
+                          {s.lastKnownNumber}
+                        </Typography>
+                      )}
+                    </Box>
+                    {s.id === activeWaSessionId && (
+                      <Typography sx={{ fontFamily: FONT_SANS, fontSize: 10.5, color: "#00A884",
+                        fontWeight: 600, flexShrink: 0 }}>
+                        Aktif
+                      </Typography>
+                    )}
+                  </Box>
+                </MenuItem>
+              ))}
+            </Menu>
+          </>
+        );
+      })()}
+
+      {/* Hubungkan WA */}
+      <Button
+        size="small"
+        startIcon={loadingStatus ? <CircularProgress size={12} sx={{ color: "rgba(255,255,255,0.8)" }} /> : <WifiRoundedIcon sx={{ fontSize: 15 }} />}
+        onClick={handleReconnect}
+        disabled={loadingStatus}
+        sx={{
+          textTransform: "none", borderRadius: "8px",
+          fontFamily: FONT_SANS, fontWeight: 500, fontSize: 12,
+          color: "rgba(255,255,255,0.9)",
+          bgcolor: "rgba(255,255,255,0.1)",
+          border: "1px solid rgba(255,255,255,0.2)",
+          px: 1.25, py: 0.5,
+          minWidth: "unset",
+          "&:hover": { bgcolor: "rgba(255,255,255,0.18)", borderColor: "rgba(255,255,255,0.35)" },
+          "&.Mui-disabled": { color: "rgba(255,255,255,0.35)", borderColor: "rgba(255,255,255,0.1)", bgcolor: "transparent" },
+        }}
+      >
+        Hubungkan WA
+      </Button>
+    </Box>
+  );
 
   return (
+    <>
+    {headerSlotEl && createPortal(headerPortalContent, headerSlotEl)}
     <Box sx={{
-      p: { xs: 1, sm: 1.5, lg: 2 },
+      p: 2,
       fontFamily: FONT_SANS,
       display: "flex",
       flexDirection: "column",
-      gap: 2,
-      height: { lg: "calc(100vh - 64px)" },
+      gap: 1.5,
+      flex: 1,
+      minHeight: 0,
+      overflow: "hidden",
     }}>
 
-      {/* ═══ TOP STATUS BAR ═══ */}
-      <Box
-        sx={{
+      {/* QR code panel — shown only when QR is active */}
+      {waQr && (
+        <Box sx={{
           flexShrink: 0,
-          bgcolor: P.white,
+          m: 1.5,
+          bgcolor: P.amberBg,
           borderRadius: "16px",
-          border: `1px solid ${P.line}`,
+          border: `1px solid ${P.amberBorder}`,
           boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-          overflow: "hidden",
-        }}
-      >
-        {/* Main row */}
-        <Box sx={{ px: 2.5, py: 1.75, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-          {/* Logo */}
+          px: 2.5, py: 2,
+          display: "flex", alignItems: "flex-start", gap: 3, flexWrap: "wrap",
+        }}>
           <Box sx={{
-            width: 42, height: 42, borderRadius: "12px", flexShrink: 0,
-            background: `linear-gradient(135deg, ${P.brand}, ${P.brandDark})`,
-            display: "grid", placeItems: "center", color: "#fff",
-            boxShadow: `0 4px 12px ${P.brand}40`,
+            width: 164, height: 164, p: 1.5, flexShrink: 0,
+            bgcolor: P.white, borderRadius: "12px",
+            border: `2px solid ${P.amberBorder}`,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+            display: "grid", placeItems: "center",
           }}>
-            <WhatsAppIcon sx={{ fontSize: 22 }} />
+            <QRCodeSVG value={waQr} size={132} />
           </Box>
-
-          {/* Title + status */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontFamily: FONT_SANS, fontWeight: 700, fontSize: 15, color: P.ink, lineHeight: 1.2 }}>
-              Chat Inbox
+          <Box sx={{ flex: 1, minWidth: 200 }}>
+            <Typography sx={{ fontFamily: FONT_SANS, fontWeight: 700, fontSize: 14, color: P.ink, mb: 0.75 }}>
+              Scan QR Code WhatsApp
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.25, flexWrap: "wrap" }}>
-              <Box sx={{
-                width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-                bgcolor: statusDotColor,
-                boxShadow: whatsappReady ? `0 0 0 3px ${statusDotColor}30` : "none",
-                animation: waInitializing ? "pulse 1.4s ease-in-out infinite" : "none",
-                "@keyframes pulse": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.2 } },
-              }} />
-              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: P.muted }}>
-                {statusLabel}
-              </Typography>
-              {(waAccount.name || waAccount.number) && (
-                <>
-                  <Typography sx={{ color: P.line, fontSize: 12 }}>·</Typography>
-                  <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: P.ink, fontWeight: 600,
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 220 }}>
-                    {waAccount.name || waAccount.number}
-                    {waAccount.name && waAccount.number && (
-                      <Box component="span" sx={{ fontWeight: 400, color: P.muted }}> ({waAccount.number})</Box>
-                    )}
-                  </Typography>
-                </>
-              )}
-            </Box>
-          </Box>
-
-          {/* Action buttons */}
-          <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={loadingStatus ? <CircularProgress size={13} color="inherit" /> : <WifiRoundedIcon sx={{ fontSize: 16 }} />}
-              onClick={handleReconnect}
-              disabled={loadingStatus}
-              sx={{
-                textTransform: "none", borderRadius: "10px",
-                fontFamily: FONT_SANS, fontWeight: 600, fontSize: 13,
-                bgcolor: P.brand, "&:hover": { bgcolor: P.brandDark },
-                boxShadow: `0 2px 8px ${P.brand}40`,
-              }}
-            >
-              Hubungkan WA
-            </Button>
-            <Tooltip title="Refresh status dan inbox">
-              <span>
-                <IconButton
-                  onClick={() => { ensureWhatsappSession({ showFeedback: true }); if (whatsappReady) loadChats(); }}
-                  disabled={loadingStatus || loadingChats}
-                  size="small"
-                  sx={{
-                    border: `1px solid ${P.line}`, borderRadius: "10px",
-                    color: P.brand, width: 34, height: 34,
-                    "&:hover": { borderColor: P.brandBorder, bgcolor: P.brandLight },
-                  }}
-                >
-                  {loadingChats
-                    ? <CircularProgress size={15} color="inherit" />
-                    : <RefreshRoundedIcon sx={{ fontSize: 18 }} />}
-                </IconButton>
-              </span>
-            </Tooltip>
+            {["Buka WhatsApp di ponsel", "Ketuk Menu atau Pengaturan", "Pilih Perangkat Tertaut", "Ketuk Tautkan Perangkat dan scan QR"].map((step, i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1, mb: 0.5 }}>
+                <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11, color: P.brand, fontWeight: 700, mt: "1px", flexShrink: 0 }}>
+                  {i + 1}.
+                </Typography>
+                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: P.text }}>
+                  {step}
+                </Typography>
+              </Box>
+            ))}
+            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: P.muted, mt: 1 }}>
+              Dibuat: {formatDateTime(waQrAt)}
+            </Typography>
           </Box>
         </Box>
-
-        {/* Sessions row */}
-        {waSessions.length > 0 && (
-          <Box sx={{
-            px: 2.5, pb: 1.5,
-            display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap",
-            borderTop: `1px solid ${P.line}`, pt: 1.25,
-          }}>
-            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, fontWeight: 700,
-              color: P.muted, textTransform: "uppercase", letterSpacing: "0.08em", mr: 0.5 }}>
-              Sesi:
-            </Typography>
-            {waSessions.map((s) => (
-              <Chip
-                key={s.id}
-                label={s.lastKnownNumber ? `${s.label} · ${s.lastKnownNumber}` : s.label}
-                size="small"
-                onClick={() => handleSelectSession(s.id)}
-                icon={
-                  <Box sx={{
-                    width: 6, height: 6, borderRadius: "50%", ml: "6px !important",
-                    bgcolor: s.id === activeWaSessionId && whatsappReady ? "#22C55E" : "#CBD5E1",
-                  }} />
-                }
-                sx={{
-                  fontFamily: FONT_SANS, fontSize: 12, fontWeight: s.id === activeWaSessionId ? 600 : 400,
-                  bgcolor: s.id === activeWaSessionId ? P.brandLight : P.surface,
-                  color: s.id === activeWaSessionId ? P.brand : P.muted,
-                  border: `1px solid ${s.id === activeWaSessionId ? P.brandBorder : P.line}`,
-                  cursor: "pointer",
-                  "&:hover": { bgcolor: P.brandLight, borderColor: P.brandBorder },
-                  "& .MuiChip-label": { pr: 1.5 },
-                }}
-              />
-            ))}
-          </Box>
-        )}
-
-        {/* QR code section */}
-        {waQr && (
-          <Box sx={{
-            borderTop: `1px solid ${P.amberBorder}`,
-            bgcolor: P.amberBg,
-            px: 2.5, py: 2,
-            display: "flex", alignItems: "flex-start", gap: 3, flexWrap: "wrap",
-          }}>
-            <Box sx={{
-              width: 164, height: 164, p: 1.5, flexShrink: 0,
-              bgcolor: P.white, borderRadius: "12px",
-              border: `2px solid ${P.amberBorder}`,
-              boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-              display: "grid", placeItems: "center",
-            }}>
-              <QRCodeSVG value={waQr} size={132} />
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 200 }}>
-              <Typography sx={{ fontFamily: FONT_SANS, fontWeight: 700, fontSize: 14, color: P.ink, mb: 0.75 }}>
-                Scan QR Code WhatsApp
-              </Typography>
-              {["Buka WhatsApp di ponsel", "Ketuk Menu atau Pengaturan", "Pilih Perangkat Tertaut", "Ketuk Tautkan Perangkat dan scan QR"].map((step, i) => (
-                <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1, mb: 0.5 }}>
-                  <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11, color: P.brand, fontWeight: 700, mt: "1px", flexShrink: 0 }}>
-                    {i + 1}.
-                  </Typography>
-                  <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: P.text }}>
-                    {step}
-                  </Typography>
-                </Box>
-              ))}
-              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: P.muted, mt: 1 }}>
-                Dibuat: {formatDateTime(waQrAt)}
-              </Typography>
-            </Box>
-          </Box>
-        )}
-      </Box>
+      )}
 
       {/* ═══ MAIN CHAT PANEL ═══ */}
       <Box
@@ -779,10 +768,10 @@ export default function ChatInboxPage() {
           minHeight: 0,
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "340px minmax(0, 1fr)" },
-          borderRadius: "16px",
           overflow: "hidden",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.10)",
+          borderRadius: "14px",
           border: `1px solid ${P.line}`,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
         }}
       >
         {/* ── Chat List ── */}
@@ -1167,5 +1156,6 @@ export default function ChatInboxPage() {
         </Alert>
       </Snackbar>
     </Box>
+    </>
   );
 }

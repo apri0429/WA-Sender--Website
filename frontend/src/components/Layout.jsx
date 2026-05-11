@@ -6,8 +6,6 @@ import TemplateSidebar from "../templateComponents/Sidebar";
 import TemplateHeader from "../templateComponents/Header";
 import BackgroundMain from "../templateComponents/BackgroundMain";
 
-const FONT = "'Plus Jakarta Sans', 'Inter', sans-serif";
-
 const waPrimaryItems = [
   { label: "Dashboard", href: "/", icon: BarChartSquare02 },
   { label: "Chat Inbox", href: "/chats", icon: MessageChatSquare },
@@ -20,49 +18,11 @@ const pageBreadcrumbs = {
   "/settings": [{ label: "Settings", active: true }],
 };
 
-function MainFooter() {
-  return (
-    <div
-      style={{
-        padding: "12px 24px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderTop: "1px solid rgba(226,232,240,0.9)",
-        background: "rgba(255,255,255,0.55)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-        userSelect: "none",
-        flexShrink: 0,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 2,
-          fontFamily: FONT,
-          fontSize: 12,
-          fontWeight: 700,
-          color: "#334155",
-          letterSpacing: "-0.1px",
-          textAlign: "center",
-        }}
-      >
-        <span>&copy; 2026 PT Pilar Niaga Makmur. All rights reserved.</span>
-        <span>Developed by IT Team PT Pilar Niaga Makmur.</span>
-      </div>
-    </div>
-  );
-}
-
 
 export default function Layout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
   const breadcrumb =
     pageBreadcrumbs[location.pathname] ?? [{ label: "Halaman", active: true }];
 
@@ -108,20 +68,21 @@ export default function Layout() {
 
         <main
           className="dashboard-main"
-          style={{ position: "relative", padding: 0 }}
+          style={{ position: "relative", padding: 0, overflow: "hidden" }}
         >
           <BackgroundMain position="absolute" zIndex={0} />
           <div
             style={{
               position: "relative",
               zIndex: 1,
-              minHeight: "100%",
+              height: "100%",
               display: "flex",
               flexDirection: "column",
+              overflowY: "auto",
+              overflowX: "hidden",
             }}
           >
             <Outlet />
-            <MainFooter />
           </div>
         </main>
       </div>

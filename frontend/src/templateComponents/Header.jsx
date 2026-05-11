@@ -289,6 +289,8 @@ function Header({
             {renderBreadcrumb()}
           </nav>
 
+          <div id="header-wa-slot" style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }} />
+
           {hasSearch || hasNotification || onRefresh ? (
             <div className="header-toolbar">
               {hasSearch ? (
