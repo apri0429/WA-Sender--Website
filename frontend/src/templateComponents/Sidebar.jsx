@@ -168,7 +168,7 @@ function Sidebar({
 }) {
   const backToPilarGroupItem = {
     id: 'back-to-pilargroup',
-    label: 'Back to Pilargroup',
+    label: 'Pilargroup',
     href: 'https://pilargroup.id',
     icon: ChevronLeft,
     className: 'nav-item--back-to-pilargroup',

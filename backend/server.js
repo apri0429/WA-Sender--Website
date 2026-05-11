@@ -10,7 +10,7 @@ const dotenv = require("dotenv");
 const { Server } = require("socket.io");
 const qrcode = require("qrcode-terminal");
 const puppeteer = require("puppeteer");
-const { Client, LocalAuth } = require("whatsapp-web.js");
+const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
 const { execSync } = require("child_process");
 
 dotenv.config();
@@ -93,6 +93,19 @@ const imageUpload = multer({
   },
 });
 
+const chatMediaUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 64 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = /^(image\/(png|jpeg|jpg|webp|gif)|video\/(mp4|3gpp)|audio\/(mpeg|ogg|mp4|aac)|application\/pdf)$/i;
+    if (allowed.test(file.mimetype || "")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Tipe file tidak didukung. Gunakan gambar, video, audio, atau PDF."));
+    }
+  },
+});
+
 let waClient = null;
 let activeSessionId = null;
 let currentClientSessionId = null;
@@ -123,6 +136,7 @@ function clearChatHistory() {
 }
 
 function serializeMessage(msg) {
+  const qd = msg._data?.quotedMsg;
   return {
     id: msg.id?.id || String(Date.now()),
     serializedId: msg.id?._serialized || null,
@@ -132,6 +146,12 @@ function serializeMessage(msg) {
     type: msg.type || "chat",
     hasMedia: msg.hasMedia || false,
     filename: msg.filename || null,
+    quotedMsg: qd ? {
+      body: qd.body || "",
+      type: qd.type || "chat",
+      from: qd.fromMe ? "me" : "them",
+      authorName: qd.notifyName || "",
+    } : null,
   };
 }
 
@@ -157,8 +177,12 @@ function storeMessage(chatId, name, phone, msg) {
 
 function mergeStoredMessages(storedChat, messages = []) {
   messages.forEach((message) => {
-    if (!storedChat.messages.find((storedMessage) => storedMessage.id === message.id)) {
+    const idx = storedChat.messages.findIndex((m) => m.id === message.id);
+    if (idx === -1) {
       storedChat.messages.push(message);
+    } else {
+      // Always update existing entry — handles revoked type changes after deletion
+      storedChat.messages[idx] = message;
     }
   });
 
@@ -2896,10 +2920,73 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
 app.post("/api/chats/:chatId/reply", async (req, res) => {
   try {
     const chatId = decodeURIComponent(req.params.chatId);
-    const { message } = req.body;
+    const { message, quotedMsgId } = req.body;
     if (!message?.trim()) return res.status(400).json({ success: false, message: "Pesan kosong" });
     await ensureWhatsAppStable();
-    await waClient.sendMessage(chatId, message.trim());
+    const opts = quotedMsgId ? { quotedMessageId: quotedMsgId } : {};
+    await waClient.sendMessage(chatId, message.trim(), opts);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post("/api/messages/:serializedId/delete", async (req, res) => {
+  try {
+    const serializedId = decodeURIComponent(req.params.serializedId);
+    await ensureWhatsAppStable();
+    const msg = await waClient.getMessageById(serializedId);
+    if (!msg) return res.status(404).json({ success: false, message: "Pesan tidak ditemukan" });
+    await msg.delete(true); // true = hapus untuk semua
+    // Immediately patch cache so refresh shows "Pesan dihapus" instead of original content
+    for (const stored of chatHistory.values()) {
+      const idx = stored.messages.findIndex((m) => m.serializedId === serializedId);
+      if (idx !== -1) {
+        stored.messages[idx] = { ...stored.messages[idx], type: "revoked", body: "", hasMedia: false, quotedMsg: null };
+        break;
+      }
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.get("/api/my-profile", async (req, res) => {
+  try {
+    await ensureWhatsAppStable();
+    const info = waClient.info;
+    const wid = info?.wid?._serialized || (info?.wid?.user ? `${info.wid.user}@c.us` : null);
+    const picUrl = wid ? await waClient.getProfilePicUrl(wid).catch(() => null) : null;
+    res.json({ name: info?.pushname || "", number: info?.wid?.user || "", picUrl: picUrl || null });
+  } catch {
+    res.json({ name: "", number: "", picUrl: null });
+  }
+});
+
+app.post("/api/chats/:chatId/mark-read", async (req, res) => {
+  try {
+    const chatId = decodeURIComponent(req.params.chatId);
+    await ensureWhatsAppStable();
+    const chat = await waClient.getChatById(chatId);
+    await chat.sendSeen();
+    res.json({ success: true });
+  } catch (error) {
+    res.json({ success: false });
+  }
+});
+
+app.post("/api/chats/:chatId/reply-media", chatMediaUpload.single("file"), async (req, res) => {
+  try {
+    const chatId = decodeURIComponent(req.params.chatId);
+    if (!req.file) return res.status(400).json({ success: false, message: "File tidak ditemukan" });
+    await ensureWhatsAppStable();
+    const base64Data = req.file.buffer.toString("base64");
+    const media = new MessageMedia(req.file.mimetype, base64Data, req.file.originalname);
+    const opts = {};
+    if (req.body.caption?.trim()) opts.caption = req.body.caption.trim();
+    if (req.body.quotedMsgId?.trim()) opts.quotedMessageId = req.body.quotedMsgId.trim();
+    await waClient.sendMessage(chatId, media, opts);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

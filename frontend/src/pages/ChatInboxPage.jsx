@@ -42,11 +42,15 @@ import FlashOnIcon from "@mui/icons-material/FlashOn";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import AttachFileRoundedIcon from "@mui/icons-material/AttachFileRounded";
+import ReplyRoundedIcon from "@mui/icons-material/ReplyRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import api from "../services/api";
 import socket from "../services/socket";
 
-// Module-level profile pic cache (persists across renders, won't trigger re-renders)
+// Module-level profile pic cache + pub/sub so all ChatAvatar instances for the same chatId update together
 const picCache = new Map(); // chatId -> url | null | "pending"
+const picSubs = new Map();  // chatId -> Set of setUrl fns
 
 const API_RAW = import.meta.env.DEV ? "http://192.168.1.254:8090" : "";
 function mkMediaUrl(serializedId) {
@@ -177,17 +181,32 @@ function useProfilePic(chatId) {
   const [url, setUrl] = useState(initial);
 
   useEffect(() => {
-    if (!chatId || picCache.has(chatId)) return;
-    picCache.set(chatId, "pending");
-    api.get(`/profile-pic/${encodeURIComponent(chatId)}`)
-      .then((res) => {
-        const picUrl = res?.data?.url || null;
-        picCache.set(chatId, picUrl);
-        setUrl(picUrl);
-      })
-      .catch(() => {
-        picCache.set(chatId, null);
-      });
+    if (!chatId) { setUrl(null); return; }
+
+    // Always sync url to what cache has RIGHT NOW for this chatId.
+    // This is critical when switching chats: useState keeps the old url value,
+    // so we must reset it here before waiting for any in-flight fetch.
+    const cached = picCache.get(chatId);
+    const resolved = (typeof cached === "string" && cached !== "pending") ? cached : null;
+    setUrl(resolved);
+
+    if (!picSubs.has(chatId)) picSubs.set(chatId, new Set());
+    picSubs.get(chatId).add(setUrl);
+
+    if (!picCache.has(chatId)) {
+      picCache.set(chatId, "pending");
+      api.get(`/profile-pic/${encodeURIComponent(chatId)}`)
+        .then((res) => {
+          const picUrl = res?.data?.url || null;
+          picCache.set(chatId, picUrl);
+          picSubs.get(chatId)?.forEach((fn) => fn(picUrl));
+        })
+        .catch(() => {
+          picCache.set(chatId, null);
+          picSubs.get(chatId)?.forEach((fn) => fn(null));
+        });
+    }
+    return () => { picSubs.get(chatId)?.delete(setUrl); };
   }, [chatId]);
 
   return url;
@@ -231,6 +250,27 @@ function ChatAvatar({ name = "", chatId = "", size = 42 }) {
           {initials}
         </Box>
       )}
+    </Box>
+  );
+}
+
+function QuotedMsgBlock({ quotedMsg, fromMe }) {
+  if (!quotedMsg) return null;
+  const meta = MSG_TYPE[quotedMsg.type];
+  const preview = meta ? meta.label : (String(quotedMsg.body || "").slice(0, 80) || "(pesan media)");
+  const accent = fromMe ? "#0C6E58" : WA.green;
+  const bg = fromMe ? "rgba(0,0,0,0.07)" : "#EEF2F5";
+  const label = quotedMsg.from === "me" ? "Kamu" : (quotedMsg.authorName || "");
+  return (
+    <Box sx={{ borderLeft: `3px solid ${accent}`, bgcolor: bg, borderRadius: "4px", px: 1, py: 0.4, mb: 0.6, maxWidth: "100%", overflow: "hidden" }}>
+      {label && (
+        <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11, fontWeight: 700, color: accent, lineHeight: 1.4 }}>
+          {label}
+        </Typography>
+      )}
+      <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: WA.sidebarSub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {preview}
+      </Typography>
     </Box>
   );
 }
@@ -377,8 +417,15 @@ export default function ChatInboxPage() {
   const [messages, setMessages] = useState([]);
   const [messageMeta, setMessageMeta] = useState({ source: "", note: "", limit: 0 });
   const [messageDraft, setMessageDraft] = useState("");
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [hoveredMsgId, setHoveredMsgId] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, msg: null });
+  const [mediaDialog, setMediaDialog] = useState({ open: false, file: null, previewUrl: null, type: "", caption: "" });
+  const [sendingMedia, setSendingMedia] = useState(false);
+  const [myPicUrl, setMyPicUrl] = useState(null);
   const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
   const messageListRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [headerSlotEl, setHeaderSlotEl] = useState(null);
   const [sessionMenuAnchor, setSessionMenuAnchor] = useState(null);
 
@@ -435,6 +482,7 @@ export default function ChatInboxPage() {
         limit: Number(res?.data?.limit) || 0,
       });
       setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, unread: 0 } : c)));
+      api.post(`/chats/${encodeURIComponent(chatId)}/mark-read`).catch(() => {});
     } catch (err) {
       const msg = err?.response?.data?.message || "Gagal memuat pesan";
       setMessageMeta({ source: "", note: msg, limit: 0 });
@@ -517,8 +565,10 @@ export default function ChatInboxPage() {
       setSendingMessage(true);
       await api.post(`/chats/${encodeURIComponent(selectedChatId)}/reply`, {
         message: messageDraft.trim(),
+        quotedMsgId: replyingTo?.serializedId || undefined,
       });
       setMessageDraft("");
+      setReplyingTo(null);
       await loadMessages(selectedChatId);
       await loadChats();
     } catch (err) {
@@ -528,8 +578,62 @@ export default function ChatInboxPage() {
     }
   };
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const isImage = file.type.startsWith("image/");
+    const previewUrl = isImage ? URL.createObjectURL(file) : null;
+    setMediaDialog({ open: true, file, previewUrl, type: isImage ? "image" : "document", caption: "" });
+    e.target.value = "";
+  };
+
+  const handleCloseMediaDialog = () => {
+    if (mediaDialog.previewUrl) URL.revokeObjectURL(mediaDialog.previewUrl);
+    setMediaDialog({ open: false, file: null, previewUrl: null, type: "", caption: "" });
+  };
+
+  const handleSendMediaFromDialog = async () => {
+    if (!selectedChatId || !mediaDialog.file) return;
+    try {
+      setSendingMedia(true);
+      const formData = new FormData();
+      formData.append("file", mediaDialog.file);
+      if (mediaDialog.caption.trim()) formData.append("caption", mediaDialog.caption.trim());
+      if (replyingTo?.serializedId) formData.append("quotedMsgId", replyingTo.serializedId);
+      await api.post(`/chats/${encodeURIComponent(selectedChatId)}/reply-media`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      handleCloseMediaDialog();
+      setReplyingTo(null);
+      await loadMessages(selectedChatId);
+      await loadChats();
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Gagal mengirim file", "error");
+    } finally {
+      setSendingMedia(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    const msg = deleteConfirm.msg;
+    setDeleteConfirm({ open: false, msg: null });
+    if (!msg?.serializedId) return;
+    try {
+      await api.post(`/messages/${encodeURIComponent(msg.serializedId)}/delete`);
+      setMessages((prev) => prev.filter((m) => m.serializedId !== msg.serializedId));
+      await loadChats({ preserveSelection: true });
+      showToast("Pesan dihapus untuk semua", "success");
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Gagal menghapus pesan", "error");
+    }
+  };
+
   useEffect(() => { ensureWhatsappSession(); }, []);
-  useEffect(() => { if (!whatsappReady) return; loadChats(); }, [whatsappReady]);
+  useEffect(() => {
+    if (!whatsappReady) return;
+    loadChats();
+    api.get("/my-profile").then((r) => setMyPicUrl(r?.data?.picUrl || null)).catch(() => {});
+  }, [whatsappReady]);
   useEffect(() => { loadMessages(selectedChatId); }, [selectedChatId]);
   useEffect(() => {
     if (whatsappReady || (!waInitializing && !waQr)) return undefined;
@@ -563,6 +667,7 @@ export default function ChatInboxPage() {
     const onNewMessage = (payload) => {
       const msg = payload?.message;
       if (!msg?.id || !payload?.chatId) return;
+      const isOpen = payload.chatId === selectedChatId;
       setChats((prev) => {
         const cur = prev.find((c) => c.id === payload.chatId);
         const next = {
@@ -570,7 +675,7 @@ export default function ChatInboxPage() {
           name: payload.name || cur?.name || payload.phone || "Chat",
           phone: payload.phone || cur?.phone || "",
           isGroup: cur?.isGroup || false,
-          unread: typeof payload.unread === "number" ? payload.unread : cur?.unread || 0,
+          unread: isOpen ? 0 : (typeof payload.unread === "number" ? payload.unread : cur?.unread || 0),
           lastMessage: {
             id: msg.id, from: msg.from, body: msg.body || "",
             timestamp: msg.timestamp || Date.now(), type: msg.type || "chat",
@@ -578,8 +683,9 @@ export default function ChatInboxPage() {
         };
         return sortChatsByActivity([next, ...prev.filter((c) => c.id !== payload.chatId)]);
       });
-      if (payload.chatId === selectedChatId) {
+      if (isOpen) {
         setMessages((prev) => prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]);
+        api.post(`/chats/${encodeURIComponent(payload.chatId)}/mark-read`).catch(() => {});
       }
     };
     socket.on("wa-ready", onWaReady);
@@ -783,9 +889,20 @@ export default function ChatInboxPage() {
           {/* Header / search */}
           <Box sx={{ px: 1.5, py: 1.25, bgcolor: P.white, borderBottom: `1px solid ${WA.sidebarBorder}`, flexShrink: 0 }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-              <Typography sx={{ fontFamily: FONT_SANS, fontWeight: 700, fontSize: 16, color: WA.sidebarText }}>
-                Chat
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                <Box sx={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", flexShrink: 0, bgcolor: WA.green }}>
+                  {myPicUrl ? (
+                    <Box component="img" src={myPicUrl} sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  ) : (
+                    <Box sx={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: "#fff", fontFamily: FONT_SANS, fontWeight: 700, fontSize: 14 }}>
+                      {(waAccount.name || "A").charAt(0).toUpperCase()}
+                    </Box>
+                  )}
+                </Box>
+                <Typography sx={{ fontFamily: FONT_SANS, fontWeight: 700, fontSize: 16, color: WA.sidebarText }}>
+                  Chat
+                </Typography>
+              </Box>
               <Box sx={{ display: "flex", gap: 0.25 }}>
                 <Tooltip title="Refresh inbox">
                   <span>
@@ -932,7 +1049,7 @@ export default function ChatInboxPage() {
                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5,
               }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
-                  <ChatAvatar name={selectedChat.name || selectedChat.phone} chatId={selectedChat.id} size={40} />
+                  <ChatAvatar name={selectedChat.name || selectedChat.phone} chatId={selectedChat.id} size={46} />
                   <Box sx={{ minWidth: 0 }}>
                     <Typography sx={{
                       fontFamily: FONT_SANS, fontWeight: 700, fontSize: 14.5, color: WA.sidebarText,
@@ -1008,11 +1125,26 @@ export default function ChatInboxPage() {
                 ) : messages.length ? (
                   messages.map((msg) => {
                     const fromMe = msg?.from === "me";
+                    const isHovered = hoveredMsgId === (msg.id || msg.serializedId);
                     return (
                       <Box
                         key={msg.id || `${msg.timestamp}-${msg.body}`}
-                        sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", mb: 0.75 }}
+                        onMouseEnter={() => setHoveredMsgId(msg.id || msg.serializedId)}
+                        onMouseLeave={() => setHoveredMsgId(null)}
+                        sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", mb: 0.75, alignItems: "flex-end", gap: 0.5 }}
                       >
+                        {/* Action buttons — left of received bubble */}
+                        {!fromMe && (
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, opacity: isHovered ? 1 : 0, transition: "opacity 0.15s", flexShrink: 0, mb: 0.5 }}>
+                            <Tooltip title="Balas" placement="left">
+                              <IconButton size="small" onClick={() => setReplyingTo({ serializedId: msg.serializedId, id: msg.id, body: msg.body || "", type: msg.type || "chat", from: msg.from, authorName: selectedChat?.name || selectedChat?.phone || "" })}
+                                sx={{ color: WA.sidebarSub, p: 0.4 }}>
+                                <ReplyRoundedIcon sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        )}
+
                         <Box
                           sx={{
                             position: "relative",
@@ -1038,6 +1170,7 @@ export default function ChatInboxPage() {
                             },
                           }}
                         >
+                          <QuotedMsgBlock quotedMsg={msg.quotedMsg} fromMe={fromMe} />
                           {MSG_TYPE[msg?.type] ? (
                             <MediaBubble msg={msg} fromMe={fromMe} />
                           ) : (
@@ -1055,6 +1188,24 @@ export default function ChatInboxPage() {
                             {fromMe && <DoneAllIcon sx={{ fontSize: 14, color: "#53BDEB" }} />}
                           </Box>
                         </Box>
+
+                        {/* Action buttons — right of sent bubble */}
+                        {fromMe && (
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, opacity: isHovered ? 1 : 0, transition: "opacity 0.15s", flexShrink: 0, mb: 0.5 }}>
+                            <Tooltip title="Balas" placement="right">
+                              <IconButton size="small" onClick={() => setReplyingTo({ serializedId: msg.serializedId, id: msg.id, body: msg.body || "", type: msg.type || "chat", from: msg.from, authorName: "Kamu" })}
+                                sx={{ color: WA.sidebarSub, p: 0.4, transform: "scaleX(-1)" }}>
+                                <ReplyRoundedIcon sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Hapus pesan" placement="right">
+                              <IconButton size="small" onClick={() => setDeleteConfirm({ open: true, msg })}
+                                sx={{ color: "#EF4444", p: 0.4 }}>
+                                <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        )}
                       </Box>
                     );
                   })
@@ -1068,53 +1219,75 @@ export default function ChatInboxPage() {
               </Box>
 
               {/* Input bar */}
-              <Box sx={{
-                px: 1.5, py: 1.25,
-                bgcolor: WA.inputBar,
-                borderTop: `1px solid ${WA.sidebarBorder}`,
-                flexShrink: 0,
-                display: "flex", alignItems: "flex-end", gap: 1,
-              }}>
-                <TextField
-                  fullWidth multiline minRows={1} maxRows={5}
-                  placeholder="Ketik pesan..."
-                  value={messageDraft}
-                  onChange={(e) => setMessageDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: WA.inputField, borderRadius: "10px",
-                      fontFamily: FONT_SANS, fontSize: 14, color: WA.inputText,
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                      "& fieldset": { borderColor: WA.sidebarBorder },
-                      "&:hover fieldset": { borderColor: P.brandBorder },
-                      "&.Mui-focused fieldset": { borderColor: WA.green },
-                    },
-                    "& .MuiInputBase-input::placeholder": { color: WA.inputPlaceholder, opacity: 1 },
-                    "& .MuiInputBase-input": { py: 1.1 },
-                  }}
-                />
-                <IconButton
-                  onClick={handleSendMessage}
-                  disabled={!whatsappReady || sendingMessage || !messageDraft.trim()}
-                  sx={{
-                    width: 44, height: 44, flexShrink: 0,
-                    bgcolor: WA.green, color: "#fff", borderRadius: "50%",
-                    "&:hover": { bgcolor: WA.greenDark },
-                    "&.Mui-disabled": { bgcolor: "#CBD5E1", color: "#94A3B8" },
-                    transition: "all 0.2s",
-                    boxShadow: `0 2px 8px ${WA.green}40`,
-                  }}
-                >
-                  {sendingMessage
-                    ? <CircularProgress size={18} color="inherit" />
-                    : <SendRoundedIcon sx={{ fontSize: 20 }} />}
-                </IconButton>
+              <Box sx={{ px: 1.25, py: 0.75, bgcolor: WA.inputBar, borderTop: `1px solid ${WA.sidebarBorder}`, flexShrink: 0 }}>
+                {/* Replying-to banner */}
+                {replyingTo && (
+                  <Box sx={{
+                    mb: 0.6, pl: 1.25, pr: 0.5, py: 0.6,
+                    bgcolor: WA.inputField, borderRadius: "10px",
+                    borderLeft: `3px solid ${WA.green}`,
+                    display: "flex", alignItems: "center", gap: 1,
+                  }}>
+                    <ReplyRoundedIcon sx={{ fontSize: 15, color: WA.green, flexShrink: 0 }} />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11, fontWeight: 700, color: WA.green, lineHeight: 1.4 }}>
+                        {replyingTo.from === "me" ? "Kamu" : replyingTo.authorName}
+                      </Typography>
+                      <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: WA.sidebarSub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {MSG_TYPE[replyingTo.type] ? MSG_TYPE[replyingTo.type].label : (replyingTo.body.slice(0, 60) || "(media)")}
+                      </Typography>
+                    </Box>
+                    <IconButton size="small" onClick={() => setReplyingTo(null)} sx={{ p: 0.4, flexShrink: 0, color: WA.sidebarSub }}>
+                      <CloseRoundedIcon sx={{ fontSize: 15 }} />
+                    </IconButton>
+                  </Box>
+                )}
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <input ref={fileInputRef} type="file"
+                    accept="image/*,application/pdf,video/mp4,video/3gpp,audio/mpeg,audio/ogg,audio/aac"
+                    style={{ display: "none" }} onChange={handleFileSelect} />
+                  <Tooltip title="Lampirkan file">
+                    <span>
+                      <IconButton onClick={() => fileInputRef.current?.click()} disabled={!whatsappReady}
+                        sx={{ width: 36, height: 36, flexShrink: 0, color: WA.sidebarSub, borderRadius: "50%", "&:hover": { bgcolor: WA.sidebarHover }, "&.Mui-disabled": { color: "#CBD5E1" } }}>
+                        <AttachFileRoundedIcon sx={{ fontSize: 19 }} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+
+                  <TextField
+                    fullWidth multiline minRows={1} maxRows={4}
+                    placeholder="Ketik pesan..."
+                    value={messageDraft}
+                    onChange={(e) => setMessageDraft(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        bgcolor: WA.inputField, borderRadius: "20px",
+                        fontFamily: FONT_SANS, fontSize: 13.5, color: WA.inputText,
+                        "& fieldset": { borderColor: WA.sidebarBorder },
+                        "&:hover fieldset": { borderColor: P.brandBorder },
+                        "&.Mui-focused fieldset": { borderColor: WA.green },
+                      },
+                      "& .MuiInputBase-input::placeholder": { color: WA.inputPlaceholder, opacity: 1 },
+                      "& .MuiInputBase-input": { py: 0.75, px: 1.5 },
+                    }}
+                  />
+                  <IconButton
+                    onClick={handleSendMessage}
+                    disabled={!whatsappReady || sendingMessage || !messageDraft.trim()}
+                    sx={{
+                      width: 38, height: 38, flexShrink: 0,
+                      bgcolor: WA.green, color: "#fff", borderRadius: "50%",
+                      "&:hover": { bgcolor: WA.greenDark },
+                      "&.Mui-disabled": { bgcolor: "#CBD5E1", color: "#94A3B8" },
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {sendingMessage ? <CircularProgress size={16} color="inherit" /> : <SendRoundedIcon sx={{ fontSize: 18 }} />}
+                  </IconButton>
+                </Box>
               </Box>
             </>
           ) : (
@@ -1143,6 +1316,79 @@ export default function ChatInboxPage() {
           )}
         </Box>
       </Box>
+
+      {/* Delete confirmation */}
+      <Dialog open={deleteConfirm.open} onClose={() => setDeleteConfirm({ open: false, msg: null })} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: "14px", m: 2 } }}>
+        <Box sx={{ px: 3, py: 2.5 }}>
+          <Typography sx={{ fontFamily: FONT_SANS, fontWeight: 700, fontSize: 15, color: WA.msgText, mb: 0.75 }}>
+            Hapus pesan?
+          </Typography>
+          <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13.5, color: WA.sidebarSub, mb: 2.5 }}>
+            Pesan ini akan dihapus untuk semua orang di chat ini.
+          </Typography>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <Button onClick={() => setDeleteConfirm({ open: false, msg: null })} variant="text"
+              sx={{ textTransform: "none", fontFamily: FONT_SANS, color: WA.sidebarSub, borderRadius: "8px" }}>
+              Batal
+            </Button>
+            <Button onClick={handleConfirmDelete} variant="contained" color="error"
+              sx={{ textTransform: "none", fontFamily: FONT_SANS, fontWeight: 600, borderRadius: "8px", px: 2 }}>
+              Hapus untuk Semua
+            </Button>
+          </Box>
+        </Box>
+      </Dialog>
+
+      {/* Media Preview Dialog */}
+      <Dialog open={mediaDialog.open} onClose={handleCloseMediaDialog} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: "16px", overflow: "hidden", m: 2 } }}>
+        <Box sx={{ position: "relative" }}>
+          <IconButton onClick={handleCloseMediaDialog} size="small"
+            sx={{ position: "absolute", top: 8, right: 8, zIndex: 2, bgcolor: "rgba(0,0,0,0.45)", color: "#fff", "&:hover": { bgcolor: "rgba(0,0,0,0.65)" } }}>
+            <CloseRoundedIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+          {mediaDialog.type === "image" && mediaDialog.previewUrl ? (
+            <Box component="img" src={mediaDialog.previewUrl}
+              sx={{ width: "100%", maxHeight: 360, objectFit: "contain", bgcolor: "#111", display: "block" }} />
+          ) : (
+            <Box sx={{ height: 180, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", bgcolor: "#F8F9FA", gap: 1.5, px: 2 }}>
+              <InsertDriveFileOutlinedIcon sx={{ fontSize: 52, color: "#D97706" }} />
+              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: WA.msgText, textAlign: "center", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {mediaDialog.file?.name}
+              </Typography>
+              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12, color: WA.sidebarSub }}>
+                {mediaDialog.file ? `${(mediaDialog.file.size / 1024).toFixed(0)} KB` : ""}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+        <Box sx={{ px: 2, pt: 1.5, pb: 2 }}>
+          <TextField
+            fullWidth autoFocus
+            placeholder="Tambahkan caption..."
+            value={mediaDialog.caption}
+            onChange={(e) => setMediaDialog((p) => ({ ...p, caption: e.target.value }))}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendMediaFromDialog(); } }}
+            size="small"
+            sx={{
+              "& .MuiOutlinedInput-root": { borderRadius: "10px", fontFamily: FONT_SANS, fontSize: 13.5, "& fieldset": { borderColor: WA.sidebarBorder }, "&.Mui-focused fieldset": { borderColor: WA.green } },
+              "& .MuiInputBase-input::placeholder": { color: WA.inputPlaceholder, opacity: 1 },
+            }}
+          />
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 1.5 }}>
+            <Button onClick={handleCloseMediaDialog} variant="text"
+              sx={{ textTransform: "none", fontFamily: FONT_SANS, color: WA.sidebarSub, borderRadius: "8px" }}>
+              Batal
+            </Button>
+            <Button onClick={handleSendMediaFromDialog} variant="contained" disabled={sendingMedia}
+              startIcon={sendingMedia ? <CircularProgress size={14} color="inherit" /> : <SendRoundedIcon sx={{ fontSize: 15 }} />}
+              sx={{ textTransform: "none", fontFamily: FONT_SANS, fontWeight: 600, bgcolor: WA.green, borderRadius: "8px", px: 2, "&:hover": { bgcolor: WA.greenDark } }}>
+              {sendingMedia ? "Mengirim..." : "Kirim"}
+            </Button>
+          </Box>
+        </Box>
+      </Dialog>
 
       <Snackbar
         open={toast.open}
