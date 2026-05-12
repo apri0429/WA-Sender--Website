@@ -10,6 +10,7 @@ const dotenv = require("dotenv");
 const { Server } = require("socket.io");
 const qrcode = require("qrcode-terminal");
 const puppeteer = require("puppeteer");
+const { google } = require("googleapis");
 const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
 const { execSync } = require("child_process");
 
@@ -42,6 +43,9 @@ const PDF_TEMPORARY_FILE = path.join(DATA_DIR, "pdf-temporary.json");
 const PDF_LOG_FILE = path.join(DATA_DIR, "pdf-log.json");
 const PDF_PROGRESS_FILE = path.join(DATA_DIR, "pdf-progress.json");
 const PDF_LOGO_FILE = path.join(DATA_DIR, "pdf-logo.json");
+const PDF_WORKBOOK_DATA_FILE = path.join(DATA_DIR, "pdf-workbook-data.json");
+const PDF_DRIVE_CONFIG_FILE = path.join(DATA_DIR, "pdf-drive-config.json");
+const PDF_DRIVE_KEY_FILE = path.join(DATA_DIR, "pdf-drive-key.json");
 const WWEBJS_CACHE_DIR = path.join(BASE_DIR, ".wwebjs_cache");
 
 if (!fs.existsSync(SESSION_DIR)) fs.mkdirSync(SESSION_DIR, { recursive: true });
@@ -104,6 +108,11 @@ const chatMediaUpload = multer({
       cb(new Error("Tipe file tidak didukung. Gunakan gambar, video, audio, atau PDF."));
     }
   },
+});
+
+const jsonUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 1024 * 1024 },
 });
 
 let waClient = null;
@@ -669,6 +678,14 @@ function savePdfTemporaryData(data = {}) {
   };
   writeJsonFile(PDF_TEMPORARY_FILE, payload);
   return payload;
+}
+
+function getPdfWorkbookData() {
+  return readJsonFile(PDF_WORKBOOK_DATA_FILE, null);
+}
+
+function savePdfWorkbookData(data = {}) {
+  writeJsonFile(PDF_WORKBOOK_DATA_FILE, { ...data, savedAt: new Date().toISOString() });
 }
 
 function getPdfLogData() {
@@ -1274,128 +1291,269 @@ function buildLogoDataUrl() {
   return `data:${logo.mimeType};base64,${logo.base64}`;
 }
 
-function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
-  const total = invoices.reduce((sum, item) => sum + (item.tagihan || 0), 0);
-  const printDate = formatTime(new Date().toISOString());
-  const invoiceRowsHtml = invoices
-    .map(
-      (invoice, index) => `
-        <tr>
-          <td class="center">${index + 1}</td>
-          <td>${escapeHtml(invoice.noInvoice)}</td>
-          <td class="center">${escapeHtml(formatDateId(invoice.tanggalInvoice))}</td>
-          <td class="center">${escapeHtml(invoice.termin)}</td>
-          <td class="center">${escapeHtml(formatDateId(invoice.tempo))}</td>
-          <td class="right strong">${escapeHtml(formatCurrency(invoice.tagihan))}</td>
-        </tr>`
-    )
-    .join("");
-
-  const periodeRowsHtml = (periodeRows.length ? periodeRows : [{ periode: "Tidak ada data periode", amountText: "-" }])
-    .map(
-      (item) => `
-        <tr>
-          <td>${escapeHtml(item.periode)}</td>
-          <td class="right strong">${escapeHtml(item.amountText)}</td>
-        </tr>`
-    )
-    .join("");
-
-  return `<!doctype html>
-  <html>
-    <head>
-      <meta charset="utf-8" />
-      <style>
-        * { box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; color: #1f2937; margin: 24px; font-size: 12px; }
-        .header { display: grid; grid-template-columns: 110px 1fr; border: 1px solid #dfe5dc; }
-        .logo { min-height: 82px; background: #f3f7f2; display: flex; align-items: center; justify-content: center; border-right: 1px solid #dfe5dc; }
-        .logo img { max-width: 92px; max-height: 60px; object-fit: contain; }
-        .title { padding: 16px 18px; text-align: right; }
-        .title h1 { margin: 0; font-size: 21px; }
-        .title p { margin: 6px 0 0; font-size: 11px; color: #6b7280; }
-        .bar { height: 5px; background: #9ca3af; margin: 18px 0; }
-        .section-title { background: #4b5563; color: #fff; font-weight: 700; padding: 8px 12px; margin-top: 14px; }
-        .amount-box { display: grid; grid-template-columns: 1fr 220px; border: 1px solid #86efac; border-top: 0; }
-        .amount-box .label { background: #1f5f45; color: #fff; padding: 12px; font-weight: 700; }
-        .amount-box .value { background: #ecfdf5; color: #166534; padding: 12px; text-align: right; font-size: 16px; font-weight: 700; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th, td { border: 1px solid #dfe5dc; padding: 8px 10px; vertical-align: top; overflow-wrap: anywhere; }
-        th { background: #6b7280; color: #fff; font-size: 11px; text-align: left; }
-        tr:nth-child(even) td { background: #fafcf9; }
-        .center { text-align: center; }
-        .right { text-align: right; }
-        .strong { font-weight: 700; }
-        .footer { margin-top: 20px; font-size: 11px; color: #6b7280; display: flex; justify-content: space-between; }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <div class="logo">${logoDataUrl ? `<img src="${logoDataUrl}" alt="logo" />` : ""}</div>
-        <div class="title">
-          <h1>RINGKASAN TAGIHAN</h1>
-          <p>Tanggal Cetak: ${escapeHtml(printDate)}</p>
-        </div>
-      </div>
-      <div style="margin-top: 18px;">
-        <div style="font-size: 11px; color: #6b7280;">Kepada Yth.</div>
-        <div style="font-size: 18px; font-weight: 700; margin-top: 4px;">${escapeHtml(customer)}</div>
-      </div>
-      <div class="bar"></div>
-      <div class="amount-box">
-        <div class="label">JUMLAH YANG HARUS DIBAYAR</div>
-        <div class="value">${escapeHtml(formatCurrency(total))}</div>
-      </div>
-      <div class="section-title">DETAIL INVOICE</div>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 42px;" class="center">No</th>
-            <th>Nomor Invoice</th>
-            <th style="width: 110px;" class="center">Tgl. Invoice</th>
-            <th style="width: 80px;" class="center">Termin</th>
-            <th style="width: 110px;" class="center">Jatuh Tempo</th>
-            <th style="width: 140px;" class="right">Jumlah Tagihan</th>
-          </tr>
-        </thead>
-        <tbody>${invoiceRowsHtml}</tbody>
-      </table>
-      <div class="section-title">RIWAYAT TAGIHAN PER PERIODE</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Periode</th>
-            <th style="width: 180px;" class="right">Jumlah</th>
-          </tr>
-        </thead>
-        <tbody>${periodeRowsHtml}</tbody>
-      </table>
-      <div class="footer">
-        <div>Dokumen ini dibuat otomatis oleh sistem.</div>
-        <div>${escapeHtml(printDate)}</div>
-      </div>
-    </body>
-  </html>`;
+function getDriveConfig() {
+  return readJsonFile(PDF_DRIVE_CONFIG_FILE, { folderId: "", enabled: false, scriptUrl: "" });
 }
 
-async function renderPdfFile(outputPath, html) {
-  ensureDir(path.dirname(outputPath));
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+function saveDriveConfig(data = {}) {
+  writeJsonFile(PDF_DRIVE_CONFIG_FILE, { ...getDriveConfig(), ...data });
+}
 
+function httpPostFollowRedirects(urlStr, payload, maxRedirects = 5) {
+  return new Promise((resolve, reject) => {
+    const bodyBuffer = Buffer.from(payload, "utf8");
+    const attempt = (currentUrl, left) => {
+      const u = new URL(currentUrl);
+      const mod = u.protocol === "https:" ? https : http;
+      const req = mod.request(
+        { hostname: u.hostname, path: u.pathname + u.search, method: "POST",
+          headers: { "Content-Type": "application/json", "Content-Length": bodyBuffer.length } },
+        (res) => {
+          if ([301, 302, 307, 308].includes(res.statusCode) && res.headers.location) {
+            res.resume();
+            if (left <= 0) return reject(new Error("Too many redirects"));
+            attempt(res.headers.location, left - 1);
+            return;
+          }
+          let data = "";
+          res.on("data", (c) => { data += c; });
+          res.on("end", () => resolve(data));
+          res.on("error", reject);
+        }
+      );
+      req.on("error", reject);
+      req.write(bodyBuffer);
+      req.end();
+    };
+    attempt(urlStr, maxRedirects);
+  });
+}
+
+async function uploadToDrive(filePath, fileName) {
+  const config = getDriveConfig();
+  if (!config.scriptUrl) throw new Error("Apps Script URL belum dikonfigurasi");
+  const payload = JSON.stringify({
+    fileName,
+    base64: fs.readFileSync(filePath).toString("base64"),
+    folderId: config.folderId || "",
+  });
+  const responseText = await httpPostFollowRedirects(config.scriptUrl, payload);
+  let result;
+  try { result = JSON.parse(responseText); } catch { throw new Error("Response tidak valid dari Apps Script"); }
+  if (!result.success) throw new Error(result.error || "Upload ke Drive gagal");
+  return result.url || `https://drive.google.com/file/d/${result.id}/view`;
+}
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
+  const total = invoices.reduce((sum, item) => sum + (item.tagihan || 0), 0);
+  const now = new Date();
+  const printDate = now.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+  const printTime = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  const closestTempo = getClosestTempo(invoices);
+  const closestTempoStr = closestTempo ? formatDateId(closestTempo) : "-";
+
+  const invoiceRowsHtml = invoices.map((inv, i) => `
+    <tr>
+      <td class="no">${i + 1}</td>
+      <td class="inv">${escapeHtml(inv.noInvoice || "-")}</td>
+      <td class="date">${escapeHtml(formatDateId(inv.tanggalInvoice))}</td>
+      <td class="center">${escapeHtml(inv.termin || "-")}</td>
+      <td class="date">${escapeHtml(formatDateId(inv.tempo))}</td>
+      <td class="amt">${escapeHtml(formatCurrency(inv.tagihan))}</td>
+    </tr>`).join("");
+
+  const periodeRowsHtml = periodeRows.map((item) => `
+    <tr>
+      <td>${escapeHtml(item.periode)}</td>
+      <td class="amt green">${escapeHtml(item.amountText)}</td>
+    </tr>`).join("");
+
+  const logoHtml = logoDataUrl
+    ? `<img src="${logoDataUrl}" alt="logo" style="max-width:80px;max-height:44px;object-fit:contain;display:block;" />`
+    : `<div style="width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;">P</div>`;
+
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,Helvetica,sans-serif;color:#1a2035;background:#fff;font-size:10.5px;line-height:1.4}
+    /* ─── HEADER ─── */
+    .hdr{background:linear-gradient(135deg,#0f2460 0%,#1a4ba8 60%,#2563eb 100%);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .hdr-right{text-align:right;color:#fff}
+    .hdr-right h1{font-size:17px;font-weight:800;letter-spacing:-0.3px;margin-bottom:2px}
+    .hdr-right p{font-size:9.5px;opacity:.75}
+    /* ─── CONTENT ─── */
+    .body{padding:18px 22px}
+    /* ─── INFO GRID ─── */
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    .info-card{background:#f5f8ff;border:1px solid #dde6f5;border-radius:8px;padding:10px 13px}
+    .info-card .lbl{font-size:8.5px;font-weight:700;color:#6b80a6;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+    .info-card .val{font-size:13px;font-weight:800;color:#0f2460}
+    .info-card .sub{font-size:9px;color:#8a9ab5;margin-top:2px}
+    /* ─── TOTAL BANNER ─── */
+    .total-banner{background:linear-gradient(135deg,#0c4232 0%,#1a7a56 100%);border-radius:10px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .total-banner .tl{color:rgba(255,255,255,.8);font-size:9.5px;font-weight:600;margin-bottom:3px}
+    .total-banner .ta{color:#fff;font-size:19px;font-weight:800}
+    .total-banner .td{color:rgba(255,255,255,.7);font-size:9px;margin-top:3px}
+    .total-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:6px 12px;color:#fff;font-size:10px;font-weight:700;text-align:center;flex-shrink:0}
+    /* ─── SECTION HDR ─── */
+    .sec-hdr{display:flex;align-items:center;gap:7px;margin-bottom:7px;padding-bottom:5px;border-bottom:2px solid #e4eaf5}
+    .sec-dot{width:7px;height:7px;border-radius:50%;background:#1a4ba8;flex-shrink:0}
+    .sec-dot.green{background:#0c4232}
+    .sec-title{font-size:10px;font-weight:800;color:#0f2460;text-transform:uppercase;letter-spacing:.05em}
+    .sec-badge{margin-left:auto;background:#eef2fc;color:#1a4ba8;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px}
+    .sec-badge.green{background:#e6f5ee;color:#0c4232}
+    /* ─── TABLE ─── */
+    table{width:100%;border-collapse:collapse;margin-bottom:14px}
+    thead th{background:#1a2035;color:#fff;font-size:9px;font-weight:700;padding:7px 9px;text-align:left;text-transform:uppercase;letter-spacing:.04em}
+    thead th:first-child{border-radius:5px 0 0 0}
+    thead th:last-child{border-radius:0 5px 0 0}
+    tbody tr{border-bottom:1px solid #edf0f7}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:nth-child(even) td{background:#f8faff}
+    td{padding:6px 9px;color:#374151;vertical-align:top}
+    td.no{color:#9ca3af;font-size:9.5px;width:28px}
+    td.inv{font-weight:700;color:#1a4ba8;font-family:monospace;font-size:10px}
+    td.date{color:#6b7280;width:82px}
+    td.center{text-align:center;width:60px}
+    td.amt{text-align:right;font-weight:700;color:#0c4232;width:130px}
+    td.amt.green{color:#0c4232}
+    /* Total row */
+    .total-row td{background:#eef2fc!important;font-weight:800;color:#0f2460;border-top:2px solid #1a4ba8;font-size:10.5px}
+    .total-row .amt{color:#0f2460;font-size:12px}
+    /* Periode table header */
+    .tbl-green thead th{background:#0c4232}
+    /* ─── STAMP ─── */
+    .stamp{border:1.5px dashed #d1d5db;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:10px;margin-bottom:12px}
+    .stamp-from{font-size:9px;color:#9ca3af}
+    .stamp-from strong{display:block;font-size:11px;font-weight:800;color:#1a2035;margin-top:2px}
+    .stamp-sign{text-align:center}
+    .stamp-sign .sign-lbl{font-size:8.5px;color:#9ca3af;margin-bottom:18px}
+    .stamp-sign .sign-line{border-top:1px solid #d1d5db;width:110px;margin:0 auto 3px}
+    .stamp-sign .sign-cap{font-size:8px;color:#b5bccf}
+    /* ─── FOOTER ─── */
+    .footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:10px;border-top:1px solid #e5eaf5}
+    .footer-brand{font-size:9px;color:#9ca3af}
+    .footer-brand strong{color:#6b7280}
+    .footer-time{font-family:monospace;font-size:8.5px;color:#b5bccf}
+  </style>
+</head>
+<body>
+  <div class="hdr">
+    ${logoHtml}
+    <div class="hdr-right">
+      <h1>TAGIHAN INVOICE</h1>
+      <p>PT Pilar Niaga Makmur &bull; Dicetak ${printDate} ${printTime}</p>
+    </div>
+  </div>
+  <div class="body">
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="lbl">Kepada Yth.</div>
+        <div class="val">${escapeHtml(customer)}</div>
+      </div>
+      <div class="info-card">
+        <div class="lbl">Jatuh Tempo Terdekat</div>
+        <div class="val">${escapeHtml(closestTempoStr)}</div>
+        <div class="sub">${invoices.length} invoice &bull; Cetak: ${printDate}</div>
+      </div>
+    </div>
+
+    <div class="total-banner">
+      <div>
+        <div class="tl">TOTAL YANG HARUS DIBAYAR</div>
+        <div class="ta">${escapeHtml(formatCurrency(total))}</div>
+        ${closestTempo ? `<div class="td">Jatuh tempo: ${escapeHtml(closestTempoStr)}</div>` : ""}
+      </div>
+      <div class="total-badge">${invoices.length}&nbsp;Invoice</div>
+    </div>
+
+    <div class="sec-hdr">
+      <div class="sec-dot"></div>
+      <div class="sec-title">Detail Invoice</div>
+      <div class="sec-badge">${invoices.length}</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:28px">No</th>
+          <th>Nomor Invoice</th>
+          <th style="width:82px">Tgl Invoice</th>
+          <th style="width:60px;text-align:center">Termin</th>
+          <th style="width:82px">Jatuh Tempo</th>
+          <th style="width:130px;text-align:right">Jumlah Tagihan</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${invoiceRowsHtml}
+        <tr class="total-row">
+          <td colspan="5" style="text-align:right;padding-right:12px">Total Tagihan</td>
+          <td class="amt">${escapeHtml(formatCurrency(total))}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    ${periodeRows.length ? `
+    <div class="sec-hdr">
+      <div class="sec-dot green"></div>
+      <div class="sec-title">Riwayat Tagihan per Periode</div>
+      <div class="sec-badge green">${periodeRows.length}</div>
+    </div>
+    <table class="tbl-green">
+      <thead><tr><th>Periode</th><th style="width:160px;text-align:right">Jumlah</th></tr></thead>
+      <tbody>${periodeRowsHtml}</tbody>
+    </table>` : ""}
+
+    <div class="stamp">
+      <div class="stamp-from">
+        Diterbitkan oleh
+        <strong>PT Pilar Niaga Makmur</strong>
+      </div>
+      <div class="stamp-sign">
+        <div class="sign-lbl">Tanda Terima</div>
+        <div class="sign-line"></div>
+        <div class="sign-cap">Tanda Tangan / Cap</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-brand">Dokumen ini diterbitkan otomatis oleh <strong>PT Pilar Niaga Makmur</strong></div>
+      <div class="footer-time">${escapeHtml(printDate)} ${escapeHtml(printTime)}</div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+async function renderPdfFile(outputPath, html, sharedBrowser = null) {
+  ensureDir(path.dirname(outputPath));
+  const ownBrowser = !sharedBrowser;
+  const browser = ownBrowser
+    ? await puppeteer.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] })
+    : sharedBrowser;
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
     await page.pdf({
       path: outputPath,
       format: "A4",
       printBackground: true,
       margin: { top: "10mm", right: "8mm", bottom: "10mm", left: "8mm" },
     });
+    await page.close();
   } finally {
-    await browser.close();
+    if (ownBrowser) await browser.close();
   }
 }
 
@@ -1404,49 +1562,51 @@ async function buildPdfTemporaryFromGoogleSheet() {
   if (!config.url) throw new Error("URL Google Sheet belum disimpan");
   const workbook = await loadWorkbookFromGoogleSheet(config.url);
   const rows = buildTemporaryRowsFromWorkbook(workbook);
+  const masterMap = buildMasterDataLookup(workbook);
+  const periodeMap = buildPeriodeSummaryMap(workbook);
+  const masterData = {};
+  for (const [k, v] of masterMap) masterData[k] = v;
+  const periodeData = {};
+  for (const [k, v] of periodeMap) periodeData[k] = v;
+  savePdfWorkbookData({ rows, masterData, periodeData });
+  const previewRows = rows.map((row) => ({
+    noInvoice: row.noInvoice || "",
+    tanggalInvoice: formatDateId(row.tanggalInvoice),
+    termin: row.termin || "",
+    tempo: formatDateId(row.tempo),
+    customer: row.customer || "",
+    tagihan: parseNumberish(row.tagihan) || 0,
+    penagih: row.penagih || "",
+  }));
   return savePdfTemporaryData({
-    headers: [
-      "No Invoice",
-      "Tanggal Invoice",
-      "Termin",
-      "Tempo",
-      "Customer",
-      "Tagihan",
-      "Penagih",
-    ],
-    rows: rows.map((row) => ({
-      noInvoice: row.noInvoice || "",
-      tanggalInvoice: formatDateId(row.tanggalInvoice),
-      termin: row.termin || "",
-      tempo: formatDateId(row.tempo),
-      customer: row.customer || "",
-      tagihan: parseNumberish(row.tagihan) || 0,
-      penagih: row.penagih || "",
-      sourceRow: row.sourceRow,
-    })),
-    sourceSheet: "INPUT",
+    headers: ["No Invoice", "Tanggal Invoice", "Termin", "Tempo", "Customer", "Tagihan", "Penagih"],
+    rows: previewRows,
+    sourceSheet: "Google Sheet",
   });
 }
 
 async function generatePdfPerPtJob() {
-  const config = getGSheetConfig();
-  if (!config.url) throw new Error("URL Google Sheet belum disimpan");
+  let saved = getPdfWorkbookData();
+  // Fallback: jika workbookData kosong, coba pakai temporaryData
+  if (!saved || !Array.isArray(saved.rows) || !saved.rows.length) {
+    const tmp = getPdfTemporaryData();
+    if (Array.isArray(tmp.rows) && tmp.rows.length) {
+      saved = { rows: tmp.rows, masterData: {}, periodeData: {} };
+    } else {
+      throw new Error("Upload file Excel atau sync Google Sheet terlebih dahulu");
+    }
+  }
 
-  const workbook = await loadWorkbookFromGoogleSheet(config.url);
-  const temporaryRows = buildTemporaryRowsFromWorkbook(workbook);
+  const temporaryRows = saved.rows;
+  const masterMap = new Map(Object.entries(saved.masterData || {}));
+  const periodeMap = new Map(Object.entries(saved.periodeData || {}));
   const grouped = groupTemporaryRowsByCustomer(temporaryRows);
-  const masterMap = buildMasterDataLookup(workbook);
-  const periodeMap = buildPeriodeSummaryMap(workbook);
   const logoDataUrl = buildLogoDataUrl();
   const customers = [...grouped.keys()];
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const logRows = [];
-
-  savePdfTemporaryData({
-    headers: ["No Invoice", "Tanggal Invoice", "Termin", "Tempo", "Customer", "Tagihan", "Penagih"],
-    rows: temporaryRows,
-    sourceSheet: "INPUT",
-  });
+  const driveConfig = getDriveConfig();
+  const useDrive = driveConfig.enabled && !!driveConfig.scriptUrl;
 
   savePdfProgress({
     running: true,
@@ -1459,45 +1619,58 @@ async function generatePdfPerPtJob() {
     error: "",
   });
 
-  for (let index = 0; index < customers.length; index += 1) {
-    const customer = customers[index];
-    const invoices = grouped.get(customer) || [];
-    const periodRows = getPeriodeRows(periodeMap, customer);
-    const totalTagihan = invoices.reduce((sum, item) => sum + (item.tagihan || 0), 0);
-    const master = findMasterData(masterMap, customer);
-    const outputFolderName = sanitizeFileName(customer, "UNKNOWN");
-    const outputDir = path.join(PDF_OUTPUT_DIR, outputFolderName);
-    const fileName = `Tagihan_${outputFolderName}_${timestamp}.pdf`;
-    const outputPath = path.join(outputDir, fileName);
+  // Launch satu browser untuk semua PDF (jauh lebih cepat)
+  const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
 
-    savePdfProgress({
-      running: true,
-      current: index + 1,
-      total: customers.length,
-      ptName: customer,
-      status: "Membuat PDF",
-      step: 3,
-      complete: false,
-      error: "",
-    });
+  try {
+    for (let index = 0; index < customers.length; index += 1) {
+      const customer = customers[index];
+      const invoices = grouped.get(customer) || [];
+      const periodRows = getPeriodeRows(periodeMap, customer);
+      const totalTagihan = invoices.reduce((sum, item) => sum + (item.tagihan || 0), 0);
+      const master = findMasterData(masterMap, customer);
+      const outputFolderName = sanitizeFileName(customer, "UNKNOWN");
+      const outputDir = path.join(PDF_OUTPUT_DIR, outputFolderName);
+      const fileName = `Tagihan_${outputFolderName}_${timestamp}.pdf`;
+      const outputPath = path.join(outputDir, fileName);
 
-    const html = buildPdfHtml({
-      customer,
-      invoices,
-      periodeRows: periodRows,
-      logoDataUrl,
-    });
-    await renderPdfFile(outputPath, html);
+      savePdfProgress({
+        running: true,
+        current: index + 1,
+        total: customers.length,
+        ptName: customer,
+        status: "Membuat PDF",
+        step: 3,
+        complete: false,
+        error: "",
+      });
 
-    const closestTempo = getClosestTempo(invoices);
-    logRows.push({
-      nama: customer,
-      total: formatCurrency(totalTagihan),
-      tempo: closestTempo ? formatDateId(closestTempo) : "-",
-      pdf: `/generated/pdfs/${encodeURIComponent(outputFolderName)}/${encodeURIComponent(fileName)}`,
-      nomor: master.phone,
-      wilayah: master.wilayah,
-    });
+      const html = buildPdfHtml({ customer, invoices, periodeRows: periodRows, logoDataUrl });
+      await renderPdfFile(outputPath, html, browser);
+
+      let driveUrl = null;
+      if (useDrive) {
+        try {
+          savePdfProgress({ running: true, current: index + 1, total: customers.length, ptName: customer, status: "Upload ke Google Drive", step: 3, complete: false, error: "" });
+          driveUrl = await uploadToDrive(outputPath, fileName);
+        } catch (driveErr) {
+          emitLog("error", `Upload Drive gagal untuk ${customer}: ${driveErr.message}`);
+        }
+      }
+
+      const closestTempo = getClosestTempo(invoices);
+      logRows.push({
+        nama: customer,
+        total: formatCurrency(totalTagihan),
+        tempo: closestTempo ? formatDateId(closestTempo) : "-",
+        pdf: `/generated/pdfs/${encodeURIComponent(outputFolderName)}/${encodeURIComponent(fileName)}`,
+        driveUrl,
+        nomor: master.phone,
+        wilayah: master.wilayah,
+      });
+    }
+  } finally {
+    await browser.close();
   }
 
   savePdfLogData({
@@ -1851,6 +2024,35 @@ async function sendSingleMessage(customer) {
   return true;
 }
 
+async function sendPdfToCustomer(row) {
+  const phone = normalizePhone(row.nomor);
+  if (!phone) throw new Error("Nomor tidak valid");
+  await ensureWhatsAppStable();
+  const chatId = `${phone}@c.us`;
+  const numberId = await waClient.getNumberId(phone);
+  if (!numberId) throw new Error("Nomor tidak terdaftar di WhatsApp");
+  const template = getTemplate();
+  const caption = generateMessage(
+    { nama: row.nama, nomor: row.nomor, total: row.total, tempo: row.tempo, pdf: "(terlampir)" },
+    template
+  );
+  if (row.pdf) {
+    const pdfRelUrl = row.pdf.replace(/^\/generated\//, "");
+    const filePath = path.join(GENERATED_DIR, ...pdfRelUrl.split("/").map(decodeURIComponent));
+    if (fs.existsSync(filePath)) {
+      const base64Data = fs.readFileSync(filePath).toString("base64");
+      const media = new MessageMedia("application/pdf", base64Data, path.basename(filePath));
+      await waClient.sendMessage(chatId, media, { caption });
+    } else {
+      await waClient.sendMessage(chatId, caption);
+    }
+  } else {
+    await waClient.sendMessage(chatId, caption);
+  }
+  await sleep(randomBetween(500, 1200));
+  return true;
+}
+
 async function sendWithRetry(customer, retryCount = 3) {
   let lastError = null;
 
@@ -2136,6 +2338,42 @@ app.post("/api/load-customers", async (req, res) => {
   }
 });
 
+app.get("/api/gsheet/input", async (req, res) => {
+  try {
+    const config = getGSheetConfig();
+    if (!config.url) {
+      return res.status(400).json({ success: false, message: "URL Google Sheet belum disimpan" });
+    }
+    const workbook = await loadWorkbookFromGoogleSheet(config.url);
+    const matrix = getSheetMatrix(workbook, "INPUT");
+    if (!matrix.length) return res.json({ success: true, headers: [], rows: [] });
+
+    // Build headers from first row — skip columns with no header text
+    const rawHeaders = matrix[0];
+    const headers = [];
+    rawHeaders.forEach((cell, i) => {
+      const label = String(cell ?? "").trim();
+      if (label) headers.push({ key: `c${i}`, label, colIndex: i });
+    });
+
+    // Data rows — skip fully-empty rows
+    const rows = matrix.slice(1)
+      .filter(row => headers.some(h => String(row[h.colIndex] ?? "").trim()))
+      .map(row => {
+        const obj = {};
+        headers.forEach(h => { obj[h.key] = row[h.colIndex] ?? ""; });
+        return obj;
+      });
+
+    // Column mapping used for PDF generation (col index → pdf field)
+    const pdfMapping = { noInvoice: "c0", tanggalInvoice: "c1", termin: "c2", customer: "c4", tagihan: "c6", tempo: "c13", penagih: "c15" };
+
+    return res.json({ success: true, headers, rows, pdfMapping });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 app.get("/api/pdf/status", (req, res) => {
   res.json({
     success: true,
@@ -2204,6 +2442,51 @@ app.delete("/api/pdf/logo", (req, res) => {
   }
 });
 
+app.post("/api/pdf/upload-excel", upload.single("file"), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: "File Excel tidak ditemukan" });
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+    const rows = buildTemporaryRowsFromWorkbook(workbook);
+    const masterMap = buildMasterDataLookup(workbook);
+    const periodeMap = buildPeriodeSummaryMap(workbook);
+
+    // Serialize Maps to plain objects for JSON storage
+    const masterData = {};
+    for (const [k, v] of masterMap) masterData[k] = v;
+    const periodeData = {};
+    for (const [k, v] of periodeMap) periodeData[k] = v;
+
+    savePdfWorkbookData({ rows, masterData, periodeData });
+
+    const previewRows = rows.map((row) => ({
+      noInvoice: row.noInvoice || "",
+      tanggalInvoice: formatDateId(row.tanggalInvoice),
+      termin: row.termin || "",
+      tempo: formatDateId(row.tempo),
+      customer: row.customer || "",
+      tagihan: parseNumberish(row.tagihan) || 0,
+      penagih: row.penagih || "",
+    }));
+
+    savePdfTemporaryData({
+      headers: ["No Invoice", "Tanggal Invoice", "Termin", "Tempo", "Customer", "Tagihan", "Penagih"],
+      rows: previewRows,
+      sourceSheet: req.file.originalname || "Excel",
+    });
+
+    const customerCount = new Set(rows.filter((r) => r.customer).map((r) => r.customer)).size;
+    return res.json({
+      success: true,
+      message: `${rows.length} baris dari ${customerCount} customer berhasil dimuat`,
+      rows: previewRows,
+      customerCount,
+      fileName: req.file.originalname,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 app.post("/api/pdf/generate-temporary", async (req, res) => {
   try {
     const data = await buildPdfTemporaryFromGoogleSheet();
@@ -2217,6 +2500,22 @@ app.post("/api/pdf/generate-temporary", async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+});
+
+app.put("/api/pdf/temporary/rows", (req, res) => {
+  try {
+    const { rows } = req.body;
+    if (!Array.isArray(rows)) {
+      return res.status(400).json({ success: false, message: "rows harus array" });
+    }
+    const current = getPdfTemporaryData();
+    savePdfTemporaryData({ ...current, rows });
+    const workbook = getPdfWorkbookData();
+    if (workbook) savePdfWorkbookData({ ...workbook, rows });
+    return res.json({ success: true, message: "Data berhasil disimpan" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -2244,6 +2543,7 @@ app.post("/api/pdf/generate-per-pt", async (req, res) => {
     setImmediate(async () => {
       try {
         await generatePdfPerPtJob();
+        io.emit("pdf-done", { success: true });
       } catch (error) {
         savePdfProgress({
           running: false,
@@ -2251,6 +2551,7 @@ app.post("/api/pdf/generate-per-pt", async (req, res) => {
           status: "Generate PDF gagal",
           error: error.message,
         });
+        io.emit("pdf-error", { error: error.message });
         emitLog("error", `Generate PDF gagal: ${error.message}`);
       } finally {
         isPdfGenerating = false;
@@ -2269,6 +2570,68 @@ app.post("/api/pdf/generate-per-pt", async (req, res) => {
       message: error.message,
     });
   }
+});
+
+app.post("/api/pdf/send-via-wa", async (req, res) => {
+  try {
+    const { rows, sessionId } = req.body;
+    const targetSessionId = resolveSessionId(sessionId);
+
+    if (isSending) return res.status(400).json({ success: false, message: "Proses pengiriman lain masih berjalan" });
+    if (!Array.isArray(rows) || !rows.length) return res.status(400).json({ success: false, message: "Data PDF kosong" });
+    if (!targetSessionId) return res.status(400).json({ success: false, message: "Pilih akun WhatsApp terlebih dahulu" });
+
+    if (targetSessionId !== activeSessionId || !waClient || !isWhatsAppReady) {
+      await initWhatsAppClient({ sessionId: targetSessionId });
+    }
+    if (!waClient || !isWhatsAppReady) return res.status(400).json({ success: false, message: "WhatsApp belum login / belum terhubung" });
+
+    isSending = true;
+    setImmediate(async () => {
+      const results = [];
+      try {
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          io.emit("pdf-wa-progress", { current: i + 1, total: rows.length, customer: row.nama || "-" });
+          try {
+            emitLog("info", `Kirim PDF ke: ${row.nama || "-"} (${row.nomor || "-"})`);
+            await sendPdfToCustomer(row);
+            results.push({ success: true, customer: row.nama });
+            emitLog("success", `PDF terkirim ke ${row.nama}`);
+          } catch (err) {
+            results.push({ success: false, customer: row.nama, error: err.message });
+            emitLog("error", `Gagal kirim PDF ke ${row.nama}: ${err.message}`);
+          }
+          if (i < rows.length - 1) await sleep(randomBetween(2000, 4000));
+        }
+        io.emit("pdf-wa-done", { results });
+      } catch (err) {
+        io.emit("pdf-wa-error", { error: err.message });
+      } finally {
+        isSending = false;
+      }
+    });
+
+    return res.json({ success: true, message: `Mulai kirim ${rows.length} PDF via WhatsApp` });
+  } catch (error) {
+    isSending = false;
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.get("/api/pdf/drive-config", (req, res) => {
+  const config = getDriveConfig();
+  return res.json({ success: true, ...config });
+});
+
+app.post("/api/pdf/drive-config", (req, res) => {
+  const { folderId, enabled, scriptUrl } = req.body;
+  saveDriveConfig({
+    folderId: String(folderId || "").trim(),
+    enabled: !!enabled,
+    scriptUrl: String(scriptUrl || "").trim(),
+  });
+  return res.json({ success: true, message: "Konfigurasi Google Drive disimpan" });
 });
 
 app.post("/api/upload-excel", upload.single("file"), async (req, res) => {

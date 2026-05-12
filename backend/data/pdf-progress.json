@@ -1,11 +1,11 @@
 {
   "running": false,
   "current": 1,
-  "total": 144,
-  "ptName": "MARANATHA TEKNIK",
-  "status": "Generate PDF gagal",
-  "step": 3,
+  "total": 1,
+  "ptName": "Selesai",
+  "status": "Semua PDF berhasil dibuat",
+  "step": 4,
   "complete": true,
-  "error": "formatTime is not defined",
-  "updatedAt": "2026-05-07T06:52:02.193Z"
+  "error": "",
+  "updatedAt": "2026-05-12T03:04:04.167Z"
 }

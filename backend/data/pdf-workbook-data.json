@@ -1,0 +1,2185 @@
+{
+  "rows": [
+    {
+      "noInvoice": "SI260100032",
+      "tanggalInvoice": 46024,
+      "termin": "3 Bulan",
+      "tempo": 46114,
+      "customer": "MARANATHA TEKNIK",
+      "tagihan": 1869221.61,
+      "penagih": "Rina Rahayu",
+      "sourceRow": 2
+    }
+  ],
+  "masterData": {
+    "pt bhakti ratutama jaya": {
+      "phone": "6287714332158",
+      "wilayah": "Luar Kota"
+    },
+    "cv anugrah teknik jaya": {
+      "phone": "628115425532",
+      "wilayah": "Luar Kota"
+    },
+    "cv banua jaya": {
+      "phone": "628123131083",
+      "wilayah": "Luar Kota"
+    },
+    "cv sumber bahagia teknik": {
+      "phone": "628118683988",
+      "wilayah": "Dalam Kota"
+    },
+    "steven": {
+      "phone": "6281352189999",
+      "wilayah": "Luar Kota"
+    },
+    "kris": {
+      "phone": "628119941333",
+      "wilayah": "Dalam Kota"
+    },
+    "cv sintesa teknik": {
+      "phone": "6281255593343",
+      "wilayah": "Luar Kota"
+    },
+    "kurnia jaya": {
+      "phone": "6282246027295",
+      "wilayah": "Luar Kota"
+    },
+    "mega kharisma": {
+      "phone": "62811578503",
+      "wilayah": "Luar Kota"
+    },
+    "ud baja utama teknik": {
+      "phone": "62811514120",
+      "wilayah": "Luar Kota"
+    },
+    "metro teknik": {
+      "phone": "6281237415254",
+      "wilayah": "Luar Kota"
+    },
+    "pt interindo sukses abadi": {
+      "phone": "6282112781975",
+      "wilayah": "Dalam Kota"
+    },
+    "cv karya pratama perkasa": {
+      "phone": "628113994466",
+      "wilayah": "Luar Kota"
+    },
+    "pt nelayan maritim jaya": {
+      "phone": "6281346582323",
+      "wilayah": "Luar Kota"
+    },
+    "cv mitra abadi sukses": {
+      "phone": "628115702525",
+      "wilayah": "Luar Kota"
+    },
+    "cv mitra gemilang sukses": {
+      "phone": "6285245318128",
+      "wilayah": "Luar Kota"
+    },
+    "cv toolsindo berkat sejahtera": {
+      "phone": "6285821506285",
+      "wilayah": "Luar Kota"
+    },
+    "cv sumber mitra": {
+      "phone": "628125597777",
+      "wilayah": "Luar Kota"
+    },
+    "cv kawijaya teknik mandiri": {
+      "phone": "6285333578999",
+      "wilayah": "Luar Kota"
+    },
+    "cv rukun abadi jaya": {
+      "phone": "6281346369328",
+      "wilayah": "Luar Kota"
+    },
+    "pt javatec trimitra utama ": {
+      "phone": "6285156548119",
+      "wilayah": "Luar Kota"
+    },
+    "cv panca logam teknik sukses": {
+      "phone": "6285267957013",
+      "wilayah": "Luar Kota"
+    },
+    "cv kuat giat ninigi": {
+      "phone": "6285959711635",
+      "wilayah": "Dalam Kota"
+    },
+    "pt kuat ninigi indonesia": {
+      "phone": "6289531422922",
+      "wilayah": "Dalam Kota"
+    },
+    "cv cipta pratama abadi": {
+      "phone": "62811747687",
+      "wilayah": "Luar Kota"
+    },
+    "cv sentral safety": {
+      "phone": "6281399339558",
+      "wilayah": "Luar Kota"
+    },
+    "melinda": {
+      "phone": "628126607718",
+      "wilayah": "Luar Kota"
+    },
+    "pt global teknik multikarya": {
+      "phone": "6285658962533",
+      "wilayah": "Luar Kota"
+    },
+    "agnis industri matriks": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "cv satrya tehnik machinery": {
+      "phone": "62895616047198",
+      "wilayah": "Luar Kota"
+    },
+    "sumber bahagia abadi": {
+      "phone": "628127124625",
+      "wilayah": "Luar Kota"
+    },
+    "cv semangat maju": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "pt andal jaya perkasa": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "kim teknik": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "cv laju jaya teknik": {
+      "phone": "6283832251382",
+      "wilayah": "Luar Kota"
+    },
+    "pt persada mandiri jakarta": {
+      "phone": "6281255550078",
+      "wilayah": "Dalam Kota"
+    },
+    "pt canne berniaga berkah": {
+      "phone": "6281342520888",
+      "wilayah": "Luar Kota"
+    },
+    "hadisun": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "rajawali teknik jakarta": {
+      "phone": "6289521687878",
+      "wilayah": "Dalam Kota"
+    },
+    "maranatha teknik": {
+      "phone": "6281283636605",
+      "wilayah": "Dalam Kota"
+    },
+    "sinar bangunan ii": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "cv mega sejahtera lestari": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "pt gracia abadi semesta": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "cv maju lancar sentosa": {
+      "phone": "6281231058888",
+      "wilayah": "Luar Kota"
+    },
+    "pt bentang persada internusa": {
+      "phone": "628113526178",
+      "wilayah": "Luar Kota"
+    },
+    "cv million jaya abadi": {
+      "phone": "6281259006038",
+      "wilayah": "Luar Kota"
+    },
+    "cv maju jaya hardware": {
+      "phone": "6282131045714",
+      "wilayah": "Luar Kota"
+    },
+    "(d) sama maju": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "cv jaya teknik": {
+      "phone": "6281239122828",
+      "wilayah": "Luar Kota"
+    },
+    "cv rajawali marketing": {
+      "phone": "6282336533226",
+      "wilayah": "Luar Kota"
+    },
+    "cv baja utama sejahtera": {
+      "phone": "6282190925825",
+      "wilayah": "Luar Kota"
+    },
+    "cv super inti perkakas": {
+      "phone": "6281285977788",
+      "wilayah": "Luar Kota"
+    },
+    "cv cahaya perkasa mandiri": {
+      "phone": "6281243337006",
+      "wilayah": "Luar Kota"
+    },
+    "cv karya bersama teknik": {
+      "phone": "6281243033252",
+      "wilayah": "Luar Kota"
+    },
+    "pt alga pratama nusantara": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "pt indotool sukses makmur": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "pt anekatama makmur abadi": {
+      "phone": "6287820909103",
+      "wilayah": "Dalam Kota"
+    },
+    "pt pilar teknik andalan indonesia": {
+      "phone": "6282125515570",
+      "wilayah": "Luar Kota"
+    },
+    "setia teknik": {
+      "phone": "6281277974443",
+      "wilayah": "Luar Kota"
+    },
+    "cv gunung mas sejahtera": {
+      "phone": "6281269627621",
+      "wilayah": "Luar Kota"
+    },
+    "kawan baru": {
+      "phone": "6285262365254",
+      "wilayah": "Luar Kota"
+    },
+    "sarana baru": {
+      "phone": "628127654409",
+      "wilayah": "Luar Kota"
+    },
+    "abdullah": {
+      "phone": "6282163228863",
+      "wilayah": "Luar Kota"
+    },
+    "mhd arief hidayat": {
+      "phone": "62811646487",
+      "wilayah": "Luar Kota"
+    },
+    "cv cv bhina karya persada": {
+      "phone": "6281260512333",
+      "wilayah": "Luar Kota"
+    },
+    "pt cahaya surga teknik indonesia": {
+      "phone": "6285370353447",
+      "wilayah": "Luar Kota"
+    },
+    "m yahya": {
+      "phone": "6281361331788",
+      "wilayah": "Luar Kota"
+    },
+    "pt riau paramita tenindo": {
+      "phone": "6281275372595",
+      "wilayah": "Luar Kota"
+    },
+    "cv buana jaya teknik": {
+      "phone": "6285365502242",
+      "wilayah": "Luar Kota"
+    },
+    "mk": {
+      "phone": "6281375686356",
+      "wilayah": "Luar Kota"
+    },
+    "pt global spex mandiri": {
+      "phone": "6281554522342",
+      "wilayah": "Luar Kota"
+    },
+    "cv empat jaya": {
+      "phone": "628983803622",
+      "wilayah": "Luar Kota"
+    },
+    "cv tekad jaya": {
+      "phone": "6281329941951",
+      "wilayah": "Luar Kota"
+    },
+    "tjitrosantoso sion": {
+      "phone": "6285218180181",
+      "wilayah": "Luar Kota"
+    },
+    "pt aneka hutama persada": {
+      "phone": "6287837091191",
+      "wilayah": "Dalam Kota"
+    },
+    "adi lestari": {
+      "phone": "6285264857986",
+      "wilayah": "Luar Kota"
+    },
+    "cv sumber bahagia": {
+      "phone": "6282375858888",
+      "wilayah": "Luar Kota"
+    },
+    "cv setia teknik": {
+      "phone": "6281277974443",
+      "wilayah": "Luar Kota"
+    },
+    "mandiri teknik": {
+      "phone": "6281280205027",
+      "wilayah": "Luar Kota"
+    },
+    "cahaya abadi": {
+      "phone": "6281367013512",
+      "wilayah": "Luar Kota"
+    },
+    "cv timur jaya anugerah": {
+      "phone": "62811205273",
+      "wilayah": "Luar Kota"
+    },
+    "pt intani jaya semesta": {
+      "phone": "6281615003534",
+      "wilayah": "Luar Kota"
+    },
+    "cv sekawan mulia abadi": {
+      "phone": "62895806626967",
+      "wilayah": "Luar Kota"
+    },
+    "sinar jaya": {
+      "phone": "62811442168",
+      "wilayah": "Luar Kota"
+    },
+    "kwee ing han": {
+      "phone": "6281328099903",
+      "wilayah": "Luar Kota"
+    },
+    "cv mitra graha putra": {
+      "phone": "6285728093088",
+      "wilayah": "Luar Kota"
+    },
+    "cv mulia agung sentosa": {
+      "phone": "62895806626967",
+      "wilayah": "Luar Kota"
+    },
+    "adi eka prasetyo": {
+      "phone": "6287722158960",
+      "wilayah": "Luar Kota"
+    },
+    "cv cahyo waskito": {
+      "phone": "6281802476688",
+      "wilayah": "Luar Kota"
+    },
+    "pt graha baja marindo": {
+      "phone": "628113358877",
+      "wilayah": "Luar Kota"
+    },
+    "pt damas raya utama": {
+      "phone": "628116616789",
+      "wilayah": "Luar Kota"
+    },
+    "pt fajar agung pratama": {
+      "phone": "6285896766714",
+      "wilayah": "Luar Kota"
+    },
+    "johny": {
+      "phone": "6285268077096",
+      "wilayah": "Luar Kota"
+    },
+    "cv cahaya laut abadi": {
+      "phone": "6282295103321",
+      "wilayah": "Luar Kota"
+    },
+    "pt multi selaras teknik": {
+      "phone": "6281378400078",
+      "wilayah": "Luar Kota"
+    },
+    "pt nikysay karya sukses": {
+      "phone": "6281908783333",
+      "wilayah": "Luar Kota"
+    },
+    "cv indomulti prakarsa mandiri": {
+      "phone": "6281374244344",
+      "wilayah": "Luar Kota"
+    },
+    "baja utama teknik": {
+      "phone": "6282191003993",
+      "wilayah": "Luar Kota"
+    },
+    "sap": {
+      "phone": "628126602564",
+      "wilayah": "Luar Kota"
+    },
+    "pt kharisma wdindo abadi": {
+      "phone": "6282391734058",
+      "wilayah": "Luar Kota"
+    },
+    "pt surya controtama indah": {
+      "phone": "6281362298848",
+      "wilayah": "Luar Kota"
+    },
+    "tanijar": {
+      "phone": "6285370353447",
+      "wilayah": "Luar Kota"
+    },
+    "pt global solution project": {
+      "phone": "6281268286715",
+      "wilayah": "Luar Kota"
+    },
+    "sinar logam": {
+      "phone": "6287766396924",
+      "wilayah": "Luar Kota"
+    },
+    "cv putra fanghin sejahtera": {
+      "phone": "628116384050",
+      "wilayah": "Luar Kota"
+    },
+    "pt antara tetap jaya": {
+      "phone": "628116529890",
+      "wilayah": "Luar Kota"
+    },
+    "pt yanmarindo perkasa": {
+      "phone": "6289524699159",
+      "wilayah": "Luar Kota"
+    },
+    "pt aneka niaga sentral perkakas": {
+      "phone": "6281247968878",
+      "wilayah": "Luar Kota"
+    },
+    "protecta": {
+      "phone": "6281268792799",
+      "wilayah": "Luar Kota"
+    },
+    "pt biondi jaya perkasa": {
+      "phone": "6281388920193",
+      "wilayah": "Dalam Kota"
+    },
+    "biondi teknik": {
+      "phone": "6281388920193",
+      "wilayah": "Dalam Kota"
+    },
+    "pt adijaya buana perkasa": {
+      "phone": "6282312608905",
+      "wilayah": "Dalam Kota"
+    },
+    "pt samudra teknik sejahtera": {
+      "phone": "6282211964204",
+      "wilayah": "Dalam Kota"
+    },
+    "pt yunika trijaya sentosa": {
+      "phone": "6281916005146",
+      "wilayah": "Luar Kota"
+    },
+    "pt pundi mas aryota": {
+      "phone": "6282112178006",
+      "wilayah": "Dalam Kota"
+    },
+    "cv logam jaya prosperindo": {
+      "phone": "628125603122",
+      "wilayah": "Luar Kota"
+    },
+    "cv mahajaya golden ocean": {
+      "phone": "6283159033408",
+      "wilayah": "Luar Kota"
+    },
+    "tet hiung": {
+      "phone": "6285347402066",
+      "wilayah": "Luar Kota"
+    },
+    "cv mitra jaya abadi": {
+      "phone": "6285365956188",
+      "wilayah": "Luar Kota"
+    },
+    "cv sido semi makmur": {
+      "phone": "628123005512",
+      "wilayah": "Luar Kota"
+    },
+    "pt faedah teknik": {
+      "phone": "628116328484",
+      "wilayah": "Luar Kota"
+    },
+    "pt papasari": {
+      "phone": "6285885659438",
+      "wilayah": "Dalam Kota"
+    },
+    "cv indomas jaya": {
+      "phone": "6282154370858",
+      "wilayah": "Luar Kota"
+    },
+    "cv pionir mandiri": {
+      "phone": "6285251833388",
+      "wilayah": "Luar Kota"
+    },
+    "juni fatimah": {
+      "phone": "6282367629999",
+      "wilayah": "Luar Kota"
+    },
+    "cv maseba teknik": {
+      "phone": "6282250665233",
+      "wilayah": "Luar Kota"
+    },
+    "cv kota baru mandiri": {
+      "phone": "6285931562575",
+      "wilayah": "Dalam Kota"
+    },
+    "pt central jaya tama abadi": {
+      "phone": "62811549533",
+      "wilayah": "Luar Kota"
+    },
+    "pt indo prima perkakas": {
+      "phone": "6281378870688",
+      "wilayah": "KOSONG"
+    },
+    "bonari": {
+      "phone": "6281268229000",
+      "wilayah": "KOSONG"
+    },
+    "indo perkakas": {
+      "phone": "628117621999",
+      "wilayah": "KOSONG"
+    },
+    "dunia tehnik": {
+      "phone": "6285275615008",
+      "wilayah": "KOSONG"
+    },
+    "pang donny wijaya": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "pt maju bersama jayakarta": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "tan tjie kiong": {
+      "phone": "628126018187",
+      "wilayah": "KOSONG"
+    },
+    "pan tji hwa": {
+      "phone": "6281361382009",
+      "wilayah": "KOSONG"
+    },
+    "cv glorindo teknik sejahtera": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "cv bintang prima sentosa": {
+      "phone": "628127584811",
+      "wilayah": "KOSONG"
+    },
+    "frans haryanto": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "cv arya teknik": {
+      "phone": "6285362627338",
+      "wilayah": "KOSONG"
+    },
+    "pt aryateknik makmursentosa": {
+      "phone": "6285362627338",
+      "wilayah": "KOSONG"
+    },
+    "kinari widjaja": {
+      "phone": "628126052657",
+      "wilayah": "KOSONG"
+    },
+    "pt glistagen": {
+      "phone": "6282172129597",
+      "wilayah": "Dalam Kota"
+    },
+    "cv surya wijaya sakti": {
+      "phone": "628129568570",
+      "wilayah": "Luar Kota"
+    },
+    "cv meiar": {
+      "phone": "6285169770057",
+      "wilayah": "Luar Kota"
+    },
+    "cv mulyo rejeki": {
+      "phone": "6281325153777",
+      "wilayah": "Luar Kota"
+    },
+    "cv cahaya material indonesia": {
+      "phone": "6281232004403",
+      "wilayah": "Luar Kota"
+    },
+    "lie lian": {
+      "phone": "628156015238",
+      "wilayah": "Luar Kota"
+    },
+    "aj safety equipment": {
+      "phone": "6282331093136",
+      "wilayah": "Luar Kota"
+    },
+    "cv sentosa teknik": {
+      "phone": "628122863846",
+      "wilayah": "Luar Kota"
+    },
+    "cv modern teknik": {
+      "phone": "6281325851135",
+      "wilayah": "Luar Kota"
+    },
+    "istana jaya sejahteracv": {
+      "phone": "628164882120",
+      "wilayah": "Luar Kota"
+    },
+    "maria g ngajung": {
+      "phone": "6285714306271",
+      "wilayah": "Dalam Kota"
+    },
+    "mitra safety": {
+      "phone": "6281291883355",
+      "wilayah": "Dalam Kota"
+    },
+    "sumber baut": {
+      "phone": "6289523113858",
+      "wilayah": "Luar Kota"
+    },
+    "cv sumber teknik": {
+      "phone": "6281919564514",
+      "wilayah": "Luar Kota"
+    },
+    "ina/andy": {
+      "phone": "6285100045459",
+      "wilayah": "Luar Kota"
+    },
+    "hauw hian": {
+      "phone": "628112147788",
+      "wilayah": "Luar Kota"
+    },
+    "pt jafian welding indonesia": {
+      "phone": "6287888121990",
+      "wilayah": "Dalam Kota"
+    },
+    "cobra steel indonesia": {
+      "phone": "6287888121990",
+      "wilayah": "Dalam Kota"
+    },
+    "pt safety equipment indonesia": {
+      "phone": "6287888502925",
+      "wilayah": "Dalam Kota"
+    },
+    "pt ragil jaya sejahtera": {
+      "phone": "628568883900",
+      "wilayah": "Luar Kota"
+    },
+    "cv bukit mas raya": {
+      "phone": "6281374243714",
+      "wilayah": "Luar Kota"
+    },
+    "pt rian jaya darma": {
+      "phone": "6281318101966",
+      "wilayah": "Dalam Kota"
+    },
+    "pt tunas baru djaya": {
+      "phone": "6281548857291",
+      "wilayah": "Dalam Kota"
+    },
+    "ang alihansyah soehanto": {
+      "phone": "6285230037105",
+      "wilayah": "Dalam Kota"
+    },
+    "lukas ardianto purnomo": {
+      "phone": "6285210678930",
+      "wilayah": "Luar Kota"
+    },
+    "surya teknik": {
+      "phone": "6281357813084",
+      "wilayah": "Luar Kota"
+    },
+    "cv sinar logam jaya": {
+      "phone": "62811663572",
+      "wilayah": "Luar Kota"
+    },
+    "cv anugrah baru tehnik": {
+      "phone": "6287875716688",
+      "wilayah": "Luar Kota"
+    },
+    "herry lys": {
+      "phone": "62811430079",
+      "wilayah": "Luar Kota"
+    },
+    "pt sinar logam bangun sejati": {
+      "phone": "628127820156",
+      "wilayah": "Luar Kota"
+    },
+    "cv angka baru": {
+      "phone": "628123140951",
+      "wilayah": "Luar Kota"
+    },
+    "pt karya bersama teknindo": {
+      "phone": "6281243033252",
+      "wilayah": "Luar Kota"
+    },
+    "matsum tjiawi": {
+      "phone": "628116060825",
+      "wilayah": "KOSONG"
+    },
+    "cv aji nusa jaya": {
+      "phone": "628121717878",
+      "wilayah": "Luar Kota"
+    },
+    "surya teknik mandiri jaya": {
+      "phone": "6281380901307",
+      "wilayah": "Dalam Kota"
+    },
+    "pt jameson permai": {
+      "phone": "KOSONG",
+      "wilayah": "Dalam Kota"
+    },
+    "pt samudra baut teknik": {
+      "phone": "6282295103321",
+      "wilayah": "Luar Kota"
+    },
+    "cv indah jaya teknik": {
+      "phone": "KOSONG",
+      "wilayah": "Luar Kota"
+    },
+    "luar kota": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "dalam kota": {
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    }
+  },
+  "periodeData": {
+    "pc-2601065 benny angkasa": {
+      "April 2026": 46056526
+    },
+    "pc-2500931 agnis industri matriks": {
+      "April 2026": 152818681,
+      "Maret 2026": 53408924,
+      "Februari 2026": 80466110,
+      "Januari 2026": 118643491
+    },
+    "cv cust00677 metropolitan": {
+      "April 2026": 170225152,
+      "Maret 2026": 108362673,
+      "Februari 2026": 173493159,
+      "Januari 2026": 70851117
+    },
+    "cv cust00863 rajawali marketing": {
+      "April 2026": 168716745,
+      "Maret 2026": 204161735,
+      "Februari 2026": 82219892,
+      "Januari 2026": 181816392
+    },
+    "cv cust00859 jaya teknik": {
+      "April 2026": 28567620,
+      "Maret 2026": 15294150,
+      "Januari 2026": 17520660
+    },
+    "pc-2200270 aj safety equipment": {
+      "April 2026": 74840650,
+      "Maret 2026": 97255800,
+      "Februari 2026": 65634543,
+      "Januari 2026": 54047625
+    },
+    "cv pc-2200158 hanjaya cv : sentral safety": {
+      "April 2026": 135246615,
+      "Maret 2026": 40846555,
+      "Februari 2026": 64679880,
+      "Januari 2026": 60682131
+    },
+    "pt cust00521 elite logam baja": {
+      "April 2026": 58750000
+    },
+    "pt pc-2300530 selamat pd : summa utama sejahtera": {
+      "April 2026": 242050459,
+      "Maret 2026": 107025952,
+      "Februari 2026": 203369313,
+      "Januari 2026": 200149775
+    },
+    "pt cust00187 biondi jaya perkasa": {
+      "April 2026": 22428000,
+      "Maret 2026": 15551040,
+      "Februari 2026": 21744000,
+      "Januari 2026": 32894400
+    },
+    "pt cust00269 indah mitra rahardja": {
+      "April 2026": 319018658,
+      "Maret 2026": 129608743,
+      "Februari 2026": 378821477,
+      "Januari 2026": 209271047
+    },
+    "cv pc-2501013 rajawali teknik : rajawali tatamakmur": {
+      "April 2026": 31985870,
+      "Maret 2026": 5791660,
+      "Februari 2026": 13325212,
+      "Januari 2026": 13587390
+    },
+    "pt pc-2200386 putra tunggal daya": {
+      "April 2026": 1902739723,
+      "Maret 2026": 1627637156,
+      "Februari 2026": 1960312818,
+      "Januari 2026": 1648389138
+    },
+    "pt cust00118 glistagen": {
+      "April 2026": 242453712,
+      "Maret 2026": 194121599,
+      "Februari 2026": 178717118,
+      "Januari 2026": 294384119
+    },
+    "pt pc-2200162 dakara citra tangguh": {
+      "April 2026": 2643300,
+      "Februari 2026": 7514100
+    },
+    "pt pc-00032 indo prima perkakas": {
+      "April 2026": 73454054,
+      "Februari 2026": 5401704,
+      "Januari 2026": 47546402
+    },
+    "pc-2200261 sarana baru": {
+      "April 2026": 12814990,
+      "Februari 2026": 12026103
+    },
+    "pt pc-2400743 atosindo mitra industri pt : pandawa mitra industri": {
+      "April 2026": 72768937,
+      "Maret 2026": 93908581,
+      "Februari 2026": 93999418,
+      "Januari 2026": 76246703
+    },
+    "cv cust00704 sumber bahagia": {
+      "April 2026": 41071260,
+      "Maret 2026": 23524983,
+      "Februari 2026": 51426788,
+      "Januari 2026": 36301354
+    },
+    "pc-2500845 herri prasetyo": {
+      "April 2026": 6339445,
+      "Maret 2026": 1834200,
+      "Februari 2026": 2324000,
+      "Januari 2026": 33245200
+    },
+    "pt cust00263 aegisindo mitra sejati": {
+      "April 2026": 1195443667,
+      "Maret 2026": 581039448,
+      "Februari 2026": 929486936,
+      "Januari 2026": 1334095990
+    },
+    "pt cust00165 golden indo teknik": {
+      "April 2026": 425558113,
+      "Maret 2026": 201627750,
+      "Februari 2026": 336114822,
+      "Januari 2026": 1059051728
+    },
+    "cust00995 cash": {
+      "April 2026": 510060439,
+      "Maret 2026": 200211912,
+      "Februari 2026": 561976471,
+      "Januari 2026": 358966045
+    },
+    "pt pc-2300587 jaya abadi (hg) : interindo sukses abadi": {
+      "April 2026": 101493580,
+      "Maret 2026": 172585078,
+      "Februari 2026": 129199365,
+      "Januari 2026": 590734779
+    },
+    "cv pc-2601063 ragam aneka berkarya": {
+      "April 2026": 2087500,
+      "Maret 2026": 3916000
+    },
+    "pt cust01095 monotaro indonesia": {
+      "April 2026": 250000,
+      "Maret 2026": 916000,
+      "Januari 2026": 1148000
+    },
+    "pt pc-2300618 makmur persada solusindo": {
+      "April 2026": 58983603,
+      "Maret 2026": 49895017,
+      "Februari 2026": 3802400,
+      "Januari 2026": 61455658
+    },
+    "pc-2200361 muria muria": {
+      "April 2026": 5518187,
+      "Maret 2026": 15551250,
+      "Januari 2026": 9931664
+    },
+    "pt cust00682 yanmarindo perkasa": {
+      "April 2026": 93170084,
+      "Maret 2026": 65762000,
+      "Februari 2026": 39618550,
+      "Januari 2026": 94323490
+    },
+    "pt cust00648 star teknik cv : riau paramita tenindo": {
+      "April 2026": 269140273,
+      "Maret 2026": 208176667,
+      "Februari 2026": 220556913,
+      "Januari 2026": 474235578
+    },
+    "pt pc-2400646 karya maju teknindo": {
+      "April 2026": 90148707
+    },
+    "pt cust00659 aneka niaga sentral perkakas": {
+      "April 2026": 137996364,
+      "Maret 2026": 44735000,
+      "Januari 2026": 142558040
+    },
+    "cv cust00701 buana jaya teknik": {
+      "April 2026": 309593008,
+      "Maret 2026": 31935543,
+      "Februari 2026": 36789802,
+      "Januari 2026": 90451127
+    },
+    "pt cust00657 sinar teknik sejahtera": {
+      "April 2026": 7854600,
+      "Januari 2026": 13093020
+    },
+    "pc-2200372 sap sap": {
+      "April 2026": 17518092,
+      "Maret 2026": 47620786,
+      "Januari 2026": 41916000
+    },
+    "pt cust00644 karya manggala sejahtera": {
+      "April 2026": 327418217,
+      "Maret 2026": 13711500,
+      "Februari 2026": 24514176,
+      "Januari 2026": 228816271
+    },
+    "pc-2200268 protecta protecta": {
+      "April 2026": 98810610,
+      "Maret 2026": 69459400,
+      "Januari 2026": 106870883
+    },
+    "pt pc-2500925 tulus abadi sukses cv : tulus harmoni sejahtera": {
+      "April 2026": 43257619,
+      "Februari 2026": 16041954,
+      "Januari 2026": 10959010
+    },
+    "cv cust00947 sumber mitra": {
+      "April 2026": 208107317,
+      "Maret 2026": 122388932,
+      "Februari 2026": 111787742,
+      "Januari 2026": 66296890
+    },
+    "pc-2500854 tan liang tjun a michun wijaya": {
+      "April 2026": 13604200,
+      "Februari 2026": 3233000,
+      "Januari 2026": 101049678
+    },
+    "cv pc-2300564 sarana teknik berkah": {
+      "April 2026": 5120000,
+      "Maret 2026": 9810000
+    },
+    "cv cust00631 satrya tehnik machinery": {
+      "April 2026": 5549000,
+      "Januari 2026": 12527756
+    },
+    "cv pc-00068 tulus abadi sukses": {
+      "April 2026": 32993808,
+      "Februari 2026": 6082695,
+      "Januari 2026": 22185770
+    },
+    "pt cust00441 maju bersama jayakarta": {
+      "April 2026": 193718178,
+      "Maret 2026": 244210896,
+      "Februari 2026": 217911541,
+      "Januari 2026": 181687797
+    },
+    "pt pc-2500831 sumber teknik (jkt) : pilar teknik andalan indonesia": {
+      "April 2026": 330508797,
+      "Maret 2026": 73989147,
+      "Februari 2026": 95847088,
+      "Januari 2026": 435672976
+    },
+    "cv pc-2200364 mulia abadi": {
+      "April 2026": 132930364,
+      "Maret 2026": 130460600,
+      "Februari 2026": 113444000,
+      "Januari 2026": 103919353
+    },
+    "pc-2200223 maju bersama jayakarta pt : pang donny wijaya": {
+      "April 2026": 100325497,
+      "Maret 2026": 21879124,
+      "Februari 2026": 72926414,
+      "Januari 2026": 94450439
+    },
+    "pc-2400747 wernastasia nogo hurint": {
+      "April 2026": 83569600,
+      "Maret 2026": 41900100,
+      "Februari 2026": 84947200,
+      "Januari 2026": 34392000
+    },
+    "cv cust01075 indomulti prakarsa mandiri": {
+      "April 2026": 121817210,
+      "Maret 2026": 27186188,
+      "Februari 2026": 37545505,
+      "Januari 2026": 129706400
+    },
+    "pt pc-00063 rinawa maju jaya": {
+      "April 2026": 72965835,
+      "Maret 2026": 26975315,
+      "Februari 2026": 87123755,
+      "Januari 2026": 169663765
+    },
+    "pt cust00672 global solution project": {
+      "April 2026": 202046576,
+      "Maret 2026": 40483400,
+      "Februari 2026": 89257547,
+      "Januari 2026": 44060240
+    },
+    "cv cust00010 indah jaya teknik": {
+      "April 2026": 54411724,
+      "Maret 2026": 52748150,
+      "Februari 2026": 72964242,
+      "Januari 2026": 114224909
+    },
+    "pt pc-2300623 nafero mitra sejati": {
+      "April 2026": 418845799,
+      "Maret 2026": 138102369,
+      "Februari 2026": 423034662,
+      "Januari 2026": 375689565
+    },
+    "cv pc-2300469 cv bhina karya persada": {
+      "April 2026": 16836204,
+      "Maret 2026": 2950000,
+      "Januari 2026": 49339078
+    },
+    "pt pc-2200191 canne berniaga berkah": {
+      "April 2026": 70760300,
+      "Maret 2026": 42175282,
+      "Februari 2026": 10478560,
+      "Januari 2026": 89629370
+    },
+    "pt cust00527 tan tjie kiong : mega jaya teknik mandiri": {
+      "April 2026": 5612555,
+      "Maret 2026": 22443490,
+      "Februari 2026": 12414210,
+      "Januari 2026": 76003260
+    },
+    "pc-2400638 tan tjie kiong": {
+      "April 2026": 72996000,
+      "Maret 2026": 50437660,
+      "Februari 2026": 31375000,
+      "Januari 2026": 29400000
+    },
+    "pt cust00066 selco indonesia": {
+      "April 2026": 1958000
+    },
+    "pc-2200276 dunia bintang teknik": {
+      "April 2026": 21035690,
+      "Maret 2026": 6766640,
+      "Februari 2026": 8441900,
+      "Januari 2026": 30143861
+    },
+    "pt pc-2601079 chani makmur jaya": {
+      "April 2026": 2700000
+    },
+    "pc-2300516 husin ismail": {
+      "April 2026": 1107000
+    },
+    "cv pc-2500822 sinar mandiri makmur": {
+      "April 2026": 38081500
+    },
+    "cv cust00330 sumber utama teknik": {
+      "April 2026": 12291660,
+      "Februari 2026": 994650,
+      "Januari 2026": 2252348
+    },
+    "pc-2500988 geesen aflah megumi": {
+      "April 2026": 59913800,
+      "Maret 2026": 3069000,
+      "Februari 2026": 60556500,
+      "Januari 2026": 12600000
+    },
+    "pt cust00254 sumber jayatama mandiri": {
+      "April 2026": 95521414,
+      "Maret 2026": 57939943,
+      "Januari 2026": 2602355
+    },
+    "pc-2200259 maju jaya (mdn)": {
+      "April 2026": 23460000
+    },
+    "cv cust00653 glorindo teknik sejahtera": {
+      "April 2026": 48012102,
+      "Maret 2026": 73701929,
+      "Februari 2026": 43134352,
+      "Januari 2026": 64564368
+    },
+    "pt cust00542 surya controtama indah": {
+      "April 2026": 77969355,
+      "Maret 2026": 32925000,
+      "Januari 2026": 25705760
+    },
+    "pt pc-2400715 cahaya prima cv : cahaya surga teknik indonesia": {
+      "April 2026": 39029250,
+      "Maret 2026": 16349400,
+      "Januari 2026": 56521000
+    },
+    "pt cust00739 bajasarana sejahtera pt : pelayaran usahagas elpindo": {
+      "April 2026": 30900000
+    },
+    "cv cust00492 cipta pratama abadi": {
+      "April 2026": 28105830,
+      "Maret 2026": 55406700,
+      "Januari 2026": 32547380
+    },
+    "cv cust00898 cahaya perkasa mandiri": {
+      "April 2026": 52333550,
+      "Maret 2026": 90001786,
+      "Februari 2026": 2766738,
+      "Januari 2026": 137731577
+    },
+    "pc-2300547 cahaya prima cv : tanijar tanijar": {
+      "April 2026": 40509800,
+      "Maret 2026": 16349400,
+      "Januari 2026": 144729528
+    },
+    "pt cust00369 pulauintan bajaperkasa konstruksi": {
+      "April 2026": 22830000,
+      "Maret 2026": 2696000,
+      "Februari 2026": 26710900,
+      "Januari 2026": 19040500
+    },
+    "pt cust00196 kharisma wira persada": {
+      "April 2026": 84501520,
+      "Maret 2026": 84938430,
+      "Februari 2026": 66384000,
+      "Januari 2026": 39751722
+    },
+    "pc-2200285 sinar baut": {
+      "April 2026": 7810150,
+      "Maret 2026": 2446120,
+      "Februari 2026": 12805390,
+      "Januari 2026": 7727300
+    },
+    "pc-2200328 aneka teknik -cimone-": {
+      "April 2026": 8820000,
+      "Maret 2026": 1000000,
+      "Februari 2026": 2736000,
+      "Januari 2026": 12192000
+    },
+    "cv cust00617 rony atmajaya : setia teknik": {
+      "April 2026": 4422000,
+      "Februari 2026": 9477300
+    },
+    "pt cust00171 dunia katiga indonesia": {
+      "April 2026": 88561000,
+      "Maret 2026": 14947320,
+      "Januari 2026": 23809877
+    },
+    "pc-2601072 steven steven : steven tanjaya": {
+      "April 2026": 95115610
+    },
+    "cust00891 tjitrosantoso sion": {
+      "April 2026": 3937992,
+      "Februari 2026": 49158224,
+      "Januari 2026": 134759955
+    },
+    "pt cust00567 faedah teknik": {
+      "April 2026": 22606245,
+      "Maret 2026": 19954195,
+      "Januari 2026": 41247151
+    },
+    "cv cust00585 makmur abadi": {
+      "April 2026": 5495400,
+      "Maret 2026": 7307400,
+      "Februari 2026": 26890170
+    },
+    "cv pc-00052 bintang prima sentosa": {
+      "April 2026": 26942554,
+      "Februari 2026": 9231670,
+      "Januari 2026": 51839030
+    },
+    "cv cust00766 mitra setia": {
+      "April 2026": 27692000
+    },
+    "pt cust00316 kuat ninigi indonesia": {
+      "April 2026": 29218525,
+      "Maret 2026": 32043620,
+      "Februari 2026": 32032967,
+      "Januari 2026": 37812161
+    },
+    "cv cust00285 semangat maju": {
+      "April 2026": 5256460,
+      "Maret 2026": 9039180,
+      "Februari 2026": 44533304,
+      "Januari 2026": 38423320
+    },
+    "pc-2200309 sanjaya makmur perkasa cv : sanjaya pd": {
+      "April 2026": 8277295,
+      "Maret 2026": 2133000,
+      "Februari 2026": 1668650
+    },
+    "pc-2400769 ferry pramadianto : heru sutoyo": {
+      "April 2026": 153532364
+    },
+    "pc-2200287 aan teknik": {
+      "April 2026": 9382000
+    },
+    "pc-2400687 berkat mitra anugrah": {
+      "April 2026": 94543240,
+      "Januari 2026": 38520000
+    },
+    "pc-2400755 rudiyanto rudiyanto": {
+      "April 2026": 3990000,
+      "Februari 2026": 2688120,
+      "Januari 2026": 4915300
+    },
+    "pt pc-2500941 yan purnama": {
+      "April 2026": 25900133,
+      "Februari 2026": 16484029,
+      "Januari 2026": 10936909
+    },
+    "cv pc-2300501 adi wangsa pradana": {
+      "April 2026": 62400000
+    },
+    "pt pc-00036 gaya jaya tehnik": {
+      "April 2026": 625068,
+      "Maret 2026": 21064979
+    },
+    "pt pc-2200233 kharisma wdindo abadi": {
+      "April 2026": 36798550,
+      "Maret 2026": 40759466,
+      "Februari 2026": 27216782,
+      "Januari 2026": 67167442
+    },
+    "pt pc-2501034 karya bersama teknik cv : karya bersama teknindo": {
+      "April 2026": 304137785,
+      "Maret 2026": 99368060,
+      "Februari 2026": 10670451,
+      "Januari 2026": 89605102
+    },
+    "pc-2200255 indo perkakas": {
+      "April 2026": 23065358,
+      "Januari 2026": 49535083
+    },
+    "pc-2200403 mega kharisma": {
+      "April 2026": 345091750,
+      "Januari 2026": 113444000
+    },
+    "pt cust00535 antara tetap jaya": {
+      "April 2026": 116838345,
+      "Februari 2026": 66356833,
+      "Januari 2026": 32530217
+    },
+    "cv cust00315 kuat giat ninigi": {
+      "April 2026": 45650701,
+      "Maret 2026": 105774374,
+      "Februari 2026": 52267811,
+      "Januari 2026": 98960721
+    },
+    "pt cust00472 ritra cargo indonesia": {
+      "April 2026": 110000000,
+      "Maret 2026": 87350000,
+      "Februari 2026": 70650000,
+      "Januari 2026": 48300000
+    },
+    "pt cust00168 adijaya buana perkasa": {
+      "April 2026": 105988770,
+      "Maret 2026": 58563569,
+      "Februari 2026": 96172467,
+      "Januari 2026": 160881999
+    },
+    "cv pc-2200352 mulia agung sentosa cv : sekawan mulia abadi": {
+      "April 2026": 37540800
+    },
+    "cv pc-2500874 linum indonesia": {
+      "April 2026": 127067360,
+      "Maret 2026": 240010400,
+      "Februari 2026": 106623200,
+      "Januari 2026": 87009720
+    },
+    "cv cust00880 baja utama sejahtera": {
+      "April 2026": 7929900,
+      "Januari 2026": 71046448
+    },
+    "pc-2601075 hendra ali sofian": {
+      "April 2026": 1900960
+    },
+    "pc-2200310 maranatha teknik": {
+      "April 2026": 74187660,
+      "Maret 2026": 53120333,
+      "Februari 2026": 13031366,
+      "Januari 2026": 28581513
+    },
+    "cv cust00332 hanna teknik": {
+      "April 2026": 3179450,
+      "Maret 2026": 9637920,
+      "Februari 2026": 11150000
+    },
+    "pt cust01044 jaya safety abadi": {
+      "April 2026": 5217480,
+      "Februari 2026": 1707200,
+      "Januari 2026": 2003535
+    },
+    "cust00161 berkat mandirindo sejahtera pt : bintang jaya abadi sukses pt (bkt)": {
+      "April 2026": 90924971,
+      "Maret 2026": 71790300,
+      "Februari 2026": 77972247,
+      "Januari 2026": 72909936
+    },
+    "pt cust01007 jaya agung sukses perkasa": {
+      "April 2026": 1882700,
+      "Februari 2026": 6061950,
+      "Januari 2026": 5700410
+    },
+    "pt pc-2501028 sejahtera kharisma makmur": {
+      "April 2026": 67900000,
+      "Maret 2026": 62500000,
+      "Februari 2026": 14750000,
+      "Januari 2026": 79000000
+    },
+    "cv pc-00053 kairos kerta karya": {
+      "April 2026": 17311000,
+      "Februari 2026": 1778875,
+      "Januari 2026": 18678000
+    },
+    "pt cust00724 fajar agung pratama": {
+      "April 2026": 1678320,
+      "Maret 2026": 2312093,
+      "Februari 2026": 49494370,
+      "Januari 2026": 89459284
+    },
+    "cv cust00635 bukit mas raya": {
+      "April 2026": 9128450,
+      "Februari 2026": 44570704,
+      "Januari 2026": 29991560
+    },
+    "pt cust00030 bhakti ratutama jaya": {
+      "April 2026": 87510400,
+      "Maret 2026": 63135000,
+      "Januari 2026": 49546000
+    },
+    "pc-2300454 naga sakti": {
+      "April 2026": 1090000
+    },
+    "pc-2601064 jap tjhun djie : sulistiawati sulistiawati": {
+      "April 2026": 141202590,
+      "Maret 2026": 42558168
+    },
+    "pc-2200266 aneka sarana safety": {
+      "April 2026": 54491830,
+      "Maret 2026": 58181288,
+      "Februari 2026": 78855845,
+      "Januari 2026": 139205347
+    },
+    "cv cust00785 maju lancar sentosa": {
+      "April 2026": 54219275,
+      "Februari 2026": 36377619,
+      "Januari 2026": 41087880
+    },
+    "cv pc-2300549 makmur cemerlang abadi": {
+      "April 2026": 67722232,
+      "Maret 2026": 81940818,
+      "Februari 2026": 4953023,
+      "Januari 2026": 49504101
+    },
+    "pc-00096 sarana prima": {
+      "April 2026": 340464002,
+      "Maret 2026": 277167083,
+      "Februari 2026": 78103365,
+      "Januari 2026": 276611647
+    },
+    "pc-2200267 sumber baut": {
+      "April 2026": 17568570
+    },
+    "pt cust01001 dwikarya tunggal pratama": {
+      "April 2026": 11248000,
+      "Februari 2026": 7122150,
+      "Januari 2026": 1400000
+    },
+    "pc-2200275 cahaya indah": {
+      "April 2026": 5887750,
+      "Maret 2026": 5887750,
+      "Februari 2026": 5192200,
+      "Januari 2026": 7540230
+    },
+    "pt pc-2400633 gracia abadi semesta": {
+      "April 2026": 11534000,
+      "Maret 2026": 10312344,
+      "Februari 2026": 15714048,
+      "Januari 2026": 5960256
+    },
+    "pt pc-2601046 biondi jaya perkasa pt : sentral berkat niaga": {
+      "April 2026": 12900000,
+      "Januari 2026": 38748000
+    },
+    "pc-2300589 laurensia octaviani": {
+      "April 2026": 92762414,
+      "Maret 2026": 94154988,
+      "Februari 2026": 103045235,
+      "Januari 2026": 81779385
+    },
+    "tb pc-2200354 sinar abadi": {
+      "April 2026": 3169220,
+      "Maret 2026": 2508905,
+      "Januari 2026": 5659135
+    },
+    "cv cust00946 mitra jaya": {
+      "April 2026": 134772518,
+      "Maret 2026": 184194291,
+      "Februari 2026": 160599262,
+      "Januari 2026": 216702170
+    },
+    "pt pc-2200119 kemilau inti mekanindo": {
+      "April 2026": 32716260
+    },
+    "cv cust00872 praba putra jaya": {
+      "April 2026": 5848401,
+      "Februari 2026": 74593939,
+      "Januari 2026": 50239518
+    },
+    "pt cust01052 jati jaya nirachi": {
+      "April 2026": 7887600,
+      "Maret 2026": 4641600,
+      "Februari 2026": 11064450,
+      "Januari 2026": 26156720
+    },
+    "pt cust01079 samudra teknik sejahtera": {
+      "April 2026": 28361000,
+      "Maret 2026": 79221200,
+      "Februari 2026": 43055000,
+      "Januari 2026": 44861000
+    },
+    "pc-2200317 adi irwanto": {
+      "April 2026": 47760000
+    },
+    "pt pc-2200121 graha baja marindo": {
+      "April 2026": 102132780,
+      "Maret 2026": 28129920,
+      "Februari 2026": 34028243,
+      "Januari 2026": 90941790
+    },
+    "pt cust00099 tunas baru djaya": {
+      "April 2026": 36633600
+    },
+    "pt pc-00077 intani jaya semesta": {
+      "April 2026": 7641670,
+      "Januari 2026": 5389395
+    },
+    "pc-2200320 rajawali jaya teknik": {
+      "April 2026": 39047375,
+      "Maret 2026": 9180000,
+      "Februari 2026": 3000000,
+      "Januari 2026": 15557400
+    },
+    "pt pc-2200175 niky mura cv : nikymura prima jaya": {
+      "April 2026": 9810000
+    },
+    "cv cust00824 million jaya abadi": {
+      "April 2026": 15255295,
+      "Maret 2026": 63455000,
+      "Februari 2026": 23457929,
+      "Januari 2026": 40625180
+    },
+    "cv cust00680 nauli": {
+      "April 2026": 2446800
+    },
+    "cv pc-2300574 baja utama teknik ud : baja utama teknik": {
+      "April 2026": 21977640,
+      "Januari 2026": 75503080
+    },
+    "pt pc-2400791 biondi jaya perkasa pt : pelita niaga indonesia": {
+      "April 2026": 70548300,
+      "Maret 2026": 22954080
+    },
+    "pt cust00214 rian jaya darma": {
+      "April 2026": 135068800,
+      "Maret 2026": 34460800,
+      "Februari 2026": 31328000
+    },
+    "pt pc-2601074 hans abhipraya nusantara": {
+      "April 2026": 7700000
+    },
+    "pt pc-2200370 atosindo mitra industri": {
+      "April 2026": 35030936,
+      "Maret 2026": 52799492,
+      "Februari 2026": 80206304,
+      "Januari 2026": 65664535
+    },
+    "cv cust00928 mulyo rejeki": {
+      "April 2026": 19800000,
+      "Maret 2026": 19800000,
+      "Februari 2026": 827400,
+      "Januari 2026": 1350000
+    },
+    "pc-2200377 sinar jaya": {
+      "April 2026": 66162500,
+      "Januari 2026": 57067230
+    },
+    "cv cust00070 anugrah teknik jaya": {
+      "April 2026": 19075505,
+      "Maret 2026": 44533184,
+      "Januari 2026": 63882110
+    },
+    "pt pc-2300543 sakata inx indonesia": {
+      "April 2026": 99698048
+    },
+    "pc-2601071 double safety global": {
+      "April 2026": 5563616
+    },
+    "pc-2500869 juni fatimah": {
+      "April 2026": 281389547,
+      "Maret 2026": 39520200,
+      "Februari 2026": 71488422,
+      "Januari 2026": 31007184
+    },
+    "pc-2501015 istana besi : istana jaya sejahteracv": {
+      "April 2026": 7005720
+    },
+    "pc-2200301 damas raya utama pt : melinda melinda": {
+      "April 2026": 8542800,
+      "Maret 2026": 6868800,
+      "Februari 2026": 13413600,
+      "Januari 2026": 16822319
+    },
+    "pc-2400758 agus salim": {
+      "April 2026": 107282000,
+      "Februari 2026": 45040679,
+      "Januari 2026": 517961000
+    },
+    "cv cust01089 handal inti usaha": {
+      "April 2026": 9348200,
+      "Maret 2026": 13675800,
+      "Februari 2026": 3380240
+    },
+    "pc-2200274 buana teknik": {
+      "April 2026": 5147170
+    },
+    "pt pc-2200231 bina teknik perkakas": {
+      "April 2026": 8584650,
+      "Maret 2026": 1187076,
+      "Januari 2026": 3282000
+    },
+    "pc-2200280 rajawali teknik jakarta": {
+      "April 2026": 1286910,
+      "Maret 2026": 8852338
+    },
+    "cv cust01060 perdana teknik": {
+      "April 2026": 2031180,
+      "Januari 2026": 8186606
+    },
+    "pc-2200329 hendra hendra": {
+      "April 2026": 38420860
+    },
+    "pc-2601069 cahaya cemerlang istimewa": {
+      "April 2026": 3520000
+    },
+    "pt pc-2500972 yunika trijaya sentosa": {
+      "April 2026": 10935180,
+      "Maret 2026": 168246300,
+      "Februari 2026": 58140050,
+      "Januari 2026": 52879321
+    },
+    "pt pc-2501036 cahaya laut abadi cv : samudra baut teknik": {
+      "April 2026": 7161350,
+      "Maret 2026": 21347950,
+      "Februari 2026": 12710705,
+      "Januari 2026": 35423798
+    },
+    "cv cust00829 tekad jaya": {
+      "April 2026": 90569550,
+      "Maret 2026": 1168410,
+      "Februari 2026": 54287220,
+      "Januari 2026": 11670010
+    },
+    "pc-2300486 kho kie seng": {
+      "April 2026": 14247000,
+      "Januari 2026": 28494000
+    },
+    "pc-2200278 gracia tehnik": {
+      "April 2026": 13777660,
+      "Maret 2026": 7513700,
+      "Februari 2026": 26380726,
+      "Januari 2026": 22531636
+    },
+    "pt pc-2500897 indomarine jaya sakti": {
+      "April 2026": 31900000
+    },
+    "pt cust00317 dunia saftindo": {
+      "April 2026": 1998999,
+      "Maret 2026": 1397801,
+      "Februari 2026": 20024737,
+      "Januari 2026": 86091660
+    },
+    "cust00620 kaharuddin nyoman": {
+      "April 2026": 5280000,
+      "Januari 2026": 16375700
+    },
+    "cv pc-2200118 cahaya las indonesia pt : cahaya material indonesia": {
+      "April 2026": 101227440,
+      "Maret 2026": 31575036,
+      "Februari 2026": 9360000,
+      "Januari 2026": 53511450
+    },
+    "pc-2200277 duta kencana pd": {
+      "April 2026": 3920840,
+      "Februari 2026": 1319200,
+      "Januari 2026": 4478586
+    },
+    "pc-2200212 makmur cemerlang abadi cv : richard cahyadi japutra": {
+      "April 2026": 23207395,
+      "Maret 2026": 10841612,
+      "Februari 2026": 33890201,
+      "Januari 2026": 16675040
+    },
+    "cv pc-2200220 laris penuh berkat": {
+      "April 2026": 76280916,
+      "Maret 2026": 28667574,
+      "Februari 2026": 9499754,
+      "Januari 2026": 79961562
+    },
+    "pt cust00640 damas raya utama": {
+      "April 2026": 21519500,
+      "Februari 2026": 1958040
+    },
+    "cv pc-2200179 utama kita": {
+      "April 2026": 43296000
+    },
+    "pc-2300490 ricardo juliver pardosi": {
+      "April 2026": 2550000
+    },
+    "pt cust00209 gajah agung teknik": {
+      "April 2026": 34914840,
+      "Januari 2026": 51500000
+    },
+    "tb pc-2200282 sahabat": {
+      "April 2026": 4505600,
+      "Februari 2026": 4505600,
+      "Januari 2026": 960000
+    },
+    "tb pc-2200288 acuan jaya": {
+      "April 2026": 680660,
+      "Januari 2026": 4035380
+    },
+    "pc-2200344 sanjaya technik pd": {
+      "April 2026": 1015590,
+      "Maret 2026": 2927460
+    },
+    "pc-2400794 makmur cemerlang abadi cv : febiyanto cahyadi": {
+      "April 2026": 3294323,
+      "Februari 2026": 35727616,
+      "Januari 2026": 13698455
+    },
+    "pc-2501004 makmur cemerlang abadi cv : eddy haryanto japutraj": {
+      "April 2026": 45036984,
+      "Maret 2026": 42499763,
+      "Februari 2026": 33636350,
+      "Januari 2026": 23705665
+    },
+    "cv cust00855 maju jaya hardware": {
+      "April 2026": 6187280,
+      "Februari 2026": 19603850,
+      "Januari 2026": 36000490
+    },
+    "cv pc-2200331 sintesa teknik": {
+      "April 2026": 7000000,
+      "Februari 2026": 15264000,
+      "Januari 2026": 47743500
+    },
+    "pc-2200294 steven steven": {
+      "Maret 2026": 256424321,
+      "Februari 2026": 990593527,
+      "Januari 2026": 435656033
+    },
+    "cv cust00522 putra fanghin sejahtera": {
+      "Maret 2026": 1238000,
+      "Februari 2026": 1425000,
+      "Januari 2026": 62462422
+    },
+    "cv cust00945 toolsindo berkat sejahtera": {
+      "Maret 2026": 41135000,
+      "Januari 2026": 25803000
+    },
+    "pc-2200441 mhdarief hidayat": {
+      "Maret 2026": 1109500,
+      "Februari 2026": 2641128,
+      "Januari 2026": 31809064
+    },
+    "pt cust00174 asia jaya sejahtera pt : asia jaya parama": {
+      "Maret 2026": 70238243,
+      "Februari 2026": 57489339,
+      "Januari 2026": 73768259
+    },
+    "pc-2200290 surya teknik mandiri jaya": {
+      "Maret 2026": 13500000,
+      "Januari 2026": 30545854
+    },
+    "pt cust00204 derap putra bangsa": {
+      "Maret 2026": 103176000
+    },
+    "pt cust00580 aryateknik makmursentosa": {
+      "Maret 2026": 5345768
+    },
+    "cust00831 sumber jaya (sby)": {
+      "Maret 2026": 10746000
+    },
+    "cv pc-2200333 aryateknik makmursentosa pt : arya teknik": {
+      "Maret 2026": 4150000
+    },
+    "cv cust00798 empat jaya": {
+      "Maret 2026": 22244030
+    },
+    "cv cust00893 super inti perkakas": {
+      "Maret 2026": 9261170,
+      "Januari 2026": 126549899
+    },
+    "cv cust00923 sumber teknik": {
+      "Maret 2026": 18114590,
+      "Februari 2026": 9038700,
+      "Januari 2026": 5028300
+    },
+    "cv cust00298 sumber bahagia teknik": {
+      "Maret 2026": 28750000,
+      "Februari 2026": 32404880,
+      "Januari 2026": 13500000
+    },
+    "pt pc-2300452 tangguh niaga karya": {
+      "Maret 2026": 1080000,
+      "Januari 2026": 1080000
+    },
+    "cv pc-2200136 manjaya komputer": {
+      "Maret 2026": 8349120
+    },
+    "pt pc-2601049 inti daya cakrawala": {
+      "Maret 2026": 2754000,
+      "Februari 2026": 79866000
+    },
+    "pc-2200263 sinar logam (mdn)": {
+      "Maret 2026": 57532810,
+      "Februari 2026": 95133368
+    },
+    "cv cust00565 multi jaya teknik": {
+      "Maret 2026": 51964695,
+      "Februari 2026": 7310502,
+      "Januari 2026": 162706699
+    },
+    "pt cust00591 virgo sejahtera abadi": {
+      "Maret 2026": 33171120
+    },
+    "pc-2200341 pan tji hwa": {
+      "Maret 2026": 26400000,
+      "Februari 2026": 14500000,
+      "Januari 2026": 14907300
+    },
+    "pc-2200193 gracia abadi semesta pt : hadisun hadisun": {
+      "Maret 2026": 24450500,
+      "Februari 2026": 7735996,
+      "Januari 2026": 15348152
+    },
+    "pt pc-2400815 nelayan maritim jaya": {
+      "Maret 2026": 123131045,
+      "Februari 2026": 143367360,
+      "Januari 2026": 110591398
+    },
+    "pc-2200376 karya wargi": {
+      "Maret 2026": 22511350,
+      "Januari 2026": 17486500
+    },
+    "pt cust00607 sumatera dinamika sejahtera": {
+      "Maret 2026": 3350000,
+      "Januari 2026": 3350000
+    },
+    "pt pc-2601055 nakema kurnia semesta": {
+      "Maret 2026": 784000,
+      "Februari 2026": 11747000
+    },
+    "pt cust00337 alberly mandiri jaya": {
+      "Maret 2026": 12693640,
+      "Februari 2026": 75879441,
+      "Januari 2026": 8253120
+    },
+    "pt pc-2400729 hakaaston": {
+      "Maret 2026": 11795200
+    },
+    "pc-2500917 jovin leomanto": {
+      "Maret 2026": 4787240,
+      "Februari 2026": 2372500
+    },
+    "pt cust00390 cipta krida bahari": {
+      "Maret 2026": 20100000,
+      "Februari 2026": 4488000,
+      "Januari 2026": 20100000
+    },
+    "pc-2200300 sumber redjeki citratama pd": {
+      "Maret 2026": 1387500,
+      "Februari 2026": 1800250,
+      "Januari 2026": 3792500
+    },
+    "cv pc-2200187 modern teknik": {
+      "Maret 2026": 8625972
+    },
+    "pc-2300610 kwee ing han": {
+      "Maret 2026": 5453580,
+      "Januari 2026": 1722200
+    },
+    "pc-2200390 curug teknik": {
+      "Maret 2026": 9004080
+    },
+    "pt cust01120 indotool sukses makmur": {
+      "Maret 2026": 3262300,
+      "Februari 2026": 31667580,
+      "Januari 2026": 25989300
+    },
+    "pc-2200378 barokah teknik": {
+      "Maret 2026": 6117750,
+      "Januari 2026": 6117750
+    },
+    "pc-2400787 fidi prasasto": {
+      "Maret 2026": 1142200
+    },
+    "pc-2200296 gunung kawi": {
+      "Maret 2026": 20569827,
+      "Februari 2026": 18784436,
+      "Januari 2026": 15268598
+    },
+    "pc-2200411 sempurna sempurna": {
+      "Maret 2026": 13394326,
+      "Februari 2026": 4546824
+    },
+    "pc-2400725 biondi jaya perkasa pt : biondi teknik": {
+      "Maret 2026": 75403921,
+      "Februari 2026": 54360000,
+      "Januari 2026": 14097600
+    },
+    "pc-2500846 tanto gunawan": {
+      "Maret 2026": 36616500
+    },
+    "pc-2300500 rajawali amarta semesta": {
+      "Maret 2026": 2303000
+    },
+    "cv cust01143 meiar": {
+      "Maret 2026": 5350000
+    },
+    "cv cust00920 sentosa teknik": {
+      "Maret 2026": 30491550,
+      "Januari 2026": 51264250
+    },
+    "pt pc-2200431 indoteknik dotcom gemilang": {
+      "Maret 2026": 1314000,
+      "Februari 2026": 7398500,
+      "Januari 2026": 2299600
+    },
+    "pc-2200315 aneka jaya sejahtera cv : suhendra kurniawan": {
+      "Maret 2026": 2270928,
+      "Januari 2026": 1399688
+    },
+    "cv pc-2300491 robin bagijo : sido semi makmur": {
+      "Maret 2026": 1322100
+    },
+    "pc-2400665 sinar surya : herry lys": {
+      "Maret 2026": 20692075,
+      "Januari 2026": 20915250
+    },
+    "pc-2400720 gembira cv : randy t tan": {
+      "Maret 2026": 3562835,
+      "Januari 2026": 8070745
+    },
+    "pt cust00262 jameson permai": {
+      "Maret 2026": 2727000
+    },
+    "cv cust00092 kota baru mandiri": {
+      "Maret 2026": 1548000,
+      "Februari 2026": 1090000,
+      "Januari 2026": 18356000
+    },
+    "pc-2200302 baja utama teknik": {
+      "Maret 2026": 11844900,
+      "Februari 2026": 4265100
+    },
+    "pc-2500863 samudra motor : tet hiung": {
+      "Maret 2026": 6324508
+    },
+    "pc-00059 segimas segimas": {
+      "Maret 2026": 30813386,
+      "Februari 2026": 14247000
+    },
+    "cust00559 maju (mdn)": {
+      "Maret 2026": 14247000,
+      "Januari 2026": 48720000
+    },
+    "cv cust00267 sama tunjang sejahtera": {
+      "Maret 2026": 32561760,
+      "Januari 2026": 66277440
+    },
+    "cv pc-00008 manarang jaya": {
+      "Maret 2026": 23569920,
+      "Februari 2026": 22096800,
+      "Januari 2026": 29462400
+    },
+    "cv pc-2400650 jaya pratama groserindo pt : karya pratama perkasa": {
+      "Maret 2026": 1809000,
+      "Februari 2026": 2399000,
+      "Januari 2026": 5482800
+    },
+    "cv pc-2500946 purnama mandiri sejahtera": {
+      "Maret 2026": 3990124,
+      "Januari 2026": 18327471
+    },
+    "pc-2200299 rajawali teknik": {
+      "Maret 2026": 1141550,
+      "Februari 2026": 6695640,
+      "Januari 2026": 7294828
+    },
+    "pt cust00220 sentral technindo sejahtera": {
+      "Maret 2026": 70150400
+    },
+    "pt cust00331 aneka hutama persada": {
+      "Maret 2026": 2700000,
+      "Januari 2026": 52155000
+    },
+    "pc-2200304 global jaya sejahtera": {
+      "Maret 2026": 27160000,
+      "Januari 2026": 66250000
+    },
+    "pt cust00231 wahana pancaran daya surya": {
+      "Maret 2026": 138000000,
+      "Februari 2026": 22636800
+    },
+    "pc-2200334 johanes agata": {
+      "Maret 2026": 4400100
+    },
+    "pt pc-2601061 megatech jaya persada": {
+      "Februari 2026": 29100000
+    },
+    "pt cust00019 anekatama makmur abadi": {
+      "Februari 2026": 3916000
+    },
+    "pt cust00128 sinar jantung primatama": {
+      "Februari 2026": 10927142
+    },
+    "pc-2500894 m yahya": {
+      "Februari 2026": 73440000
+    },
+    "cv cust00627 sinar logam jaya": {
+      "Februari 2026": 5804530
+    },
+    "pc-2601060 sinar proteksindo optimal pt : lutfi lutfi": {
+      "Februari 2026": 61260392
+    },
+    "pc-2200265 global teknik (jkt)": {
+      "Februari 2026": 121200000
+    },
+    "pc-2200254 dunia tehnik": {
+      "Februari 2026": 13527800,
+      "Januari 2026": 21312000
+    },
+    "pt cust00994 inovatif teknik mesindo": {
+      "Februari 2026": 1662716,
+      "Januari 2026": 1456066
+    },
+    "pc-2200262 abdullah abdullah": {
+      "Februari 2026": 95225948,
+      "Januari 2026": 85202536
+    },
+    "cv pc-2500886 mitra abadi sukses cv : karya visi sejahtera": {
+      "Februari 2026": 17133900
+    },
+    "pt pc-2601056 grand mitra bangunan": {
+      "Februari 2026": 24742000
+    },
+    "pt cust00338 sumber mega jaya": {
+      "Februari 2026": 1109358205
+    },
+    "cv pc-2300586 aneka diesel perkasa": {
+      "Februari 2026": 58277810
+    },
+    "pt cust00820 global spex mandiri": {
+      "Februari 2026": 17325900
+    },
+    "pc-2500912 lukas ardianto purnomo": {
+      "Februari 2026": 11999100,
+      "Januari 2026": 3770280
+    },
+    "pc-2300508 d3 safety": {
+      "Februari 2026": 5400000
+    },
+    "pc-2400644 mitra abadi sunjaya": {
+      "Februari 2026": 7548000,
+      "Januari 2026": 3774000
+    },
+    "cv cust00571 gunung mas sejahtera": {
+      "Februari 2026": 12434103,
+      "Januari 2026": 1980000
+    },
+    "cv pc-2300607 tb lc : mega sejahtera lestari": {
+      "Februari 2026": 42541500
+    },
+    "cv cust00817 aji nusa jaya": {
+      "Februari 2026": 4300000
+    },
+    "pt cust00243 rekan bangun pratama": {
+      "Februari 2026": 5667000
+    },
+    "cv pc-00015 aura pratama": {
+      "Februari 2026": 1795000
+    },
+    "pt pc-2501029 joobang karya sehati": {
+      "Februari 2026": 1887620,
+      "Januari 2026": 11135600
+    },
+    "pc-2200324 johny johny": {
+      "Februari 2026": 28361000
+    },
+    "cv pc-2500887 indo teknik : indo teknik mataram": {
+      "Februari 2026": 3690000
+    },
+    "pc-2200196 gajah agung teknik pt : sabarudin sabarudin": {
+      "Februari 2026": 35766144,
+      "Januari 2026": 55884600
+    },
+    "cv pc-2300446 kayfa maju teknik": {
+      "Februari 2026": 4365000
+    },
+    "ud pc-2200286 sahabat": {
+      "Februari 2026": 9857041,
+      "Januari 2026": 4906176
+    },
+    "cv pc-00071 cahaya rukun makmur": {
+      "Februari 2026": 59422200
+    },
+    "pc-2200110 zurpyan zurpyan": {
+      "Februari 2026": 1510000
+    },
+    "pc-2300468 jadi jaya": {
+      "Februari 2026": 4437500,
+      "Januari 2026": 17531760
+    },
+    "cv pc-2300483 kilau mentari cemerlang": {
+      "Februari 2026": 6000000
+    },
+    "pt cust00451 rukun sejahtera teknik": {
+      "Februari 2026": 1872500,
+      "Januari 2026": 150000
+    },
+    "pc-2500861 sukses mulya : adi eka prasetyo": {
+      "Januari 2026": 28332400
+    },
+    "pc-2500996 sumbar safety": {
+      "Januari 2026": 3140000
+    },
+    "pt pc-00099 aura pratama cv : tradco energi indonesia": {
+      "Januari 2026": 1625000
+    },
+    "pt pc-2300563 nikysay karya sukses": {
+      "Januari 2026": 10881131
+    },
+    "cv pc-2601050 sumber rezeki lumintu": {
+      "Januari 2026": 4200000
+    },
+    "pc-2200314 jap tjhun djie": {
+      "Januari 2026": 90681067
+    },
+    "cv pc-2200139 cahyo waskito": {
+      "Januari 2026": 4781130
+    },
+    "pt cust01046 jodhi jatmiko : cahaya utama safety indonesia": {
+      "Januari 2026": 53690260
+    },
+    "cv cust00949 gembira": {
+      "Januari 2026": 9637862
+    },
+    "cv cust00885 surya wijaya sakti": {
+      "Januari 2026": 26799700
+    },
+    "pc-2200258 kawan baru": {
+      "Januari 2026": 31971025
+    },
+    "pc-2500970 kasim arifin": {
+      "Januari 2026": 31300000
+    },
+    "cv cust00958 rukun abadi jaya": {
+      "Januari 2026": 44000000
+    },
+    "pt pc-2400817 aneka perkakas khatulistiwa": {
+      "Januari 2026": 48600000
+    },
+    "pt pc-2200105 sinar logam bangun sejati": {
+      "Januari 2026": 12230628
+    },
+    "cv pc-2500895 anugrah driatama": {
+      "Januari 2026": 59514000
+    },
+    "pt cust00096 ragil jaya sejahtera": {
+      "Januari 2026": 3893762
+    },
+    "cv cust00742 mitra abadi sukses": {
+      "Januari 2026": 17472396
+    },
+    "pt cust00261 davindo surya pratama": {
+      "Januari 2026": 13482000
+    },
+    "pc-2200337 naga mas jaya": {
+      "Januari 2026": 411600000
+    },
+    "pt cust00223 corner abadi tehnika": {
+      "Januari 2026": 8488800
+    },
+    "pt pc-2500843 pazto indonesia sejahtera": {
+      "Januari 2026": 7435414
+    },
+    "cv pc-2200107 mulia agung sentosa": {
+      "Januari 2026": 30637500
+    },
+    "pc-2200351 cahaya abadi": {
+      "Januari 2026": 1138000
+    },
+    "pt cust00738 bajasarana sejahtera": {
+      "Januari 2026": 25466400
+    },
+    "pt pc-2200246 tomeco perkakas indonesia": {
+      "Januari 2026": 46992000
+    },
+    "pc-2200389 ina/ andy": {
+      "Januari 2026": 5027100
+    },
+    "pt cust00189 sumber hidup lindeteves": {
+      "Januari 2026": 1047000
+    },
+    "pc-2300481 suwar gazali": {
+      "Januari 2026": 41030515
+    },
+    "pc-2300464 bonari bonari": {
+      "Januari 2026": 9147000
+    },
+    "cv cust00685 mitra jaya abadi": {
+      "Januari 2026": 3573620
+    },
+    "pc-2500896 maranatha teknik : kim loi": {
+      "Januari 2026": 53934700
+    },
+    "cv cust00686 teknik steel": {
+      "Januari 2026": 31900000
+    },
+    "cust00539 matsum tjiawi": {
+      "Januari 2026": 3835000
+    },
+    "pt pc-2500876 mitra sukses bersama : hmh sukses makmur": {
+      "Januari 2026": 53350000
+    },
+    "cv pc-2501032 cahaya nusantara teknik": {
+      "Januari 2026": 1700000
+    },
+    "cv pc-2200295 angka baru": {
+      "Januari 2026": 25833000
+    },
+    "cv pc-2200229 sinar sukses": {
+      "Januari 2026": 32010000
+    },
+    "cv cust00761 (d) maha jaya (ptk) : mahajaya golden ocean": {
+      "Januari 2026": 9450000
+    },
+    "cv cust00044 panca logam teknik sukses": {
+      "Januari 2026": 11170767
+    },
+    "pc-2200306 cahaya pd": {
+      "Januari 2026": 3294702
+    },
+    "cv cust00016 timur jaya anugerah": {
+      "Januari 2026": 36000000
+    },
+    "cv pc-2300582 orlin sukses sejahtera": {
+      "Januari 2026": 17098097
+    },
+    "cv cust00952 kawijaya teknik mandiri": {
+      "Januari 2026": 6450000
+    },
+    "pt pc-00054 karya kekar abadi": {
+      "Januari 2026": 25313340
+    },
+    "pt pc-2501035 tirta bumi naga": {
+      "Januari 2026": 3663000
+    }
+  },
+  "savedAt": "2026-05-12T03:41:30.393Z"
+}
