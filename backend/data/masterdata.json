@@ -1,0 +1,914 @@
+{
+  "rows": [
+    {
+      "nama": "BHAKTI RATUTAMA JAYA, PT",
+      "phone": "6287714332158",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "ANUGRAH TEKNIK JAYA, CV",
+      "phone": "628115425532",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "BANUA JAYA, CV",
+      "phone": "628123131083",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SUMBER BAHAGIA TEKNIK, CV",
+      "phone": "628118683988",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "STEVEN",
+      "phone": "6281352189999",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "KRIS",
+      "phone": "628119941333",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "SINTESA TEKNIK, CV",
+      "phone": "6281255593343",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "KURNIA JAYA",
+      "phone": "6282246027295",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MEGA KHARISMA",
+      "phone": "62811578503",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "BAJA UTAMA TEKNIK, UD",
+      "phone": "62811514120",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "METRO TEKNIK",
+      "phone": "6281237415254",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "INTERINDO SUKSES ABADI, PT",
+      "phone": "6282112781975",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "KARYA PRATAMA PERKASA, CV",
+      "phone": "628113994466",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "NELAYAN MARITIM JAYA, PT",
+      "phone": "6281346582323",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MITRA ABADI SUKSES, CV",
+      "phone": "628115702525",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MITRA GEMILANG SUKSES, CV",
+      "phone": "6285245318128",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "TOOLSINDO BERKAT SEJAHTERA, CV",
+      "phone": "6285821506285",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SUMBER MITRA, CV",
+      "phone": "628125597777",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "KAWIJAYA TEKNIK MANDIRI, CV",
+      "phone": "6285333578999",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "RUKUN ABADI JAYA, CV",
+      "phone": "6281346369328",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "JAVATEC TRIMITRA UTAMA , PT",
+      "phone": "6285156548119",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "PANCA LOGAM TEKNIK SUKSES, CV",
+      "phone": "6285267957013",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "KUAT GIAT NINIGI, CV",
+      "phone": "6285959711635",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "KUAT NINIGI INDONESIA, PT",
+      "phone": "6289531422922",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "CIPTA PRATAMA ABADI, CV",
+      "phone": "62811747687",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SENTRAL SAFETY, CV",
+      "phone": "6281399339558",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MELINDA",
+      "phone": "628126607718",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "GLOBAL TEKNIK MULTIKARYA, PT",
+      "phone": "6285658962533",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "AGNIS INDUSTRI MATRIKS",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "SATRYA TEHNIK MACHINERY, CV",
+      "phone": "62895616047198",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SUMBER BAHAGIA ABADI",
+      "phone": "628127124625",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SEMANGAT MAJU, CV",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "ANDAL JAYA PERKASA, PT",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "KIM TEKNIK",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "LAJU JAYA TEKNIK, CV",
+      "phone": "6283832251382",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "PERSADA MANDIRI JAKARTA, PT",
+      "phone": "6281255550078",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "CANNE BERNIAGA BERKAH, PT",
+      "phone": "6281342520888",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "HADISUN",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "RAJAWALI TEKNIK JAKARTA",
+      "phone": "6289521687878",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "MARANATHA TEKNIK",
+      "phone": "6281385173258",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "SINAR BANGUNAN II",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "MEGA SEJAHTERA LESTARI, CV",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "GRACIA ABADI SEMESTA, PT",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "MAJU LANCAR SENTOSA, CV",
+      "phone": "6281231058888",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "BENTANG PERSADA INTERNUSA, PT",
+      "phone": "628113526178",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MILLION JAYA ABADI, CV",
+      "phone": "6281259006038",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MAJU JAYA HARDWARE, CV",
+      "phone": "6282131045714",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "(d) SAMA MAJU",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "JAYA TEKNIK, CV",
+      "phone": "6281239122828",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "RAJAWALI MARKETING, CV",
+      "phone": "6282336533226",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "BAJA UTAMA SEJAHTERA, CV",
+      "phone": "6282190925825",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SUPER INTI PERKAKAS, CV",
+      "phone": "6281285977788",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "CAHAYA PERKASA MANDIRI, CV",
+      "phone": "6281243337006",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "KARYA BERSAMA TEKNIK, CV",
+      "phone": "6281243033252",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "ALGA PRATAMA NUSANTARA, PT",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "INDOTOOL SUKSES MAKMUR, PT",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "ANEKATAMA MAKMUR ABADI, PT",
+      "phone": "6287820909103",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "phone": "6282125515570",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SETIA TEKNIK",
+      "phone": "6281277974443",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "GUNUNG MAS SEJAHTERA, CV",
+      "phone": "6281269627621",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "KAWAN BARU",
+      "phone": "6285262365254",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SARANA BARU",
+      "phone": "628127654409",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "ABDULLAH",
+      "phone": "6282163228863",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MHD. ARIEF HIDAYAT",
+      "phone": "62811646487",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "CV. BHINA KARYA PERSADA, CV",
+      "phone": "6281260512333",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "CAHAYA SURGA TEKNIK INDONESIA, PT",
+      "phone": "6285370353447",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "M. YAHYA",
+      "phone": "6281361331788",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "RIAU PARAMITA TENINDO, PT",
+      "phone": "6281275372595",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "BUANA JAYA TEKNIK, CV",
+      "phone": "6285365502242",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MK",
+      "phone": "6281375686356",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "GLOBAL SPEX MANDIRI, PT",
+      "phone": "6281554522342",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "EMPAT JAYA, CV",
+      "phone": "628983803622",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "TEKAD JAYA, CV",
+      "phone": "6281329941951",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "TJITROSANTOSO SION",
+      "phone": "6285218180181",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "ANEKA HUTAMA PERSADA, PT",
+      "phone": "6287837091191",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "ADI LESTARI",
+      "phone": "6285264857986",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SUMBER BAHAGIA, CV",
+      "phone": "6282375858888",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SETIA TEKNIK, CV",
+      "phone": "6281277974443",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MANDIRI TEKNIK",
+      "phone": "6281280205027",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "CAHAYA ABADI",
+      "phone": "6281367013512",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "TIMUR JAYA ANUGERAH, CV",
+      "phone": "62811205273",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "INTANI JAYA SEMESTA, PT",
+      "phone": "6281615003534",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SEKAWAN MULIA ABADI, CV",
+      "phone": "62895806626967",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SINAR JAYA",
+      "phone": "62811442168",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "KWEE ING HAN",
+      "phone": "6281328099903",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MITRA GRAHA PUTRA, CV",
+      "phone": "6285728093088",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MULIA AGUNG SENTOSA, CV",
+      "phone": "62895806626967",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "ADI EKA PRASETYO",
+      "phone": "6287722158960",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "CAHYO WASKITO, CV",
+      "phone": "6281802476688",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "GRAHA BAJA MARINDO, PT",
+      "phone": "628113358877",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "DAMAS RAYA UTAMA, PT",
+      "phone": "628116616789",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "FAJAR AGUNG PRATAMA, PT",
+      "phone": "6285896766714",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "JOHNY",
+      "phone": "6285268077096",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "CAHAYA LAUT ABADI, CV",
+      "phone": "6282295103321",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MULTI SELARAS TEKNIK, PT",
+      "phone": "6281378400078",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "NIKYSAY KARYA SUKSES, PT",
+      "phone": "6281908783333",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "INDOMULTI PRAKARSA MANDIRI, CV",
+      "phone": "6281374244344",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "BAJA UTAMA TEKNIK",
+      "phone": "6282191003993",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SAP",
+      "phone": "628126602564",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "KHARISMA WDINDO ABADI, PT",
+      "phone": "6282391734058",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SURYA CONTROTAMA INDAH, PT",
+      "phone": "6281362298848",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "TANIJAR",
+      "phone": "6285370353447",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "GLOBAL SOLUTION PROJECT, PT",
+      "phone": "6281268286715",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SINAR LOGAM",
+      "phone": "6287766396924",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "PUTRA FANGHIN SEJAHTERA, CV",
+      "phone": "628116384050",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "ANTARA TETAP JAYA, PT",
+      "phone": "628116529890",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "YANMARINDO PERKASA, PT",
+      "phone": "6289524699159",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "ANEKA NIAGA SENTRAL PERKAKAS, PT",
+      "phone": "6281247968878",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "PROTECTA",
+      "phone": "6281268792799",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "BIONDI JAYA PERKASA, PT",
+      "phone": "6281388920193",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "BIONDI TEKNIK",
+      "phone": "6281388920193",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "ADIJAYA BUANA PERKASA, PT",
+      "phone": "6282312608905",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "SAMUDRA TEKNIK SEJAHTERA, PT",
+      "phone": "6282211964204",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "YUNIKA TRIJAYA SENTOSA, PT",
+      "phone": "6281916005146",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "PUNDI MAS ARYOTA, PT",
+      "phone": "6282112178006",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "LOGAM JAYA PROSPERINDO, CV",
+      "phone": "628125603122",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MAHAJAYA GOLDEN OCEAN, CV",
+      "phone": "6283159033408",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "TET HIUNG",
+      "phone": "6285347402066",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MITRA JAYA ABADI, CV",
+      "phone": "6285365956188",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SIDO SEMI MAKMUR, CV",
+      "phone": "628123005512",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "FAEDAH TEKNIK, PT",
+      "phone": "628116328484",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "PAPASARI, PT",
+      "phone": "6285885659438",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "INDOMAS JAYA, CV",
+      "phone": "6282154370858",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "PIONIR MANDIRI, CV",
+      "phone": "6285251833388",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "JUNI FATIMAH",
+      "phone": "6282367629999",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MASEBA TEKNIK, CV",
+      "phone": "6282250665233",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "KOTA BARU MANDIRI, CV",
+      "phone": "6285931562575",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "CENTRAL JAYA TAMA ABADI, PT",
+      "phone": "62811549533",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "INDO PRIMA PERKAKAS, PT",
+      "phone": "6281378870688",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "BONARI",
+      "phone": "6281268229000",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "INDO PERKAKAS",
+      "phone": "628117621999",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "DUNIA TEHNIK",
+      "phone": "6285275615008",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "PANG DONNY WIJAYA",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "MAJU BERSAMA JAYAKARTA, PT",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "TAN TJIE KIONG",
+      "phone": "628126018187",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "PAN TJI HWA",
+      "phone": "6281361382009",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "GLORINDO TEKNIK SEJAHTERA, CV",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "BINTANG PRIMA SENTOSA, CV",
+      "phone": "628127584811",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "FRANS HARYANTO",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "ARYA TEKNIK, CV",
+      "phone": "6285362627338",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "ARYATEKNIK MAKMURSENTOSA, PT",
+      "phone": "6285362627338",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "KINARI WIDJAJA",
+      "phone": "628126052657",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "GLISTAGEN, PT",
+      "phone": "6282172129597",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "SURYA WIJAYA SAKTI, CV",
+      "phone": "628129568570",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MeiAR, CV",
+      "phone": "6285169770057",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MULYO REJEKI, CV",
+      "phone": "6281325153777",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "CAHAYA MATERIAL INDONESIA, CV",
+      "phone": "6281232004403",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "LIE LIAN",
+      "phone": "628156015238",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "AJ SAFETY EQUIPMENT",
+      "phone": "6282331093136",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SENTOSA TEKNIK, CV",
+      "phone": "628122863846",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MODERN TEKNIK, CV",
+      "phone": "6281325851135",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "ISTANA JAYA SEJAHTERA,CV",
+      "phone": "628164882120",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MARIA G NGAJUNG",
+      "phone": "6285714306271",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "MITRA SAFETY",
+      "phone": "6281291883355",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "SUMBER BAUT",
+      "phone": "6289523113858",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SUMBER TEKNIK, CV",
+      "phone": "6281919564514",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "INA/ANDY",
+      "phone": "6285100045459",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "HAUW HIAN",
+      "phone": "628112147788",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "JAFIAN WELDING INDONESIA, PT",
+      "phone": "6287888121990",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "COBRA STEEL INDONESIA",
+      "phone": "6287888121990",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "SAFETY EQUIPMENT INDONESIA, PT",
+      "phone": "6287888502925",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "RAGIL JAYA SEJAHTERA, PT",
+      "phone": "628568883900",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "BUKIT MAS RAYA, CV",
+      "phone": "6281374243714",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "RIAN JAYA DARMA, PT",
+      "phone": "6281318101966",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "TUNAS BARU DJAYA, PT",
+      "phone": "6281548857291",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "ANG, ALIHANSYAH SOEHANTO",
+      "phone": "6285230037105",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "LUKAS ARDIANTO PURNOMO",
+      "phone": "6285210678930",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SURYA TEKNIK",
+      "phone": "6281357813084",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SINAR LOGAM JAYA, CV",
+      "phone": "62811663572",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "ANUGRAH BARU TEHNIK, CV",
+      "phone": "6287875716688",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "HERRY LYS",
+      "phone": "62811430079",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SINAR LOGAM BANGUN SEJATI, PT",
+      "phone": "628127820156",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "ANGKA BARU, CV",
+      "phone": "628123140951",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "KARYA BERSAMA TEKNINDO, PT",
+      "phone": "6281243033252",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MATSUM TJIAWI",
+      "phone": "628116060825",
+      "wilayah": "KOSONG"
+    },
+    {
+      "nama": "AJI NUSA JAYA, CV",
+      "phone": "628121717878",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "SURYA TEKNIK MANDIRI JAYA",
+      "phone": "6281380901307",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "JAMESON PERMAI, PT",
+      "phone": "KOSONG",
+      "wilayah": "Dalam Kota"
+    },
+    {
+      "nama": "SAMUDRA BAUT TEKNIK, PT",
+      "phone": "6282295103321",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "INDAH JAYA TEKNIK, CV",
+      "phone": "KOSONG",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "TOTAL PERKAKAS SEJAHTERA",
+      "phone": "6281283636605",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "",
+      "phone": "",
+      "wilayah": ""
+    }
+  ]
+}

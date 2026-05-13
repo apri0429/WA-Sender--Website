@@ -46,6 +46,7 @@ const PDF_LOGO_FILE = path.join(DATA_DIR, "pdf-logo.json");
 const PDF_WORKBOOK_DATA_FILE = path.join(DATA_DIR, "pdf-workbook-data.json");
 const PDF_DRIVE_CONFIG_FILE = path.join(DATA_DIR, "pdf-drive-config.json");
 const PDF_DRIVE_KEY_FILE = path.join(DATA_DIR, "pdf-drive-key.json");
+const MASTERDATA_FILE = path.join(DATA_DIR, "masterdata.json");
 const WWEBJS_CACHE_DIR = path.join(BASE_DIR, ".wwebjs_cache");
 
 if (!fs.existsSync(SESSION_DIR)) fs.mkdirSync(SESSION_DIR, { recursive: true });
@@ -134,6 +135,7 @@ let currentSendProgress = {
   customer: null,
 };
 let isPdfGenerating = false;
+let isPdfCancelRequested = false;
 
 // Chat inbox - in-memory store
 const chatHistory = new Map(); // chatId -> { id, name, phone, unread, messages[] }
@@ -730,6 +732,35 @@ function savePdfProgress(nextData = {}) {
   return payload;
 }
 
+function getSafePdfProgress() {
+  const progress = getPdfProgress();
+  if (progress.running && !isPdfGenerating) {
+    return savePdfProgress({
+      running: false,
+      current: 0,
+      total: 0,
+      ptName: "",
+      status: "",
+      step: 0,
+      complete: false,
+      error: "",
+    });
+  }
+  return progress;
+}
+
+function createPdfCancelError() {
+  const error = new Error("Generate PDF dibatalkan");
+  error.code = "PDF_CANCELLED";
+  return error;
+}
+
+function throwIfPdfCancelRequested() {
+  if (isPdfCancelRequested) {
+    throw createPdfCancelError();
+  }
+}
+
 function getTemplate() {
   const data = readJsonFile(TEMPLATE_FILE, {
     template:
@@ -828,7 +859,8 @@ function generateMessage(customer, template) {
     .replace(/{nomor}/g, customer.nomor || "-")
     .replace(/{total}/g, formatRupiah(customer.total))
     .replace(/{tempo}/g, formatExcelDate(customer.tempo))
-    .replace(/{pdf}/g, customer.pdf || "");
+    .replace(/{pdf}/g, customer.pdf || "")
+    .replace(/{drive}/g, customer.drive || "");
 }
 
 function emitLog(type, message) {
@@ -1189,6 +1221,7 @@ function buildMasterDataLookup(workbook) {
     const name = String(getCellValue(row, 0) || "").trim();
     if (!name) return;
     map.set(normalizeCompanyName(name), {
+      nama: name,
       phone: String(getCellValue(row, 1) || "").trim() || "KOSONG",
       wilayah: String(getCellValue(row, 2) || "").trim() || "KOSONG",
     });
@@ -1302,17 +1335,17 @@ function saveDriveConfig(data = {}) {
 function httpPostFollowRedirects(urlStr, payload, maxRedirects = 5) {
   return new Promise((resolve, reject) => {
     const bodyBuffer = Buffer.from(payload, "utf8");
-    const attempt = (currentUrl, left) => {
+
+    const doGet = (currentUrl, left) => {
       const u = new URL(currentUrl);
       const mod = u.protocol === "https:" ? https : http;
       const req = mod.request(
-        { hostname: u.hostname, path: u.pathname + u.search, method: "POST",
-          headers: { "Content-Type": "application/json", "Content-Length": bodyBuffer.length } },
+        { hostname: u.hostname, path: u.pathname + u.search, method: "GET" },
         (res) => {
           if ([301, 302, 307, 308].includes(res.statusCode) && res.headers.location) {
             res.resume();
             if (left <= 0) return reject(new Error("Too many redirects"));
-            attempt(res.headers.location, left - 1);
+            doGet(res.headers.location, left - 1);
             return;
           }
           let data = "";
@@ -1322,10 +1355,30 @@ function httpPostFollowRedirects(urlStr, payload, maxRedirects = 5) {
         }
       );
       req.on("error", reject);
-      req.write(bodyBuffer);
       req.end();
     };
-    attempt(urlStr, maxRedirects);
+
+    const u = new URL(urlStr);
+    const mod = u.protocol === "https:" ? https : http;
+    const req = mod.request(
+      { hostname: u.hostname, path: u.pathname + u.search, method: "POST",
+        headers: { "Content-Type": "application/json", "Content-Length": bodyBuffer.length } },
+      (res) => {
+        if ([301, 302, 307, 308].includes(res.statusCode) && res.headers.location) {
+          res.resume();
+          // Apps Script memproses POST di request pertama lalu redirect ke URL response — follow sebagai GET
+          doGet(res.headers.location, maxRedirects - 1);
+          return;
+        }
+        let data = "";
+        res.on("data", (c) => { data += c; });
+        res.on("end", () => resolve(data));
+        res.on("error", reject);
+      }
+    );
+    req.on("error", reject);
+    req.write(bodyBuffer);
+    req.end();
   });
 }
 
@@ -1338,8 +1391,9 @@ async function uploadToDrive(filePath, fileName) {
     folderId: config.folderId || "",
   });
   const responseText = await httpPostFollowRedirects(config.scriptUrl, payload);
+  emitLog("log", `[Drive] Raw response: ${responseText.substring(0, 300)}`);
   let result;
-  try { result = JSON.parse(responseText); } catch { throw new Error("Response tidak valid dari Apps Script"); }
+  try { result = JSON.parse(responseText); } catch { throw new Error(`Response tidak valid dari Apps Script: ${responseText.substring(0, 200)}`); }
   if (!result.success) throw new Error(result.error || "Upload ke Drive gagal");
   return result.url || `https://drive.google.com/file/d/${result.id}/view`;
 }
@@ -1374,12 +1428,8 @@ function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
   const periodeRowsHtml = periodeRows.map((item) => `
     <tr>
       <td>${escapeHtml(item.periode)}</td>
-      <td class="amt green">${escapeHtml(item.amountText)}</td>
+      <td class="amt-g">${escapeHtml(item.amountText)}</td>
     </tr>`).join("");
-
-  const logoHtml = logoDataUrl
-    ? `<img src="${logoDataUrl}" alt="logo" style="max-width:80px;max-height:44px;object-fit:contain;display:block;" />`
-    : `<div style="width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;">P</div>`;
 
   return `<!doctype html>
 <html>
@@ -1387,155 +1437,129 @@ function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
   <meta charset="utf-8" />
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,Helvetica,sans-serif;color:#1a2035;background:#fff;font-size:10.5px;line-height:1.4}
-    /* ─── HEADER ─── */
-    .hdr{background:linear-gradient(135deg,#0f2460 0%,#1a4ba8 60%,#2563eb 100%);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-    .hdr-right{text-align:right;color:#fff}
-    .hdr-right h1{font-size:17px;font-weight:800;letter-spacing:-0.3px;margin-bottom:2px}
-    .hdr-right p{font-size:9.5px;opacity:.75}
-    /* ─── CONTENT ─── */
-    .body{padding:18px 22px}
-    /* ─── INFO GRID ─── */
-    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-    .info-card{background:#f5f8ff;border:1px solid #dde6f5;border-radius:8px;padding:10px 13px}
-    .info-card .lbl{font-size:8.5px;font-weight:700;color:#6b80a6;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
-    .info-card .val{font-size:13px;font-weight:800;color:#0f2460}
-    .info-card .sub{font-size:9px;color:#8a9ab5;margin-top:2px}
-    /* ─── TOTAL BANNER ─── */
-    .total-banner{background:linear-gradient(135deg,#0c4232 0%,#1a7a56 100%);border-radius:10px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-    .total-banner .tl{color:rgba(255,255,255,.8);font-size:9.5px;font-weight:600;margin-bottom:3px}
-    .total-banner .ta{color:#fff;font-size:19px;font-weight:800}
-    .total-banner .td{color:rgba(255,255,255,.7);font-size:9px;margin-top:3px}
-    .total-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:6px 12px;color:#fff;font-size:10px;font-weight:700;text-align:center;flex-shrink:0}
-    /* ─── SECTION HDR ─── */
-    .sec-hdr{display:flex;align-items:center;gap:7px;margin-bottom:7px;padding-bottom:5px;border-bottom:2px solid #e4eaf5}
-    .sec-dot{width:7px;height:7px;border-radius:50%;background:#1a4ba8;flex-shrink:0}
-    .sec-dot.green{background:#0c4232}
-    .sec-title{font-size:10px;font-weight:800;color:#0f2460;text-transform:uppercase;letter-spacing:.05em}
-    .sec-badge{margin-left:auto;background:#eef2fc;color:#1a4ba8;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px}
-    .sec-badge.green{background:#e6f5ee;color:#0c4232}
-    /* ─── TABLE ─── */
-    table{width:100%;border-collapse:collapse;margin-bottom:14px}
-    thead th{background:#1a2035;color:#fff;font-size:9px;font-weight:700;padding:7px 9px;text-align:left;text-transform:uppercase;letter-spacing:.04em}
-    thead th:first-child{border-radius:5px 0 0 0}
-    thead th:last-child{border-radius:0 5px 0 0}
-    tbody tr{border-bottom:1px solid #edf0f7}
-    tbody tr:last-child{border-bottom:none}
-    tbody tr:nth-child(even) td{background:#f8faff}
-    td{padding:6px 9px;color:#374151;vertical-align:top}
-    td.no{color:#9ca3af;font-size:9.5px;width:28px}
-    td.inv{font-weight:700;color:#1a4ba8;font-family:monospace;font-size:10px}
-    td.date{color:#6b7280;width:82px}
-    td.center{text-align:center;width:60px}
-    td.amt{text-align:right;font-weight:700;color:#0c4232;width:130px}
-    td.amt.green{color:#0c4232}
-    /* Total row */
-    .total-row td{background:#eef2fc!important;font-weight:800;color:#0f2460;border-top:2px solid #1a4ba8;font-size:10.5px}
-    .total-row .amt{color:#0f2460;font-size:12px}
-    /* Periode table header */
-    .tbl-green thead th{background:#0c4232}
-    /* ─── STAMP ─── */
-    .stamp{border:1.5px dashed #d1d5db;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:10px;margin-bottom:12px}
-    .stamp-from{font-size:9px;color:#9ca3af}
-    .stamp-from strong{display:block;font-size:11px;font-weight:800;color:#1a2035;margin-top:2px}
-    .stamp-sign{text-align:center}
-    .stamp-sign .sign-lbl{font-size:8.5px;color:#9ca3af;margin-bottom:18px}
-    .stamp-sign .sign-line{border-top:1px solid #d1d5db;width:110px;margin:0 auto 3px}
-    .stamp-sign .sign-cap{font-size:8px;color:#b5bccf}
-    /* ─── FOOTER ─── */
-    .footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:10px;border-top:1px solid #e5eaf5}
-    .footer-brand{font-size:9px;color:#9ca3af}
-    .footer-brand strong{color:#6b7280}
-    .footer-time{font-family:monospace;font-size:8.5px;color:#b5bccf}
+    body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:#18181b;background:#fff;font-size:13px;line-height:1.65;padding:28px 32px}
+
+    .hdr{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:14px;border-bottom:2.5px solid #27272a;margin-bottom:22px}
+    .hdr-logo{display:flex;flex-direction:row;align-items:center;gap:11px}
+    .hdr-logo img{max-width:54px;max-height:54px;object-fit:contain;object-position:center;display:block;flex-shrink:0}
+    .hdr-logo-texts{display:flex;flex-direction:column;gap:3px}
+    .hdr-logo-name{font-size:15px;font-weight:800;color:#18181b;letter-spacing:-.02em;line-height:1.2}
+    .hdr-logo-sub{font-size:10.5px;color:#71717a}
+    .hdr-right{text-align:right}
+    .hdr-right .doc-type{font-size:9px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px}
+    .hdr-right .doc-title{font-size:26px;font-weight:800;color:#18181b;letter-spacing:-.03em;line-height:1}
+    .hdr-right .doc-date{font-size:10.5px;color:#71717a;margin-top:6px}
+
+    .info-row{display:flex;justify-content:space-between;margin-bottom:20px}
+    .info-block .ib-label{font-size:9px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px}
+    .info-block .ib-value{font-size:15px;font-weight:700;color:#18181b}
+    .info-block .ib-sub{font-size:10.5px;color:#71717a;margin-top:3px}
+    .info-block.right{text-align:right}
+
+    .total-bar{background:#1e293b;border-radius:6px;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+    .tb-label{font-size:9px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+    .tb-amount{font-size:25px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1}
+    .tb-sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:5px}
+    .tb-count{text-align:center;padding:9px 18px;background:rgba(255,255,255,.09);border-radius:5px;color:rgba(255,255,255,.65);font-size:10px;font-weight:600}
+    .tb-count span{display:block;font-size:24px;font-weight:800;color:#fff;line-height:1;margin-bottom:3px}
+
+    .sec-label{font-size:9px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:9px}
+
+    table{width:100%;border-collapse:collapse;margin-bottom:22px;font-size:12px}
+    thead th{font-size:9px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:.08em;padding:0 10px 9px;text-align:left;border-bottom:1.5px solid #e4e4e7}
+    tbody td{padding:9px 10px;border-bottom:1px solid #f4f4f5;color:#3f3f46;vertical-align:middle}
+    tbody tr:last-child td{border-bottom:1.5px solid #e4e4e7}
+    td.no{color:#d4d4d8;font-size:10px;width:22px;padding-left:2px}
+    td.inv{font-weight:700;color:#27272a;font-family:monospace;font-size:12px;white-space:nowrap}
+    td.date{color:#52525b;font-size:11.5px;white-space:nowrap;width:84px}
+    td.center{text-align:center;width:54px;color:#52525b}
+    td.amt{text-align:right;font-weight:700;color:#18181b;width:132px;white-space:nowrap}
+    td.amt-g{text-align:right;font-weight:700;color:#18181b;white-space:nowrap}
+    .trow td{background:#f4f4f5;font-weight:700;color:#18181b;border-top:1.5px solid #e4e4e7;border-bottom:none;font-size:12.5px}
+    .trow .amt{font-size:13px}
+
+    .footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:13px;border-top:1.5px solid #e4e4e7;margin-top:6px}
+    .footer-left{display:flex;flex-direction:column;gap:2px}
+    .footer-auto{font-size:10px;font-weight:600;color:#52525b}
+    .footer-brand{font-size:9.5px;color:#a1a1aa}
+    .footer-time{font-size:10px;color:#71717a;font-family:monospace;text-align:right}
   </style>
 </head>
 <body>
   <div class="hdr">
-    ${logoHtml}
+    <div class="hdr-logo">
+      ${logoDataUrl ? `<img src="${logoDataUrl}" alt="logo" />` : ""}
+      <div class="hdr-logo-texts">
+        <div class="hdr-logo-name">PT Pilar Niaga Makmur</div>
+        <div class="hdr-logo-sub">Statement Tagihan Pelanggan</div>
+      </div>
+    </div>
     <div class="hdr-right">
-      <h1>TAGIHAN INVOICE</h1>
-      <p>PT Pilar Niaga Makmur &bull; Dicetak ${printDate} ${printTime}</p>
+      <div class="doc-type">Dokumen Tagihan</div>
+      <div class="doc-title">TAGIHAN</div>
+      <div class="doc-date">${escapeHtml(printDate)}, ${escapeHtml(printTime)} WIB</div>
     </div>
   </div>
-  <div class="body">
-    <div class="info-grid">
-      <div class="info-card">
-        <div class="lbl">Kepada Yth.</div>
-        <div class="val">${escapeHtml(customer)}</div>
-      </div>
-      <div class="info-card">
-        <div class="lbl">Jatuh Tempo Terdekat</div>
-        <div class="val">${escapeHtml(closestTempoStr)}</div>
-        <div class="sub">${invoices.length} invoice &bull; Cetak: ${printDate}</div>
-      </div>
-    </div>
 
-    <div class="total-banner">
-      <div>
-        <div class="tl">TOTAL YANG HARUS DIBAYAR</div>
-        <div class="ta">${escapeHtml(formatCurrency(total))}</div>
-        ${closestTempo ? `<div class="td">Jatuh tempo: ${escapeHtml(closestTempoStr)}</div>` : ""}
-      </div>
-      <div class="total-badge">${invoices.length}&nbsp;Invoice</div>
+  <div class="info-row">
+    <div class="info-block">
+      <div class="ib-label">Kepada Yth.</div>
+      <div class="ib-value">${escapeHtml(customer)}</div>
     </div>
+    <div class="info-block right">
+      <div class="ib-label">Jatuh Tempo Terdekat</div>
+      <div class="ib-value">${escapeHtml(closestTempoStr)}</div>
+      <div class="ib-sub">${invoices.length} invoice</div>
+    </div>
+  </div>
 
-    <div class="sec-hdr">
-      <div class="sec-dot"></div>
-      <div class="sec-title">Detail Invoice</div>
-      <div class="sec-badge">${invoices.length}</div>
+  <div class="total-bar">
+    <div>
+      <div class="tb-label">Total Yang Harus Dibayar</div>
+      <div class="tb-amount">${escapeHtml(formatCurrency(total))}</div>
+      ${closestTempo ? `<div class="tb-sub">Jatuh tempo: ${escapeHtml(closestTempoStr)}</div>` : ""}
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th style="width:28px">No</th>
-          <th>Nomor Invoice</th>
-          <th style="width:82px">Tgl Invoice</th>
-          <th style="width:60px;text-align:center">Termin</th>
-          <th style="width:82px">Jatuh Tempo</th>
-          <th style="width:130px;text-align:right">Jumlah Tagihan</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${invoiceRowsHtml}
-        <tr class="total-row">
-          <td colspan="5" style="text-align:right;padding-right:12px">Total Tagihan</td>
-          <td class="amt">${escapeHtml(formatCurrency(total))}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="tb-count"><span>${invoices.length}</span>Invoice</div>
+  </div>
 
-    ${periodeRows.length ? `
-    <div class="sec-hdr">
-      <div class="sec-dot green"></div>
-      <div class="sec-title">Riwayat Tagihan per Periode</div>
-      <div class="sec-badge green">${periodeRows.length}</div>
-    </div>
-    <table class="tbl-green">
-      <thead><tr><th>Periode</th><th style="width:160px;text-align:right">Jumlah</th></tr></thead>
-      <tbody>${periodeRowsHtml}</tbody>
-    </table>` : ""}
+  <div class="sec-label">Detail Invoice</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22px"></th>
+        <th>Nomor Invoice</th>
+        <th style="width:80px">Tgl Invoice</th>
+        <th style="width:54px;text-align:center">Termin</th>
+        <th style="width:80px">Jatuh Tempo</th>
+        <th style="width:128px;text-align:right">Jumlah Tagihan</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${invoiceRowsHtml}
+      <tr class="trow">
+        <td colspan="5" style="text-align:right;color:#a1a1aa;font-size:8.5px">Total Tagihan</td>
+        <td class="amt">${escapeHtml(formatCurrency(total))}</td>
+      </tr>
+    </tbody>
+  </table>
 
-    <div class="stamp">
-      <div class="stamp-from">
-        Diterbitkan oleh
-        <strong>PT Pilar Niaga Makmur</strong>
-      </div>
-      <div class="stamp-sign">
-        <div class="sign-lbl">Tanda Terima</div>
-        <div class="sign-line"></div>
-        <div class="sign-cap">Tanda Tangan / Cap</div>
-      </div>
-    </div>
+  ${periodeRows.length ? `
+  <div class="sec-label">Riwayat per Periode</div>
+  <table>
+    <thead><tr><th>Periode</th><th style="text-align:right">Jumlah</th></tr></thead>
+    <tbody>${periodeRowsHtml}</tbody>
+  </table>` : ""}
 
-    <div class="footer">
-      <div class="footer-brand">Dokumen ini diterbitkan otomatis oleh <strong>PT Pilar Niaga Makmur</strong></div>
-      <div class="footer-time">${escapeHtml(printDate)} ${escapeHtml(printTime)}</div>
+  <div class="footer">
+    <div class="footer-left">
+      <div class="footer-auto">Dicetak otomatis oleh sistem</div>
+      <div class="footer-brand">PT Pilar Niaga Makmur</div>
     </div>
+    <div class="footer-time">${escapeHtml(printDate)}, ${escapeHtml(printTime)} WIB</div>
   </div>
 </body>
 </html>`;
 }
-
 async function renderPdfFile(outputPath, html, sharedBrowser = null) {
   ensureDir(path.dirname(outputPath));
   const ownBrowser = !sharedBrowser;
@@ -1544,12 +1568,15 @@ async function renderPdfFile(outputPath, html, sharedBrowser = null) {
     : sharedBrowser;
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "domcontentloaded" });
+    await page.setViewport({ width: 1240, height: 1754, deviceScaleFactor: 2 });
+    await page.setContent(html, { waitUntil: "networkidle0" });
     await page.pdf({
       path: outputPath,
       format: "A4",
       printBackground: true,
-      margin: { top: "10mm", right: "8mm", bottom: "10mm", left: "8mm" },
+      preferCSSPageSize: false,
+      scale: 1,
+      margin: { top: "12mm", right: "10mm", bottom: "12mm", left: "10mm" },
     });
     await page.close();
   } finally {
@@ -1606,7 +1633,7 @@ async function generatePdfPerPtJob() {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const logRows = [];
   const driveConfig = getDriveConfig();
-  const useDrive = driveConfig.enabled && !!driveConfig.scriptUrl;
+  const useDrive = driveConfig.enabled && !!driveConfig.scriptUrl && !!driveConfig.folderId;
 
   savePdfProgress({
     running: true,
@@ -1624,6 +1651,7 @@ async function generatePdfPerPtJob() {
 
   try {
     for (let index = 0; index < customers.length; index += 1) {
+      throwIfPdfCancelRequested();
       const customer = customers[index];
       const invoices = grouped.get(customer) || [];
       const periodRows = getPeriodeRows(periodeMap, customer);
@@ -1649,12 +1677,20 @@ async function generatePdfPerPtJob() {
       await renderPdfFile(outputPath, html, browser);
 
       let driveUrl = null;
+      let driveError = "";
+      let localPdf = `/generated/pdfs/${encodeURIComponent(outputFolderName)}/${encodeURIComponent(fileName)}`;
       if (useDrive) {
+        throwIfPdfCancelRequested();
         try {
           savePdfProgress({ running: true, current: index + 1, total: customers.length, ptName: customer, status: "Upload ke Google Drive", step: 3, complete: false, error: "" });
           driveUrl = await uploadToDrive(outputPath, fileName);
+          // Upload berhasil — hapus file lokal, simpan di Drive saja
+          try { fs.unlinkSync(outputPath); } catch (_) {}
+          localPdf = null;
         } catch (driveErr) {
+          driveError = driveErr.message || "Upload ke Drive gagal";
           emitLog("error", `Upload Drive gagal untuk ${customer}: ${driveErr.message}`);
+          // Upload gagal — tetap simpan lokal sebagai fallback
         }
       }
 
@@ -1663,11 +1699,17 @@ async function generatePdfPerPtJob() {
         nama: customer,
         total: formatCurrency(totalTagihan),
         tempo: closestTempo ? formatDateId(closestTempo) : "-",
-        pdf: `/generated/pdfs/${encodeURIComponent(outputFolderName)}/${encodeURIComponent(fileName)}`,
+        pdf: localPdf,
         driveUrl,
+        driveError,
         nomor: master.phone,
         wilayah: master.wilayah,
       });
+
+      savePdfLogData({
+        rows: logRows,
+      });
+      io.emit("pdf-log-updated", { count: logRows.length });
     }
   } finally {
     await browser.close();
@@ -2032,10 +2074,23 @@ async function sendPdfToCustomer(row) {
   const numberId = await waClient.getNumberId(phone);
   if (!numberId) throw new Error("Nomor tidak terdaftar di WhatsApp");
   const template = getTemplate();
-  const caption = generateMessage(
-    { nama: row.nama, nomor: row.nomor, total: row.total, tempo: row.tempo, pdf: "(terlampir)" },
+  const driveLink = String(row.driveUrl || "").trim();
+  let caption = generateMessage(
+    {
+      nama: row.nama,
+      nomor: row.nomor,
+      total: row.total,
+      tempo: row.tempo,
+      pdf: "(terlampir)",
+      drive: driveLink,
+    },
     template
   );
+
+  if (driveLink && !template.includes("{drive}")) {
+    caption = `${caption}\n\nLink Google Drive:\n${driveLink}`;
+  }
+
   if (row.pdf) {
     const pdfRelUrl = row.pdf.replace(/^\/generated\//, "");
     const filePath = path.join(GENERATED_DIR, ...pdfRelUrl.split("/").map(decodeURIComponent));
@@ -2368,7 +2423,59 @@ app.get("/api/gsheet/input", async (req, res) => {
     // Column mapping used for PDF generation (col index → pdf field)
     const pdfMapping = { noInvoice: "c0", tanggalInvoice: "c1", termin: "c2", customer: "c4", tagihan: "c6", tempo: "c13", penagih: "c15" };
 
-    return res.json({ success: true, headers, rows, pdfMapping });
+    // Format date columns so they display as "dd/mm/yyyy" instead of Excel serial numbers
+    const dateColKeys = new Set([pdfMapping.tanggalInvoice, pdfMapping.tempo]);
+    const formattedRows = rows.map(row => {
+      const r = { ...row };
+      dateColKeys.forEach(k => {
+        if (r[k] !== undefined && r[k] !== "") r[k] = formatDateId(r[k]);
+      });
+      return r;
+    });
+
+    return res.json({ success: true, headers, rows: formattedRows, pdfMapping });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get("/api/gsheet/periode", async (req, res) => {
+  try {
+    const config = getGSheetConfig();
+    if (!config.url) {
+      return res.status(400).json({ success: false, message: "URL Google Sheet belum disimpan" });
+    }
+    const workbook = await loadWorkbookFromGoogleSheet(config.url);
+    const matrix = getSheetMatrix(workbook, "PERIODE");
+    if (!matrix.length) return res.json({ success: true, headers: [], rows: [] });
+
+    const rawHeaders = matrix[0];
+    const headers = [];
+    rawHeaders.forEach((cell, i) => {
+      const label = String(cell ?? "").trim();
+      if (label) headers.push({ key: `c${i}`, label, colIndex: i });
+    });
+
+    // c3 = periode (month/year); other numbers in Excel date range → dd/mm/yyyy
+    const monthColKey = "c3";
+    const isExcelDateSerial = (v) => typeof v === "number" && v > 30000 && v < 100000 && Number.isInteger(v);
+
+    const rows = matrix.slice(1)
+      .filter(row => headers.some(h => String(row[h.colIndex] ?? "").trim()))
+      .map(row => {
+        const obj = {};
+        headers.forEach(h => {
+          const raw = row[h.colIndex] ?? "";
+          if (isExcelDateSerial(raw)) {
+            obj[h.key] = h.key === monthColKey ? formatMonthId(raw) : formatDateId(raw);
+          } else {
+            obj[h.key] = raw;
+          }
+        });
+        return obj;
+      });
+
+    return res.json({ success: true, headers, rows });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -2378,7 +2485,7 @@ app.get("/api/pdf/status", (req, res) => {
   res.json({
     success: true,
     hasLogo: hasPdfLogo(),
-    progress: getPdfProgress(),
+    progress: getSafePdfProgress(),
   });
 });
 
@@ -2389,6 +2496,60 @@ app.get("/api/pdf/temporary", (req, res) => {
   });
 });
 
+app.post("/api/masterdata/sync", async (req, res) => {
+  try {
+    const config = getGSheetConfig();
+    if (!config.url) return res.status(400).json({ success: false, message: "URL Google Sheet belum disimpan" });
+    const workbook = await loadWorkbookFromGoogleSheet(config.url);
+    const masterMap = buildMasterDataLookup(workbook);
+    if (masterMap.size === 0) return res.status(404).json({ success: false, message: "Sheet MASTER DATA tidak ditemukan atau kosong" });
+    const masterData = {};
+    for (const [k, v] of masterMap) masterData[k] = v;
+    const existing = getPdfWorkbookData() || {};
+    savePdfWorkbookData({ ...existing, masterData });
+    const rows = Object.entries(masterData).map(([key, val]) => ({
+      nama: val.nama || key,
+      phone: val.phone || "",
+      wilayah: val.wilayah || "",
+    }));
+    writeJsonFile(MASTERDATA_FILE, { rows });
+    return res.json({ success: true, message: `${rows.length} data master berhasil disinkronisasi`, rows });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get("/api/masterdata", (req, res) => {
+  const saved = readJsonFile(MASTERDATA_FILE, null);
+  if (saved && Array.isArray(saved.rows) && saved.rows.length > 0) {
+    return res.json({ success: true, rows: saved.rows });
+  }
+  const wb = getPdfWorkbookData();
+  if (!wb || !wb.masterData || typeof wb.masterData !== "object") {
+    return res.json({ success: true, rows: [], note: "Belum ada data. Lakukan Sync / Generate Temporary terlebih dahulu." });
+  }
+  const rows = Object.entries(wb.masterData).map(([key, val]) => ({
+    nama: val.nama || key,
+    phone: val.phone || "",
+    wilayah: val.wilayah || "",
+  }));
+  return res.json({ success: true, rows });
+});
+
+app.put("/api/masterdata", (req, res) => {
+  const { rows } = req.body;
+  if (!Array.isArray(rows)) return res.status(400).json({ success: false, message: "rows harus array" });
+  writeJsonFile(MASTERDATA_FILE, { rows });
+  const existing = getPdfWorkbookData() || {};
+  const masterData = {};
+  rows.forEach(row => {
+    const key = normalizeCompanyName(row.nama || "");
+    if (key) masterData[key] = { nama: row.nama || "", phone: row.phone || "", wilayah: row.wilayah || "" };
+  });
+  savePdfWorkbookData({ ...existing, masterData });
+  return res.json({ success: true, message: `${rows.length} record disimpan` });
+});
+
 app.get("/api/pdf/log", (req, res) => {
   const data = getPdfLogData();
   res.json({
@@ -2396,6 +2557,12 @@ app.get("/api/pdf/log", (req, res) => {
     rows: data.rows || [],
     generatedAt: data.generatedAt || null,
   });
+});
+
+app.get("/api/pdf/logo", (req, res) => {
+  const logo = getPdfLogo();
+  if (!logo.base64 || !logo.mimeType) return res.json({ success: true, dataUrl: null });
+  return res.json({ success: true, dataUrl: `data:${logo.mimeType};base64,${logo.base64}` });
 });
 
 app.post("/api/pdf/logo", imageUpload.single("logo"), (req, res) => {
@@ -2521,6 +2688,7 @@ app.put("/api/pdf/temporary/rows", (req, res) => {
 
 app.post("/api/pdf/generate-per-pt", async (req, res) => {
   try {
+    getSafePdfProgress();
     if (isPdfGenerating) {
       return res.status(409).json({
         success: false,
@@ -2529,6 +2697,7 @@ app.post("/api/pdf/generate-per-pt", async (req, res) => {
     }
 
     isPdfGenerating = true;
+    isPdfCancelRequested = false;
     savePdfProgress({
       running: true,
       current: 0,
@@ -2545,16 +2714,27 @@ app.post("/api/pdf/generate-per-pt", async (req, res) => {
         await generatePdfPerPtJob();
         io.emit("pdf-done", { success: true });
       } catch (error) {
-        savePdfProgress({
-          running: false,
-          complete: true,
-          status: "Generate PDF gagal",
-          error: error.message,
-        });
-        io.emit("pdf-error", { error: error.message });
-        emitLog("error", `Generate PDF gagal: ${error.message}`);
+        if (error?.code === "PDF_CANCELLED") {
+          savePdfProgress({
+            running: false,
+            complete: true,
+            status: "Generate PDF dibatalkan",
+            error: "",
+          });
+          io.emit("pdf-cancelled", { message: error.message });
+        } else {
+          savePdfProgress({
+            running: false,
+            complete: true,
+            status: "Generate PDF gagal",
+            error: error.message,
+          });
+          io.emit("pdf-error", { error: error.message });
+          emitLog("error", `Generate PDF gagal: ${error.message}`);
+        }
       } finally {
         isPdfGenerating = false;
+        isPdfCancelRequested = false;
       }
     });
 
@@ -2570,6 +2750,48 @@ app.post("/api/pdf/generate-per-pt", async (req, res) => {
       message: error.message,
     });
   }
+});
+
+app.post("/api/pdf/cancel-generate", (req, res) => {
+  if (!isPdfGenerating) {
+    return res.status(409).json({
+      success: false,
+      message: "Tidak ada proses generate PDF yang sedang berjalan",
+    });
+  }
+
+  isPdfCancelRequested = true;
+  savePdfProgress({
+    running: true,
+    status: "Membatalkan generate PDF...",
+    error: "",
+  });
+
+  return res.json({
+    success: true,
+    message: "Permintaan pembatalan generate PDF dikirim",
+  });
+});
+
+app.post("/api/pdf/reset-progress", (req, res) => {
+  isPdfGenerating = false;
+  isPdfCancelRequested = false;
+  const progress = savePdfProgress({
+    running: false,
+    current: 0,
+    total: 0,
+    ptName: "",
+    status: "",
+    step: 0,
+    complete: false,
+    error: "",
+  });
+
+  return res.json({
+    success: true,
+    message: "Status generate PDF berhasil direset",
+    progress,
+  });
 });
 
 app.post("/api/pdf/send-via-wa", async (req, res) => {
@@ -3498,3 +3720,4 @@ process.on("uncaughtException", (error) => {
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled rejection:", reason);
 });
+

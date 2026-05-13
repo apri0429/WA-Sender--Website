@@ -558,6 +558,7 @@ export default function DashboardPage() {
   const [loadingAutoCustomers, setLoadingAutoCustomers] = useState(false);
   const [lastSendSummary, setLastSendSummary] = useState(null);
   const [lastSendResults, setLastSendResults] = useState([]);
+  const [pdfLogRows, setPdfLogRows] = useState([]);
   const [waQr, setWaQr] = useState("");
   const [waQrAt, setWaQrAt] = useState(null);
   const [waInitializing, setWaInitializing] = useState(false);
@@ -820,6 +821,8 @@ export default function DashboardPage() {
         addLog("error", stRes.reason?.response?.data?.message || "Gagal load status WhatsApp");
       }
 
+      await loadCustomersFromPdf(false);
+
       if (gs?.url) {
         const sheets = await fetchSheetNames(false);
         if (gs?.autoSync && sheets.length > 0) {
@@ -988,6 +991,26 @@ export default function DashboardPage() {
     }, 5000);
     return () => window.clearInterval(timer);
   }, [whatsappReady, waInitializing, waQr, activeWaSessionId, pendingWaSessionId]);
+
+  const loadCustomersFromPdf = async (showMsg = false) => {
+    try {
+      const res = await api.get("/pdf/log");
+      const rows = Array.isArray(res?.data?.rows) ? res.data.rows : [];
+      setPdfLogRows(rows);
+      const valid = rows
+        .filter((r) => r.nomor && r.nomor !== "TIDAK DITEMUKAN")
+        .map((r) => ({ nama: r.nama, nomor: r.nomor }));
+      setCustomers(valid);
+      setSourceMode("pdf");
+      setFileInfo({ fileName: `Hasil PDF — ${valid.length} pelanggan`, message: `${valid.length} dari ${rows.length} siap kirim` });
+      if (showMsg) showToast(`${valid.length} pelanggan dari Hasil PDF dimuat`, "success");
+      addLog("success", `${valid.length} pelanggan dari Hasil PDF`);
+      return valid;
+    } catch (err) {
+      if (showMsg) showToast("Gagal muat data dari Hasil PDF", "error");
+      return [];
+    }
+  };
 
   const handleUpload = async (file) => {
     try {
@@ -1249,968 +1272,324 @@ export default function DashboardPage() {
     ? template
     : "Template belum diisi. Buka Pengaturan untuk mengatur pesan yang akan dikirim.";
 
+  const waAccentColor = whatsappReady ? "#16a34a" : waInitializing ? T.amber : T.red;
+  const waAccentGrad = whatsappReady
+    ? "linear-gradient(90deg,#16a34a,#4ade80)"
+    : waInitializing
+    ? `linear-gradient(90deg,${T.amber},#fbbf24)`
+    : `linear-gradient(90deg,${T.red},#f87171)`;
+
   return (
     <Box
       sx={{
         fontFamily: FONT_SANS,
         p: 2,
+        pb: 4,
         boxSizing: "border-box",
-        "&, & *": {
-          boxSizing: "border-box",
-        },
+        "&, & *": { boxSizing: "border-box" },
       }}
     >
-      <Grid container spacing={2} alignItems={{ xs: "flex-start", lg: "stretch" }}>
-        <Grid
-          item
-          xs={12}
-          md={6}
-          lg={4}
-          sx={{ display: "flex", alignSelf: { xs: "flex-start", lg: "stretch" } }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-              minWidth: 0,
-              width: "100%",
-              height: { xs: "auto", lg: "100%" },
-            }}
-          >
-            <SourceToggle value={sourceMode} onChange={setSourceMode} />
+      {/* ── Stat Cards ── */}
+      <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
+        {[
+          {
+            label: "Pelanggan Dimuat",
+            value: customers.length.toLocaleString(),
+            sub: sourceMode === "pdf"
+              ? `Hasil PDF — ${pdfLogRows.length} total`
+              : sourceMode === "gsheet"
+              ? `Google Sheet — ${selectedSheet || "-"}`
+              : fileInfo?.fileName || "Belum ada data",
+            icon: <PeopleAltRoundedIcon />,
+            color: "#2563eb",
+            topLine: "linear-gradient(90deg, #4767aa 0%, #7aa3ef 100%)",
+          },
+          {
+            label: "Status WhatsApp",
+            value: waLabel,
+            sub: waAccount.number || selectedWaSession?.lastKnownNumber || activeWaSessionId || "Belum terhubung",
+            icon: <WhatsAppIcon />,
+            color: whatsappReady ? "#16a34a" : waInitializing ? "#d97706" : "#dc2626",
+            topLine: whatsappReady
+              ? "linear-gradient(90deg, #32724a 0%, #58d68a 100%)"
+              : waInitializing
+              ? "linear-gradient(90deg, #b06b2c 0%, #f1b24b 100%)"
+              : "linear-gradient(90deg, #ab4b4b 0%, #f07b7b 100%)",
+          },
+          {
+            label: "Template Pesan",
+            value: template?.trim() ? "Siap Kirim" : "Belum Diatur",
+            sub: template?.trim() ? `${template.trim().split("\n").length} baris pesan` : "Buka menu Pengaturan",
+            icon: <DescriptionRoundedIcon />,
+            color: template?.trim() ? "#7c3aed" : "#6b7280",
+            topLine: template?.trim()
+              ? "linear-gradient(90deg, #7250b7 0%, #a78bfa 100%)"
+              : "linear-gradient(90deg, #667085 0%, #b5bdc9 100%)",
+          },
+          {
+            label: "Sesi WA Tersimpan",
+            value: `${waSessions.length} Akun`,
+            sub: activeWaSessionId
+              ? (selectedWaSession?.lastKnownName || selectedWaSession?.label || activeWaSessionId)
+              : "Belum ada sesi aktif",
+            icon: <SignalCellularAltRoundedIcon />,
+            color: "#0f766e",
+            topLine: "linear-gradient(90deg, #3a7c76 0%, #58cec0 100%)",
+          },
+        ].map((s, i) => (
+          <Grid item xs={6} sm={3} key={i}>
+            <Box sx={{ bgcolor: T.white, border: `1px solid ${T.line}`, borderRadius: "14px", p: 1.75, pt: 2.1, height: "100%", display: "flex", flexDirection: "column", gap: 0.4, position: "relative", overflow: "hidden", boxShadow: "0 3px 14px rgba(15,23,42,0.05)" }}>
+              <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: s.topLine, opacity: 0.9 }} />
+              <Box sx={{ position: "absolute", right: -14, bottom: -14, "& svg": { fontSize: 80, color: s.color, opacity: 0.08 } }}>
+                {s.icon}
+              </Box>
+              <Box sx={{ width: 30, height: 30, borderRadius: "8px", bgcolor: `${s.color}14`, display: "grid", placeItems: "center", mb: 0.5, "& svg": { fontSize: 15, color: s.color } }}>
+                {s.icon}
+              </Box>
+              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 9.5, fontWeight: 700, color: s.color, textTransform: "uppercase", letterSpacing: ".1em" }}>
+                {s.label}
+              </Typography>
+              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 17, fontWeight: 800, color: T.ink, letterSpacing: "-.02em", lineHeight: 1.2, wordBreak: "break-word" }}>
+                {s.value}
+              </Typography>
+              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11, color: T.muted, lineHeight: 1.4 }}>
+                {s.sub}
+              </Typography>
+            </Box>
+          </Grid>
+        ))}
+      </Grid>
 
-            {sourceMode === "manual" && (
-              <Panel
-                sx={{
-                  width: "100%",
-                  flex: { lg: 1 },
-                  background: "linear-gradient(155deg, #ffffff 40%, #eaeff7 100%)",
-                  borderColor: T.brandBorder,
-                }}
-              >
-                <Box
-                  sx={{
-                    height: 3,
-                    background: "linear-gradient(90deg, #172649 0%, #233971 55%, #3a5ca8 100%)",
-                  }}
-                />
+      <Grid container spacing={2} alignItems="stretch">
 
-                <SectionTitle
-                  icon={<UploadFileRoundedIcon />}
-                  accentColor={T.brand}
-                  action={
-                    <StatusPill
-                      label={fileInfo ? "Dimuat" : "Belum ada file"}
-                      color={fileInfo ? "green" : "gray"}
-                    />
-                  }
-                >
-                  Upload File Excel
-                </SectionTitle>
+        {/* ── Col 1: Akses Cepat + Template ── */}
+        <Grid item xs={12} md={4} lg={4}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, height: "100%" }}>
 
-                <Box sx={{ p: 2.5, position: "relative", overflow: "hidden" }}>
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      right: -16,
-                      bottom: -16,
-                      pointerEvents: "none",
-                      zIndex: 0,
-                      "& svg": { fontSize: 160, color: T.brand, opacity: 0.045 },
-                    }}
-                  >
-                    <UploadFileRoundedIcon />
-                  </Box>
-
-                  <Box sx={{ position: "relative", zIndex: 1 }}>
-                    <Box
-                      sx={{
-                        p: 1.75,
-                        borderRadius: "8px",
-                        bgcolor: T.brandLight,
-                        border: `1px solid ${T.brandBorder}`,
-                        mb: 2,
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontFamily: FONT_SANS,
-                          fontSize: 12.5,
-                          color: T.brandDark,
-                          lineHeight: 1.7,
-                        }}
-                      >
-                        Upload file <strong>.xlsx</strong> dengan kolom nomor HP dan nama pelanggan.
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 2 }}>
-                      {[".xlsx", ".xls"].map((ext) => (
-                        <Box
-                          key={ext}
-                          sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                            px: 1.25,
-                            py: 0.5,
-                            borderRadius: "6px",
-                            bgcolor: "#fff",
-                            border: `1px solid ${T.brandBorder}`,
-                            boxShadow: "0 1px 3px rgba(35,57,113,0.08)",
-                          }}
-                        >
-                          <DescriptionRoundedIcon sx={{ fontSize: 12, color: T.brand }} />
-                          <Typography
-                            sx={{
-                              fontFamily: FONT_MONO,
-                              fontSize: 11.5,
-                              fontWeight: 600,
-                              color: T.brand,
-                            }}
-                          >
-                            {ext}
-                          </Typography>
-                        </Box>
-                      ))}
-                      <Typography
-                        sx={{
-                          fontFamily: FONT_SANS,
-                          fontSize: 11.5,
-                          color: T.subtle,
-                        }}
-                      >
-                        format yang didukung
-                      </Typography>
-                    </Box>
-
-                    <UploadCard onUpload={handleUpload} fileInfo={fileInfo} />
-                  </Box>
-                </Box>
-              </Panel>
-            )}
-
-            {sourceMode === "gsheet" && (
-              <Panel sx={{ width: "100%", flex: { lg: 1 } }}>
-                <SectionTitle
-                  icon={<TableChartRoundedIcon />}
-                  accentColor={T.brand}
-                  action={
-                    gsheetUrl ? (
-                      <ActionBtn
-                        variant="outline"
-                        color="brand"
-                        size="sm"
-                        startIcon={<OpenInNewRoundedIcon sx={{ fontSize: "13px !important" }} />}
-                        onClick={openGSheet}
-                      >
-                        Buka
-                      </ActionBtn>
-                    ) : null
-                  }
-                >
-                  Google Sheet
-                </SectionTitle>
-                <Box sx={{ p: 2.5 }}>
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, 1fr)",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    {[
-                      {
-                        label: loadingSheets ? "Memuat..." : "Ambil Sheet",
-                        icon: <ViewListRoundedIcon />,
-                        action: () => fetchSheetNames(true),
-                        disabled: loadingSheets || !gsheetUrl.trim(),
-                        variant: "outline",
-                      },
-                      {
-                        label: syncingSheet ? "Syncing..." : "Sync Data",
-                        icon: <SyncRoundedIcon />,
-                        action: handleSyncGSheet,
-                        disabled:
-                          syncingSheet ||
-                          loadingSheets ||
-                          !gsheetUrl.trim() ||
-                          (sheetNames.length > 0 && !selectedSheet),
-                        variant: "solid",
-                      },
-                      {
-                        label: "Load Data",
-                        icon: <PeopleAltRoundedIcon />,
-                        action: handleLoadCustomers,
-                        disabled: !gsheetUrl.trim() || syncingSheet,
-                        variant: "outline",
-                      },
-                      {
-                        label: "Buka Sheet",
-                        icon: <LaunchRoundedIcon />,
-                        action: openGSheet,
-                        disabled: !gsheetUrl.trim(),
-                        variant: "outline",
-                      },
-                    ].map((btn, i) => (
-                      <ActionBtn
-                        key={i}
-                        variant={btn.variant}
-                        color="brand"
-                        size="sm"
-                        startIcon={
-                          <Box sx={{ "& svg": { fontSize: "14px !important" } }}>{btn.icon}</Box>
-                        }
-                        onClick={btn.action}
-                        disabled={btn.disabled}
-                        sx={{ width: "100%", justifyContent: "center" }}
-                      >
-                        {btn.label}
-                      </ActionBtn>
-                    ))}
-                  </Box>
-
-                  <FormControl fullWidth size="small" sx={{ ...fieldStyle, mb: 2 }}>
-                    <InputLabel>Pilih Sheet</InputLabel>
-                    <Select
-                      value={selectedSheet}
-                      label="Pilih Sheet"
-                      onChange={(e) => handleSelectSheet(e.target.value)}
-                      disabled={!sheetNames.length || loadingSheets}
-                    >
-                      {sheetNames.map((s) => (
-                        <MenuItem
-                          key={s}
-                          value={s}
-                          sx={{ fontFamily: FONT_SANS, fontSize: 13.5 }}
-                        >
-                          {s}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      px: 1.5,
-                      py: 1.25,
-                      borderRadius: "8px",
-                      bgcolor: T.surface,
-                      border: `1px solid ${T.line}`,
-                      mb: 2,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontFamily: FONT_SANS,
-                        fontSize: 13,
-                        color: T.text,
-                        fontWeight: 500,
-                      }}
-                    >
-                      Auto sync saat dibuka
-                    </Typography>
-                    <Switch
-                      checked={autoSync}
-                      onChange={(e) => handleToggleAutoSync(e.target.checked)}
-                      disabled={savingGsheet || !gsheetUrl.trim()}
-                      size="small"
-                      color="success"
-                    />
-                  </Box>
-
-                  <Box
-                    sx={{
-                      borderRadius: "8px",
-                      border: `1px solid ${T.line}`,
-                      overflow: "hidden",
-                      bgcolor: T.surface,
-                      px: 1.5,
-                    }}
-                  >
-                    <DataRow label="Sheet aktif" value={selectedSheet} />
-                    <DataRow label="Jumlah sheet" value={sheetNames.length || "—"} />
-                    <DataRow label="Last sync" value={formatSyncTime(lastSyncAt)} mono />
-                  </Box>
-                </Box>
-              </Panel>
-            )}
-          </Box>
-        </Grid>
-
-        <Grid
-          item
-          xs={12}
-          md={6}
-          lg={4}
-          sx={{ display: "flex", alignSelf: { xs: "flex-start", lg: "stretch" } }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-              minWidth: 0,
-              width: "100%",
-              height: { xs: "auto", lg: "100%" },
-            }}
-          >
-            <Panel sx={{ width: "100%" }}>
-              <SectionTitle
-                icon={<WhatsAppIcon />}
-                accentColor="#25D366"
-                action={<StatusPill label={waLabel} color={waStatus} />}
-              >
-                Kirim WhatsApp
+            {/* Quick Access */}
+            <Panel>
+              <SectionTitle icon={<LaunchRoundedIcon />} accentColor={T.brand}>
+                Akses Cepat
               </SectionTitle>
-              <Box sx={{ p: 2.5 }}>
-                <FormControl fullWidth size="small" sx={{ ...fieldStyle, mb: 1.5 }}>
-                  <InputLabel>Akun WhatsApp</InputLabel>
-                  <Select
-                    value={activeWaSessionId}
-                    label="Akun WhatsApp"
-                    onChange={(e) => handleSelectWhatsappSession(e.target.value)}
-                  >
-                    {waSessions.length === 0 ? (
-                      <MenuItem value="" disabled>
-                        Belum ada akun tersimpan
-                      </MenuItem>
-                    ) : (
-                      waSessions.map((s) => (
-                        <MenuItem
-                          key={s.id}
-                          value={s.id}
-                          sx={{ fontFamily: FONT_SANS, fontSize: 13.5 }}
-                        >
-                          {s.label}
-                        </MenuItem>
-                      ))
-                    )}
-                  </Select>
-                </FormControl>
-
-                <Box
-                  sx={{
-                    borderRadius: "8px",
-                    border: `1px solid ${T.line}`,
-                    bgcolor: T.surface,
-                    px: 1.5,
-                    mb: 1.5,
-                  }}
-                >
-                  <DataRow
-                    label="Nama akun"
-                    value={
-                      waAccount.name ||
-                      selectedWaSession?.lastKnownName ||
-                      selectedWaSession?.label ||
-                      "-"
-                    }
-                  />
-                  <DataRow
-                    label="Nomor WA"
-                    value={waAccount.number || selectedWaSession?.lastKnownNumber || "-"}
-                    mono
-                  />
-                  <DataRow
-                    label="Session ID"
-                    value={activeWaSessionId || "Belum dipilih"}
-                    mono
-                  />
-                </Box>
-
-                {!whatsappReady && !waQr && (
+              <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+                {[
+                  { label: "Input Data", sub: "Upload Excel / Google Sheet", icon: <TableChartRoundedIcon />, href: "/input", color: T.brand },
+                  { label: "Generate PDF", sub: "Buat & kirim tagihan PDF", icon: <DescriptionRoundedIcon />, href: "/pdf", color: T.teal },
+                  { label: "Master Data", sub: "Kelola data pelanggan", icon: <PeopleAltRoundedIcon />, href: "/masterdata", color: T.blue },
+                  { label: "Pengaturan", sub: "Template & konfigurasi sistem", icon: <SettingsRoundedIcon />, href: "/settings", color: T.violet },
+                ].map((item) => (
                   <Box
+                    key={item.href}
+                    onClick={() => navigate(item.href)}
                     sx={{
-                      px: 1.75,
-                      py: 1.25,
-                      borderRadius: "8px",
-                      bgcolor: T.amberBg,
-                      border: `1px solid ${T.amberBorder}`,
-                      mb: 1.5,
+                      display: "flex", alignItems: "center", gap: 1.5, p: 1.5,
+                      borderRadius: "10px", cursor: "pointer",
+                      border: `1px solid ${T.line}`, bgcolor: T.surface,
+                      transition: "all 0.15s",
+                      "&:hover": { bgcolor: T.white, borderColor: item.color, boxShadow: `0 0 0 3px ${item.color}10` },
                     }}
                   >
-                    <Typography
-                      sx={{
-                        fontFamily: FONT_SANS,
-                        fontSize: 12.5,
-                        color: "#92400e",
-                        lineHeight: 1.7,
-                      }}
-                    >
-                      {waInitializing
-                        ? "Menyiapkan koneksi WhatsApp..."
-                        : "Pilih akun lalu klik Hubungkan, atau tambah akun baru."}
-                    </Typography>
-                  </Box>
-                )}
-
-                <QRSection
-                  waQr={waQr}
-                  waQrAt={waQrAt}
-                  whatsappReady={whatsappReady}
-                  formatSyncTime={formatSyncTime}
-                />
-
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    px: 1.75,
-                    py: 1.5,
-                    borderRadius: "8px",
-                    bgcolor: T.surface,
-                    border: `1px solid ${T.line}`,
-                    mb: 2,
-                  }}
-                >
-                  <AccessTimeRoundedIcon sx={{ fontSize: 16, color: T.muted, flexShrink: 0 }} />
-                  <Typography
-                    sx={{
-                      fontFamily: FONT_SANS,
-                      fontSize: 13,
-                      color: T.text,
-                      flex: 1,
-                      fontWeight: 500,
-                    }}
-                  >
-                    Jeda antar pesan
-                  </Typography>
-                  <TextField
-                    type="number"
-                    value={delay}
-                    size="small"
-                    onChange={(e) => setDelay(e.target.value)}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <Typography
-                            sx={{
-                              fontFamily: FONT_MONO,
-                              fontSize: 12,
-                              color: T.subtle,
-                            }}
-                          >
-                            ms
-                          </Typography>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      width: 120,
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "7px",
-                        fontFamily: FONT_MONO,
-                        fontSize: 13,
-                        "& fieldset": { borderColor: T.line },
-                        "&:hover fieldset": { borderColor: T.brand },
-                        "&.Mui-focused fieldset": { borderColor: T.brand },
-                      },
-                    }}
-                  />
-                </Box>
-
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <ActionBtn
-                    color="brand"
-                    fullWidth
-                    size="md"
-                    startIcon={<WhatsAppIcon sx={{ fontSize: "16px !important" }} />}
-                    onClick={handleInitWhatsapp}
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {whatsappReady
-                      ? "WhatsApp Terhubung ✓"
-                      : waInitializing
-                      ? "Menyiapkan..."
-                      : "Hubungkan WhatsApp"}
-                  </ActionBtn>
-
-                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
-                    <ActionBtn
-                      variant="outline"
-                      color="brand"
-                      size="md"
-                      fullWidth
-                      startIcon={<AddRoundedIcon sx={{ fontSize: "15px !important" }} />}
-                      onClick={handleAddWhatsappAccount}
-                      disabled={sending}
-                    >
-                      Tambah Akun
-                    </ActionBtn>
-                    <ActionBtn
-                      variant="outline"
-                      color="red"
-                      size="md"
-                      fullWidth
-                      startIcon={
-                        <DeleteOutlineRoundedIcon sx={{ fontSize: "15px !important" }} />
-                      }
-                      onClick={handleDeleteWhatsappSession}
-                      disabled={!activeWaSessionId || sending || waInitializing}
-                    >
-                      Hapus Sesi
-                    </ActionBtn>
-                  </Box>
-
-                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
-                    <ActionBtn
-                      color="slate"
-                      size="md"
-                      fullWidth
-                      startIcon={<SendRoundedIcon sx={{ fontSize: "15px !important" }} />}
-                      onClick={handleSend}
-                      disabled={!whatsappReady || !customers.length || sending}
-                    >
-                      {sending ? "Mengirim..." : "Kirim Pesan"}
-                    </ActionBtn>
-                    <ActionBtn
-                      variant="outline"
-                      size="md"
-                      fullWidth
-                      startIcon={<WifiRoundedIcon sx={{ fontSize: "15px !important" }} />}
-                      onClick={() => checkWhatsappStatus(true)}
-                      disabled={checkingWhatsapp || sending}
-                    >
-                      {checkingWhatsapp ? "Mengecek..." : "Cek Status"}
-                    </ActionBtn>
-                  </Box>
-                </Box>
-
-                <Box
-                  sx={{
-                    mt: 2,
-                    px: 1.75,
-                    py: 1.25,
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    bgcolor: customers.length ? T.brandLight : T.surface,
-                    border: `1px solid ${customers.length ? T.brandBorder : T.line}`,
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontFamily: FONT_SANS,
-                      fontSize: 12.5,
-                      color: T.muted,
-                    }}
-                  >
-                    Data siap kirim
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontFamily: FONT_MONO,
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: customers.length ? T.brand : T.subtle,
-                    }}
-                  >
-                    {customers.length.toLocaleString()} pelanggan
-                  </Typography>
-                </Box>
-
-                {(progress.total > 0 || loadingAutoCustomers || sending) && (
-                  <Box
-                    sx={{
-                      mt: 1.5,
-                      p: 1.75,
-                      borderRadius: "8px",
-                      bgcolor: T.brandLight,
-                      border: `1px solid ${T.brandBorder}`,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        mb: 1.25,
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontFamily: FONT_SANS,
-                          fontSize: 12.5,
-                          fontWeight: 500,
-                          color: T.brand,
-                        }}
-                      >
-                        {loadingAutoCustomers
-                          ? "Memuat auto sync..."
-                          : sending
-                          ? "Mengirim pesan..."
-                          : "Progress pengiriman"}
-                      </Typography>
-                      {!loadingAutoCustomers && (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <Typography
-                            sx={{
-                              fontFamily: FONT_MONO,
-                              fontSize: 11.5,
-                              color: T.muted,
-                            }}
-                          >
-                            {progress.current}/{progress.total}
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontFamily: FONT_MONO,
-                              fontSize: 11.5,
-                              fontWeight: 600,
-                              px: 0.75,
-                              py: 0.25,
-                              borderRadius: "5px",
-                              bgcolor: T.white,
-                              color: T.brand,
-                              border: `1px solid ${T.brandBorder}`,
-                            }}
-                          >
-                            {percent}%
-                          </Typography>
-                        </Box>
-                      )}
+                    <Box sx={{ width: 34, height: 34, borderRadius: "9px", bgcolor: `${item.color}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, "& svg": { fontSize: 17, color: item.color } }}>
+                      {item.icon}
                     </Box>
-                    <LinearProgress
-                      variant={loadingAutoCustomers ? "indeterminate" : "determinate"}
-                      value={loadingAutoCustomers ? undefined : percent}
-                      sx={{
-                        height: 4,
-                        borderRadius: 999,
-                        bgcolor: T.white,
-                        "& .MuiLinearProgress-bar": {
-                          borderRadius: 999,
-                          bgcolor: T.brand,
-                        },
-                      }}
-                    />
-                  </Box>
-                )}
-
-                {lastSendSummary && (
-                  <Box
-                    sx={{
-                      mt: 1.5,
-                      px: 1.5,
-                      py: 1.25,
-                      borderRadius: "8px",
-                      bgcolor: T.surface,
-                      border: `1px solid ${T.line}`,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontFamily: FONT_SANS,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: T.subtle,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.07em",
-                        mb: 1,
-                      }}
-                    >
-                      Hasil terakhir
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
-                      {[
-                        {
-                          label: `Total ${lastSendSummary.total || 0}`,
-                          bg: T.brandLight,
-                          color: T.brand,
-                          border: T.brandBorder,
-                        },
-                        {
-                          label: `Berhasil ${lastSendSummary.success || 0}`,
-                          bg: T.brandLight,
-                          color: T.brand,
-                          border: T.brandBorder,
-                        },
-                        {
-                          label: `Gagal ${lastSendSummary.failed || 0}`,
-                          bg: T.redBg,
-                          color: T.red,
-                          border: T.redBorder,
-                        },
-                      ].map((c, i) => (
-                        <Box
-                          key={i}
-                          sx={{
-                            px: 1,
-                            py: 0.4,
-                            borderRadius: "5px",
-                            bgcolor: c.bg,
-                            border: `1px solid ${c.border}`,
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontFamily: FONT_MONO,
-                              fontSize: 11.5,
-                              fontWeight: 600,
-                              color: c.color,
-                            }}
-                          >
-                            {c.label}
-                          </Typography>
-                        </Box>
-                      ))}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: T.ink, lineHeight: 1.3 }}>{item.label}</Typography>
+                      <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11, color: T.muted, lineHeight: 1.4 }}>{item.sub}</Typography>
                     </Box>
+                    <OpenInNewRoundedIcon sx={{ fontSize: 13, color: T.ghost, flexShrink: 0 }} />
                   </Box>
-                )}
+                ))}
               </Box>
             </Panel>
 
-            <Panel sx={{ width: "100%", flex: { lg: 1 } }}>
+            {/* Pelanggan dari PDF */}
+            <Panel sx={{ flex: 1 }}>
               <SectionTitle
-                icon={<DescriptionRoundedIcon />}
-                accentColor={T.brand}
+                icon={<PeopleAltRoundedIcon />}
+                accentColor={T.teal}
                 action={
-                  <ActionBtn
-                    variant="outline"
-                    color="brand"
-                    size="sm"
-                    startIcon={<SettingsRoundedIcon sx={{ fontSize: "13px !important" }} />}
-                    onClick={() => navigate("/settings")}
-                  >
-                    Edit
+                  <ActionBtn variant="outline" color="brand" size="sm"
+                    startIcon={<SyncRoundedIcon sx={{ fontSize: "13px !important" }} />}
+                    onClick={() => loadCustomersFromPdf(true)}>
+                    Refresh
                   </ActionBtn>
                 }
               >
-                Template Pesan
+                Pelanggan dari PDF
               </SectionTitle>
-              <Box sx={{ p: 2.5 }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    px: 1.5,
-                    py: 1.25,
-                    borderRadius: "8px",
-                    bgcolor: T.brandLight,
-                    border: `1px solid ${T.brandBorder}`,
-                    mb: 1.5,
-                    cursor: "pointer",
-                    "&:hover": { filter: "brightness(0.97)" },
-                  }}
-                  onClick={() => navigate("/settings")}
-                >
-                  <LockRoundedIcon sx={{ fontSize: 14, color: T.brand }} />
-                  <Typography
-                    sx={{
-                      fontFamily: FONT_SANS,
-                      fontSize: 12.5,
-                      color: T.brandDark,
-                      flex: 1,
-                    }}
-                  >
-                    Template hanya bisa diedit di halaman Pengaturan
+              <Box sx={{ p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.25, px: 0.25 }}>
+                  <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12, color: T.muted }}>
+                    {customers.length} siap kirim
+                  </Typography>
+                  <Box sx={{ px: 1, py: 0.3, borderRadius: "6px", bgcolor: T.brandLight, border: `1px solid ${T.brandBorder}` }}>
+                    <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11, fontWeight: 600, color: T.brand }}>
+                      {pdfLogRows.length} total PDF
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ maxHeight: 220, overflow: "auto", borderRadius: "10px", border: `1px solid ${T.line}` }}>
+                  {customers.length === 0 ? (
+                    <Box sx={{ p: 2.5, textAlign: "center" }}>
+                      <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12, color: T.subtle, lineHeight: 1.7 }}>
+                        Belum ada data.<br />Klik <strong>Refresh</strong> untuk muat dari Hasil PDF.
+                      </Typography>
+                    </Box>
+                  ) : (
+                    customers.map((c, i) => (
+                      <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 0.85, borderBottom: `1px solid ${T.line}`, "&:last-child": { borderBottom: "none" }, bgcolor: i % 2 === 0 ? T.white : T.surface }}>
+                        <Box sx={{ width: 20, height: 20, borderRadius: "50%", bgcolor: T.brandLight, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Typography sx={{ fontFamily: FONT_MONO, fontSize: 8.5, fontWeight: 700, color: T.brand }}>{i + 1}</Typography>
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, fontWeight: 600, color: T.ink, lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.nama}</Typography>
+                          <Typography sx={{ fontFamily: FONT_MONO, fontSize: 10, color: T.muted }}>{c.nomor}</Typography>
+                        </Box>
+                      </Box>
+                    ))
+                  )}
+                </Box>
+              </Box>
+            </Panel>
+          </Box>
+        </Grid>
+
+        {/* ── Col 2: WhatsApp Send ── */}
+        <Grid item xs={12} md={4} lg={4}>
+          <Panel sx={{ width: "100%", height: "100%" }}>
+            <Box sx={{ height: 3, background: waAccentGrad }} />
+            <SectionTitle icon={<WhatsAppIcon />} accentColor={waAccentColor} action={<StatusPill label={waLabel} color={waStatus} />}>
+              Kontrol Pengiriman WhatsApp
+            </SectionTitle>
+            <Box sx={{ p: 2.5 }}>
+              <FormControl fullWidth size="small" sx={{ ...fieldStyle, mb: 1.5 }}>
+                <InputLabel>Akun WhatsApp</InputLabel>
+                <Select value={activeWaSessionId} label="Akun WhatsApp" onChange={(e) => handleSelectWhatsappSession(e.target.value)}>
+                  {waSessions.length === 0 ? (
+                    <MenuItem value="" disabled>Belum ada akun tersimpan</MenuItem>
+                  ) : (
+                    waSessions.map((s) => <MenuItem key={s.id} value={s.id} sx={{ fontFamily: FONT_SANS, fontSize: 13.5 }}>{s.label}</MenuItem>)
+                  )}
+                </Select>
+              </FormControl>
+
+              <Box sx={{ borderRadius: "8px", border: `1px solid ${T.line}`, bgcolor: T.surface, px: 1.5, mb: 1.5 }}>
+                <DataRow label="Nama akun" value={waAccount.name || selectedWaSession?.lastKnownName || selectedWaSession?.label || "-"} />
+                <DataRow label="Nomor WA" value={waAccount.number || selectedWaSession?.lastKnownNumber || "-"} mono />
+                <DataRow label="Session ID" value={activeWaSessionId || "Belum dipilih"} mono />
+              </Box>
+
+              {!whatsappReady && !waQr && (
+                <Box sx={{ px: 1.75, py: 1.25, borderRadius: "8px", bgcolor: T.amberBg, border: `1px solid ${T.amberBorder}`, mb: 1.5 }}>
+                  <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: "#92400e", lineHeight: 1.7 }}>
+                    {waInitializing ? "Menyiapkan koneksi WhatsApp..." : "Pilih akun lalu klik Hubungkan, atau tambah akun baru."}
                   </Typography>
                 </Box>
+              )}
 
-                <Box
-                  sx={{
-                    borderRadius: "12px",
-                    border: `1px solid ${T.brandBorder}`,
-                    background:
-                      "radial-gradient(circle at top right, rgba(58,92,168,0.12) 0%, rgba(58,92,168,0) 32%), linear-gradient(180deg, #ffffff 0%, #f8fafe 100%)",
-                    overflow: "hidden",
-                    position: "relative",
-                    minHeight: 168,
-                    boxShadow:
-                      "inset 0 1px 0 rgba(255,255,255,0.85), 0 10px 24px rgba(35,57,113,0.08)",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      px: 1.5,
-                      py: 1.1,
-                      borderBottom: `1px solid ${T.brandBorder}`,
-                      bgcolor: "rgba(234,239,247,0.8)",
-                      backdropFilter: "blur(8px)",
-                    }}
-                  >
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontFamily: FONT_SANS,
-                          fontSize: 11,
-                          fontWeight: 700,
-                          color: T.brand,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.08em",
-                        }}
-                      >
-                        Template Preview
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontFamily: FONT_SANS,
-                          fontSize: 12,
-                          color: T.muted,
-                          mt: 0.35,
-                        }}
-                      >
-                        Pesan yang akan dikirim
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: "50%",
-                        bgcolor: template?.trim() ? T.brand : T.ghost,
-                        boxShadow: template?.trim()
-                          ? "0 0 0 6px rgba(35,57,113,0.12)"
-                          : "0 0 0 6px rgba(209,213,219,0.35)",
-                        transition: "all 0.2s ease",
-                      }}
-                    />
-                  </Box>
+              <QRSection waQr={waQr} waQrAt={waQrAt} whatsappReady={whatsappReady} formatSyncTime={formatSyncTime} />
 
-                  <Box
-                    sx={{
-                      position: "relative",
-                      px: 1.75,
-                      pt: 1.75,
-                      pb: 4.75,
-                      minHeight: 126,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontFamily: FONT_SANS,
-                        fontSize: 13.5,
-                        color: template?.trim() ? T.text : T.subtle,
-                        lineHeight: 1.9,
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                        maxHeight: 118,
-                        overflow: "hidden",
-                        pr: 0.5,
-                        letterSpacing: "-0.01em",
-                      }}
-                    >
-                      {templatePreview}
-                    </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 1.75, py: 1.5, borderRadius: "8px", bgcolor: T.surface, border: `1px solid ${T.line}`, mb: 2 }}>
+                <AccessTimeRoundedIcon sx={{ fontSize: 16, color: T.muted, flexShrink: 0 }} />
+                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, color: T.text, flex: 1, fontWeight: 500 }}>Jeda antar pesan</Typography>
+                <TextField
+                  type="number" value={delay} size="small" onChange={(e) => setDelay(e.target.value)}
+                  InputProps={{ endAdornment: <InputAdornment position="end"><Typography sx={{ fontFamily: FONT_MONO, fontSize: 12, color: T.subtle }}>ms</Typography></InputAdornment> }}
+                  sx={{ width: 120, "& .MuiOutlinedInput-root": { borderRadius: "7px", fontFamily: FONT_MONO, fontSize: 13, "& fieldset": { borderColor: T.line }, "&:hover fieldset": { borderColor: T.brand }, "&.Mui-focused fieldset": { borderColor: T.brand } } }}
+                />
+              </Box>
 
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: 72,
-                        background:
-                          "linear-gradient(180deg, rgba(248,250,254,0) 0%, rgba(248,250,254,0.8) 42%, #f8fafe 100%)",
-                        pointerEvents: "none",
-                      }}
-                    />
-
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        left: 14,
-                        right: 14,
-                        bottom: 12,
-                        zIndex: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 1,
-                        px: 1.4,
-                        py: 1,
-                        borderRadius: "10px",
-                        bgcolor: "rgba(255,255,255,0.88)",
-                        border: `1px solid rgba(179,193,216,0.8)`,
-                        backdropFilter: "blur(10px)",
-                        boxShadow: "0 8px 18px rgba(12,17,27,0.06)",
-                      }}
-                    >
-                      <Box>
-                        <Typography
-                          sx={{
-                            fontFamily: FONT_SANS,
-                            fontSize: 12.5,
-                            fontWeight: 600,
-                            color: T.ink2,
-                          }}
-                        >
-                          Buka editor template
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontFamily: FONT_SANS,
-                            fontSize: 11.5,
-                            color: T.muted,
-                            mt: 0.2,
-                          }}
-                        >
-                          Atur isi pesan, format, dan detail lengkap.
-                        </Typography>
-                      </Box>
-                      <ActionBtn
-                        variant="outline"
-                        color="brand"
-                        size="sm"
-                        onClick={() => navigate("/settings")}
-                        sx={{ flexShrink: 0 }}
-                      >
-                        Edit
-                      </ActionBtn>
-                    </Box>
-                  </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <ActionBtn color="brand" fullWidth size="md" startIcon={<WhatsAppIcon sx={{ fontSize: "16px !important" }} />} onClick={handleInitWhatsapp} sx={{ fontWeight: 600 }}>
+                  {whatsappReady ? "WhatsApp Terhubung ✓" : waInitializing ? "Menyiapkan..." : "Hubungkan WhatsApp"}
+                </ActionBtn>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+                  <ActionBtn variant="outline" color="brand" size="md" fullWidth startIcon={<AddRoundedIcon sx={{ fontSize: "15px !important" }} />} onClick={handleAddWhatsappAccount} disabled={sending}>Tambah Akun</ActionBtn>
+                  <ActionBtn variant="outline" color="red" size="md" fullWidth startIcon={<DeleteOutlineRoundedIcon sx={{ fontSize: "15px !important" }} />} onClick={handleDeleteWhatsappSession} disabled={!activeWaSessionId || sending || waInitializing}>Hapus Sesi</ActionBtn>
+                </Box>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+                  <ActionBtn color="slate" size="md" fullWidth startIcon={<SendRoundedIcon sx={{ fontSize: "15px !important" }} />} onClick={handleSend} disabled={!whatsappReady || !customers.length || sending}>
+                    {sending ? "Mengirim..." : "Kirim Pesan"}
+                  </ActionBtn>
+                  <ActionBtn variant="outline" size="md" fullWidth startIcon={<WifiRoundedIcon sx={{ fontSize: "15px !important" }} />} onClick={() => checkWhatsappStatus(true)} disabled={checkingWhatsapp || sending}>
+                    {checkingWhatsapp ? "Mengecek..." : "Cek Status"}
+                  </ActionBtn>
                 </Box>
               </Box>
-            </Panel>
-          </Box>
+
+              <Box sx={{ mt: 2, px: 1.75, py: 1.25, borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: customers.length ? T.brandLight : T.surface, border: `1px solid ${customers.length ? T.brandBorder : T.line}` }}>
+                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: T.muted }}>Data siap kirim</Typography>
+                <Typography sx={{ fontFamily: FONT_MONO, fontSize: 14, fontWeight: 600, color: customers.length ? T.brand : T.subtle }}>{customers.length.toLocaleString()} pelanggan</Typography>
+              </Box>
+
+              {(progress.total > 0 || loadingAutoCustomers || sending) && (
+                <Box sx={{ mt: 1.5, p: 1.75, borderRadius: "8px", bgcolor: T.brandLight, border: `1px solid ${T.brandBorder}` }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.25 }}>
+                    <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 500, color: T.brand }}>
+                      {loadingAutoCustomers ? "Memuat auto sync..." : sending ? "Mengirim pesan..." : "Progress pengiriman"}
+                    </Typography>
+                    {!loadingAutoCustomers && (
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11.5, color: T.muted }}>{progress.current}/{progress.total}</Typography>
+                        <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: 600, px: 0.75, py: 0.25, borderRadius: "5px", bgcolor: T.white, color: T.brand, border: `1px solid ${T.brandBorder}` }}>{percent}%</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                  <LinearProgress variant={loadingAutoCustomers ? "indeterminate" : "determinate"} value={loadingAutoCustomers ? undefined : percent}
+                    sx={{ height: 4, borderRadius: 999, bgcolor: T.white, "& .MuiLinearProgress-bar": { borderRadius: 999, bgcolor: T.brand } }} />
+                </Box>
+              )}
+
+              {lastSendSummary && (
+                <Box sx={{ mt: 1.5, px: 1.5, py: 1.25, borderRadius: "8px", bgcolor: T.surface, border: `1px solid ${T.line}` }}>
+                  <Typography sx={{ fontFamily: FONT_SANS, fontSize: 10.5, fontWeight: 700, color: T.subtle, textTransform: "uppercase", letterSpacing: "0.07em", mb: 1 }}>Hasil terakhir</Typography>
+                  <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+                    {[
+                      { label: `Total ${lastSendSummary.total || 0}`, bg: T.brandLight, color: T.brand, border: T.brandBorder },
+                      { label: `Berhasil ${lastSendSummary.success || 0}`, bg: T.brandLight, color: T.brand, border: T.brandBorder },
+                      { label: `Gagal ${lastSendSummary.failed || 0}`, bg: T.redBg, color: T.red, border: T.redBorder },
+                    ].map((c, i) => (
+                      <Box key={i} sx={{ px: 1, py: 0.4, borderRadius: "5px", bgcolor: c.bg, border: `1px solid ${c.border}` }}>
+                        <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: 600, color: c.color }}>{c.label}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          </Panel>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          lg={4}
-          sx={{ display: "flex", alignSelf: { xs: "flex-start", lg: "stretch" } }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-              minWidth: 0,
-              width: "100%",
-              height: { xs: "auto", lg: "100%" },
-            }}
-          >
-            <Panel sx={{ width: "100%", flex: { lg: 1 } }}>
-              <SectionTitle icon={<PeopleAltRoundedIcon />} accentColor={T.teal}>
-                Preview Data
-              </SectionTitle>
-              <Box sx={{ p: 2.5 }}>
-                <CustomerPreview customers={customers} />
-              </Box>
-            </Panel>
-
-            <Panel sx={{ width: "100%", flex: { lg: 1 } }}>
-              <SectionTitle icon={<SignalCellularAltRoundedIcon />} accentColor={T.brand}>
-                Activity Log
-              </SectionTitle>
-              <Box sx={{ p: 2.5 }}>
+        {/* ── Col 3: Activity Log ── */}
+        <Grid item xs={12} md={4} lg={4}>
+          <Panel sx={{ height: "100%" }}>
+            <SectionTitle icon={<SignalCellularAltRoundedIcon />} accentColor={T.teal} action={<StatusPill label="Live" color="blue" />}>
+              Activity Log
+            </SectionTitle>
+            <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {lastSendSummary && (
+                <Box sx={{ px: 1.5, py: 1.25, borderRadius: "8px", bgcolor: T.surface, border: `1px solid ${T.line}` }}>
+                  <Typography sx={{ fontFamily: FONT_SANS, fontSize: 10.5, fontWeight: 700, color: T.subtle, textTransform: "uppercase", letterSpacing: "0.07em", mb: 0.75 }}>Hasil Terakhir</Typography>
+                  <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+                    {[
+                      { label: `Total ${lastSendSummary.total || 0}`, bg: T.brandLight, color: T.brand, border: T.brandBorder },
+                      { label: `Berhasil ${lastSendSummary.success || 0}`, bg: T.brandLight, color: T.brand, border: T.brandBorder },
+                      { label: `Gagal ${lastSendSummary.failed || 0}`, bg: T.redBg, color: T.red, border: T.redBorder },
+                    ].map((c, i) => (
+                      <Box key={i} sx={{ px: 1, py: 0.4, borderRadius: "5px", bgcolor: c.bg, border: `1px solid ${c.border}` }}>
+                        <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: 600, color: c.color }}>{c.label}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+              <Box sx={{ maxHeight: { xs: "none", lg: 540 }, overflow: "auto", pr: 0.5 }}>
                 <LogsPanel logs={logs} />
               </Box>
-            </Panel>
-          </Box>
+            </Box>
+          </Panel>
         </Grid>
+
       </Grid>
 
       <Snackbar

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { BarChartSquare02, MessageChatSquare, Settings01, FilePlus02, Table } from "@untitledui/icons";
+import { BarChartSquare02, MessageChatSquare, Settings01, FilePlus02, FileCheck02, Table, Database01, CalendarDate } from "@untitledui/icons";
 
 import TemplateSidebar from "../templateComponents/Sidebar";
 import TemplateHeader from "../templateComponents/Header";
@@ -9,16 +9,34 @@ import BackgroundMain from "../templateComponents/BackgroundMain";
 const waPrimaryItems = [
   { label: "Dashboard", href: "/", icon: BarChartSquare02 },
   { label: "Chat Inbox", href: "/chats", icon: MessageChatSquare },
-  { label: "Input Data", href: "/input", icon: Table },
-  { label: "Generate PDF", href: "/pdf", icon: FilePlus02 },
+  {
+    label: "Input Data",
+    icon: Table,
+    children: [
+      { label: "Input", href: "/input", icon: Table },
+      { label: "Periode", href: "/input/periode", icon: CalendarDate },
+    ],
+  },
+  {
+    label: "Generate PDF",
+    icon: FilePlus02,
+    children: [
+      { label: "Generate", href: "/pdf", icon: FilePlus02 },
+      { label: "Hasil PDF", href: "/pdf/hasil", icon: FileCheck02 },
+    ],
+  },
+  { label: "Master Data", href: "/masterdata", icon: Database01 },
   { label: "Settings", href: "/settings", icon: Settings01 },
 ];
 
 const pageBreadcrumbs = {
   "/": [{ label: "Dashboard", active: true }],
   "/chats": [{ label: "Chat Inbox", active: true }],
-  "/input": [{ label: "Input Data", active: true }],
+  "/input": [{ label: "Input Data" }, { label: "Input", active: true }],
+  "/input/periode": [{ label: "Input Data" }, { label: "Periode", active: true }],
   "/pdf": [{ label: "Generate PDF", active: true }],
+  "/pdf/hasil": [{ label: "Generate PDF" }, { label: "Hasil PDF", active: true }],
+  "/masterdata": [{ label: "Master Data", active: true }],
   "/settings": [{ label: "Settings", active: true }],
 };
 
@@ -64,7 +82,7 @@ export default function Layout() {
 
       <div className="dashboard-stage">
         <TemplateHeader
-          title="WA Sender"
+          title="Sendline"
           breadcrumb={breadcrumb}
           showMenuButton={true}
           onMenuToggle={() => setMobileOpen((v) => !v)}

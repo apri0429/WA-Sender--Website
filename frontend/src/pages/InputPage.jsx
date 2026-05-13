@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -6,13 +8,16 @@ import {
   CircularProgress,
   IconButton,
   InputAdornment,
+  LinearProgress,
   Snackbar,
+  Skeleton,
   TextField,
   Tooltip,
   Typography,
+  Select,
+  MenuItem,
 } from "@mui/material";
-import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
@@ -24,6 +29,7 @@ import PictureAsPdfRoundedIcon from "@mui/icons-material/PictureAsPdfRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import api from "../services/api";
 
 const FONT_SANS = "'Plus Jakarta Sans', 'Inter', sans-serif";
@@ -51,46 +57,107 @@ function formatCurrency(v) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(v) || 0);
 }
 
-function Panel({ children, sx = {} }) {
+const cellInputSx = {
+  width: "100%", border: `1.5px solid ${T.brand}`, borderRadius: "5px",
+  px: "6px", py: "3px", fontFamily: FONT_SANS, fontSize: 12, outline: "none",
+  bgcolor: "rgba(255,255,255,0.9)", color: T.ink, minWidth: 80,
+  "&:focus": { borderColor: T.brandDark },
+};
+
+function LoadingTableState({ syncing }) {
   return (
-    <Box sx={{ bgcolor: T.white, borderRadius: "14px", border: `1px solid ${T.line}`, boxShadow: "0 2px 12px rgba(0,0,0,0.04)", overflow: "hidden", ...sx }}>
-      {children}
+    <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <Box sx={{ px: 2, py: 1.25, borderBottom: `1px solid ${T.line}`, bgcolor: `${T.brand}05` }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
+          <Box>
+            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 700, color: T.ink }}>
+              {syncing ? "Menyinkronkan data sheet" : "Menyiapkan halaman input"}
+            </Typography>
+            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12, color: T.muted, mt: 0.35 }}>
+              {syncing ? "Mengambil header, baris, dan mapping PDF dari Google Sheet..." : "Memeriksa konfigurasi dan memuat data terakhir..."}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.25, py: 0.75, borderRadius: "999px", bgcolor: T.white, border: `1px solid ${T.brandBorder}` }}>
+            <CircularProgress size={16} sx={{ color: T.brand }} />
+            <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: 700, color: T.brand }}>
+              {syncing ? "SYNCING" : "LOADING"}
+            </Typography>
+          </Box>
+        </Box>
+        <LinearProgress sx={{ mt: 1.25, height: 5, borderRadius: 999, bgcolor: T.brandLight, "& .MuiLinearProgress-bar": { borderRadius: 999, bgcolor: T.brand } }} />
+      </Box>
+
+      <Box sx={{ flex: 1, minHeight: 0, overflow: "hidden", p: 2, bgcolor: T.white }}>
+        <Box sx={{ border: `1px solid ${T.line}`, borderRadius: "12px", overflow: "hidden" }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "60px 1.3fr 1fr 0.9fr 0.9fr", gap: 0, borderBottom: `1px solid ${T.line}`, bgcolor: T.brandLight }}>
+            {["No", "Customer", "Invoice", "Tagihan", "Tempo"].map((label) => (
+              <Box key={label} sx={{ px: 2, py: 1.2 }}>
+                <Skeleton variant="text" width={label === "Customer" ? "70%" : "55%"} sx={{ bgcolor: "rgba(26,75,168,0.12)", transform: "none" }} />
+              </Box>
+            ))}
+          </Box>
+          {Array.from({ length: 7 }).map((_, rowIdx) => (
+            <Box
+              key={rowIdx}
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "60px 1.3fr 1fr 0.9fr 0.9fr",
+                borderBottom: rowIdx === 6 ? "none" : `1px solid ${T.line}`,
+                bgcolor: rowIdx % 2 === 0 ? T.white : T.surface,
+              }}
+            >
+              <Box sx={{ px: 2, py: 1.1 }}>
+                <Skeleton variant="text" width="35%" sx={{ bgcolor: "rgba(148,163,184,0.18)", transform: "none" }} />
+              </Box>
+              <Box sx={{ px: 2, py: 1.1 }}>
+                <Skeleton variant="text" width={`${72 - rowIdx * 4}%`} sx={{ bgcolor: "rgba(148,163,184,0.18)", transform: "none" }} />
+              </Box>
+              <Box sx={{ px: 2, py: 1.1 }}>
+                <Skeleton variant="text" width={`${58 + (rowIdx % 3) * 8}%`} sx={{ bgcolor: "rgba(148,163,184,0.18)", transform: "none" }} />
+              </Box>
+              <Box sx={{ px: 2, py: 1.1 }}>
+                <Skeleton variant="text" width={`${50 + (rowIdx % 2) * 14}%`} sx={{ bgcolor: "rgba(12,66,50,0.14)", transform: "none" }} />
+              </Box>
+              <Box sx={{ px: 2, py: 1.1 }}>
+                <Skeleton variant="text" width={`${44 + (rowIdx % 4) * 9}%`} sx={{ bgcolor: "rgba(148,163,184,0.18)", transform: "none" }} />
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </Box>
     </Box>
   );
 }
 
-const cellInputSx = {
-  width: "100%", border: `1.5px solid ${T.brand}`, borderRadius: "5px",
-  px: "6px", py: "3px", fontFamily: FONT_SANS, fontSize: 11.5, outline: "none",
-  bgcolor: T.brandLight, color: T.ink, minWidth: 80,
-  "&:focus": { borderColor: T.brandDark },
-};
-
-// Keys used for PDF generation
-const PDF_FIELD_KEYS = ["noInvoice", "tanggalInvoice", "termin", "customer", "tagihan", "tempo", "penagih"];
-
 export default function InputPage() {
-  // Sheet data (from /api/gsheet/input — raw INPUT sheet columns)
-  const [sheetHeaders, setSheetHeaders] = useState([]); // [{key, label}]
-  const [sheetRows, setSheetRows] = useState([]);        // [{c0: val, c1: val, ...}]
-  const [pdfMapping, setPdfMapping] = useState({});      // {noInvoice: 'c0', customer: 'c4', ...}
+  const navigate = useNavigate();
+  const [sheetHeaders, setSheetHeaders] = useState([]);
+  const [sheetRows, setSheetRows]       = useState([]);
+  const [pdfMapping, setPdfMapping]     = useState({});
 
-  const [gsheetUrl, setGsheetUrl] = useState("");
+  const [gsheetUrl, setGsheetUrl]       = useState("");
   const [gsheetUrlEdit, setGsheetUrlEdit] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [savingPdf, setSavingPdf] = useState(false);
-  const [pdfSaved, setPdfSaved] = useState(false);
+  const [syncing, setSyncing]           = useState(false);
+  const [loading, setLoading]           = useState(true);
+  const [savingPdf, setSavingPdf]       = useState(false);
+  const [pdfSaved, setPdfSaved]         = useState(false);
 
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [page, setPage] = useState(0);
-  const [editingCell, setEditingCell] = useState(null); // { row, colKey, orig }
-  const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
+  const [rowsPerPage, setRowsPerPage]   = useState(25);
+  const [page, setPage]                 = useState(0);
+  const [searchQuery, setSearchQuery]   = useState("");
+  const [editingCell, setEditingCell]   = useState(null);
+  const [toast, setToast]               = useState({ open: false, message: "", severity: "success" });
+  const [headerSlot, setHeaderSlot]     = useState(null);
 
   const gsheetSavedUrlRef = useRef("");
-  const rowsRef = useRef([]);
-  const skipBlurRef = useRef(false);
+  const rowsRef           = useRef([]);
+  const skipBlurRef       = useRef(false);
 
   rowsRef.current = sheetRows;
+
+  useEffect(() => {
+    setTimeout(() => setHeaderSlot(document.getElementById("header-wa-slot")), 100);
+  }, []);
 
   const showToast = (msg, sev = "success") => setToast({ open: true, message: msg, severity: sev });
 
@@ -100,7 +167,20 @@ export default function InputPage() {
       setGsheetUrl(url);
       gsheetSavedUrlRef.current = url;
       setGsheetUrlEdit(!url);
-    }).catch(() => {});
+      if (url) {
+        setSyncing(true);
+        api.get("/gsheet/input").then((r) => {
+          const d = r?.data || {};
+          setSheetHeaders(Array.isArray(d.headers) ? d.headers : []);
+          setSheetRows(Array.isArray(d.rows) ? d.rows : []);
+          setPdfMapping(d.pdfMapping || {});
+          setPage(0);
+          showToast(`${(d.rows || []).length} baris dimuat dari GSheet`, "success");
+        }).catch((err) => {
+          showToast(err?.response?.data?.message || "Gagal auto-sync", "error");
+        }).finally(() => setSyncing(false));
+      }
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const handleGSheetSaveUrl = async () => {
@@ -118,8 +198,7 @@ export default function InputPage() {
 
   const handleSync = async () => {
     if (!gsheetSavedUrlRef.current) { showToast("Atur URL Google Sheet terlebih dahulu", "warning"); return; }
-    setSyncing(true);
-    setPdfSaved(false);
+    setSyncing(true); setPdfSaved(false);
     try {
       const res = await api.get("/gsheet/input");
       const d = res?.data || {};
@@ -127,39 +206,25 @@ export default function InputPage() {
       setSheetRows(Array.isArray(d.rows) ? d.rows : []);
       setPdfMapping(d.pdfMapping || {});
       setPage(0);
-      showToast(`${(d.rows || []).length} baris dimuat dari sheet INPUT`, "success");
+      showToast(`${(d.rows || []).length} baris dimuat`, "success");
     } catch (err) {
-      showToast(err?.response?.data?.message || "Gagal sync dari GSheet", "error");
-    } finally {
-      setSyncing(false);
-    }
+      showToast(err?.response?.data?.message || "Gagal sync", "error");
+    } finally { setSyncing(false); }
   };
 
-  // Map current sheet rows to PDF temporary format and save
   const handleSaveForPdf = async () => {
-    if (!sheetRows.length) { showToast("Tidak ada data untuk disimpan", "warning"); return; }
     setSavingPdf(true);
     try {
-      const mapped = sheetRows.map((row) => ({
-        noInvoice:      String(row[pdfMapping.noInvoice]      ?? ""),
-        tanggalInvoice: String(row[pdfMapping.tanggalInvoice] ?? ""),
-        termin:         String(row[pdfMapping.termin]         ?? ""),
-        customer:       String(row[pdfMapping.customer]       ?? ""),
-        tagihan:        Number(row[pdfMapping.tagihan])        || 0,
-        tempo:          String(row[pdfMapping.tempo]          ?? ""),
-        penagih:        String(row[pdfMapping.penagih]        ?? ""),
-      })).filter(r => r.noInvoice || r.customer || r.tagihan);
-      await api.put("/pdf/temporary/rows", { rows: mapped });
+      const res = await api.post("/pdf/generate-temporary");
+      const count = res?.data?.rows?.length ?? 0;
+      showToast(`${count} baris siap untuk PDF`, "success");
       setPdfSaved(true);
-      showToast(`${mapped.length} baris siap untuk Generate PDF`, "success");
+      setTimeout(() => navigate("/pdf"), 800);
     } catch (err) {
-      showToast(err?.response?.data?.message || "Gagal simpan untuk PDF", "error");
-    } finally {
-      setSavingPdf(false);
-    }
+      showToast(err?.response?.data?.message || "Gagal generate temporary", "error");
+    } finally { setSavingPdf(false); }
   };
 
-  // Cell editing
   const handleCellClick = (rowIdx, colKey) => {
     if (editingCell?.row === rowIdx && editingCell?.colKey === colKey) return;
     setEditingCell({ row: rowIdx, colKey, orig: sheetRows[rowIdx]?.[colKey] });
@@ -187,37 +252,25 @@ export default function InputPage() {
         skipBlurRef.current = true;
         setEditingCell({ row: next, colKey: editingCell?.colKey, orig: rowsRef.current[next]?.[editingCell?.colKey] });
         setTimeout(() => { skipBlurRef.current = false; }, 50);
-      } else {
-        setEditingCell(null);
-      }
+      } else { setEditingCell(null); }
     } else if (e.key === "Tab") {
       e.preventDefault();
       const keys = sheetHeaders.map(h => h.key);
       const ci = keys.indexOf(editingCell?.colKey);
       skipBlurRef.current = true;
       if (!e.shiftKey) {
-        if (ci < keys.length - 1) {
-          setEditingCell({ row: rowIdx, colKey: keys[ci + 1], orig: rowsRef.current[rowIdx]?.[keys[ci + 1]] });
-        } else if (rowIdx < rowsRef.current.length - 1) {
-          setEditingCell({ row: rowIdx + 1, colKey: keys[0], orig: rowsRef.current[rowIdx + 1]?.[keys[0]] });
-        } else {
-          setEditingCell(null);
-        }
+        if (ci < keys.length - 1) setEditingCell({ row: rowIdx, colKey: keys[ci + 1], orig: rowsRef.current[rowIdx]?.[keys[ci + 1]] });
+        else if (rowIdx < rowsRef.current.length - 1) setEditingCell({ row: rowIdx + 1, colKey: keys[0], orig: rowsRef.current[rowIdx + 1]?.[keys[0]] });
+        else setEditingCell(null);
       } else {
-        if (ci > 0) {
-          setEditingCell({ row: rowIdx, colKey: keys[ci - 1], orig: rowsRef.current[rowIdx]?.[keys[ci - 1]] });
-        } else if (rowIdx > 0) {
-          setEditingCell({ row: rowIdx - 1, colKey: keys[keys.length - 1], orig: rowsRef.current[rowIdx - 1]?.[keys[keys.length - 1]] });
-        } else {
-          setEditingCell(null);
-        }
+        if (ci > 0) setEditingCell({ row: rowIdx, colKey: keys[ci - 1], orig: rowsRef.current[rowIdx]?.[keys[ci - 1]] });
+        else if (rowIdx > 0) setEditingCell({ row: rowIdx - 1, colKey: keys[keys.length - 1], orig: rowsRef.current[rowIdx - 1]?.[keys[keys.length - 1]] });
+        else setEditingCell(null);
       }
       setTimeout(() => { skipBlurRef.current = false; }, 50);
     } else if (e.key === "Escape") {
       skipBlurRef.current = true;
-      if (editingCell) {
-        setSheetRows((prev) => prev.map((r, i) => i === rowIdx ? { ...r, [editingCell.colKey]: editingCell.orig } : r));
-      }
+      if (editingCell) setSheetRows((prev) => prev.map((r, i) => i === rowIdx ? { ...r, [editingCell.colKey]: editingCell.orig } : r));
       setEditingCell(null);
       setTimeout(() => { skipBlurRef.current = false; }, 50);
     }
@@ -230,200 +283,204 @@ export default function InputPage() {
     setSheetRows(newRows);
     setPdfSaved(false);
     const newRowIdx = newRows.length - 1;
-    const lastPage = Math.floor(newRowIdx / rowsPerPage);
-    setPage(lastPage);
+    setPage(Math.floor(newRowIdx / rowsPerPage));
     setEditingCell({ row: newRowIdx, colKey: sheetHeaders[0]?.key, orig: "" });
   };
 
   const deleteRow = (idx) => {
-    const newRows = sheetRows.filter((_, i) => i !== idx);
-    setSheetRows(newRows);
+    setSheetRows(sheetRows.filter((_, i) => i !== idx));
     setPdfSaved(false);
     if (editingCell?.row === idx) setEditingCell(null);
   };
 
-  // Check if a column key is used for PDF mapping
   const isPdfCol = (key) => Object.values(pdfMapping).includes(key);
   const pdfFieldLabel = (key) => {
-    const entry = Object.entries(pdfMapping).find(([, v]) => v === key);
-    return entry ? entry[0] : null;
+    const e = Object.entries(pdfMapping).find(([, v]) => v === key);
+    return e ? e[0] : null;
   };
 
+  const mappedRows = sheetRows.map((row, index) => ({ row, index }));
+  const filteredRows = mappedRows.filter(({ row }) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return sheetHeaders.some(h => String(row[h.key] ?? "").toLowerCase().includes(q));
+  });
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+  const showFullLoadingState = loading || (syncing && sheetRows.length === 0);
+
   return (
-    <Box sx={{ fontFamily: FONT_SANS, p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ fontFamily: FONT_SANS, p: 2, display: "flex", flexDirection: "column", gap: 1.5, height: "calc(100vh - 64px)", boxSizing: "border-box", overflow: "hidden" }}>
 
-      {/* ── Kontrol GSheet ── */}
-      <Panel>
-        <Box sx={{ px: 2.5, py: 2, display: "flex", flexDirection: "column", gap: 1.25 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-
-            {gsheetUrlEdit ? (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 260 }}>
-                <TextField size="small" fullWidth autoFocus
-                  placeholder="https://docs.google.com/spreadsheets/d/..."
-                  value={gsheetUrl}
-                  onChange={(e) => setGsheetUrl(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleGSheetSaveUrl()}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start"><LinkRoundedIcon sx={{ fontSize: 15, color: T.muted }} /></InputAdornment>,
-                    sx: { fontFamily: FONT_SANS, fontSize: 12, borderRadius: "9px" },
-                  }}
-                  sx={{ "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: T.brandBorder }, "&:hover fieldset": { borderColor: T.brand }, "&.Mui-focused fieldset": { borderColor: T.brand } } }}
-                />
-                <Button onClick={handleGSheetSaveUrl} disabled={!gsheetUrl.trim()}
-                  sx={{ height: 40, px: 2, borderRadius: "9px", fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 600, textTransform: "none", border: `1.5px solid ${T.brandBorder}`, color: T.brand, bgcolor: T.brandLight, boxShadow: "none", whiteSpace: "nowrap", flexShrink: 0, "&:hover": { bgcolor: "#dce7f9", boxShadow: "none" }, "&:disabled": { opacity: 0.5 } }}>
-                  Simpan
-                </Button>
-                {gsheetSavedUrlRef.current && (
-                  <IconButton size="small" onClick={() => { setGsheetUrl(gsheetSavedUrlRef.current); setGsheetUrlEdit(false); }} sx={{ color: T.muted, "&:hover": { bgcolor: T.surface }, flexShrink: 0 }}>
-                    <CloseRoundedIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                )}
-              </Box>
-            ) : (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.25, py: 0.75, borderRadius: "9px", bgcolor: T.brandLight, border: `1px solid ${T.brandBorder}`, flex: 1, minWidth: 200 }}>
-                <TableChartRoundedIcon sx={{ fontSize: 14, color: T.brand, flexShrink: 0 }} />
-                {gsheetSavedUrlRef.current ? (
-                  <Box component="a" href={gsheetSavedUrlRef.current} target="_blank" rel="noopener noreferrer"
-                    sx={{ flex: 1, display: "flex", alignItems: "center", gap: 0.5, fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, color: T.brand, textDecoration: "none", overflow: "hidden", "&:hover": { textDecoration: "underline" } }}>
-                    Buka Google Sheet
-                    <OpenInNewRoundedIcon sx={{ fontSize: 12, flexShrink: 0 }} />
-                  </Box>
-                ) : (
-                  <Typography sx={{ flex: 1, fontFamily: FONT_SANS, fontSize: 12, color: T.muted, fontStyle: "italic" }}>
-                    Belum dikonfigurasi
-                  </Typography>
-                )}
-                <Tooltip title="Ubah URL">
-                  <IconButton size="small" onClick={() => setGsheetUrlEdit(true)} sx={{ color: T.muted, p: "3px", "&:hover": { bgcolor: "#dce7f9" } }}>
-                    <EditRoundedIcon sx={{ fontSize: 13 }} />
-                  </IconButton>
-                </Tooltip>
-                <Button onClick={handleSync} disabled={syncing || !gsheetSavedUrlRef.current}
-                  startIcon={syncing ? <CircularProgress size={11} color="inherit" /> : <SyncRoundedIcon sx={{ fontSize: 14 }} />}
-                  sx={{ height: 32, px: 1.5, borderRadius: "7px", fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, textTransform: "none", border: `1.5px solid ${T.brandBorder}`, color: T.brand, bgcolor: T.white, boxShadow: "none", whiteSpace: "nowrap", flexShrink: 0, "&:hover": { bgcolor: "#dce7f9" }, "&:disabled": { opacity: 0.5 } }}>
-                  {syncing ? "Sync..." : "Sync dari GSheet"}
-                </Button>
-              </Box>
-            )}
-
-            {/* Stats + Save for PDF */}
-            {sheetRows.length > 0 && (
-              <>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
-                  <CheckCircleOutlineRoundedIcon sx={{ fontSize: 15, color: T.brand }} />
-                  <Typography sx={{ fontFamily: FONT_MONO, fontSize: 12, color: T.brand, fontWeight: 600 }}>
-                    {sheetRows.length} baris &bull; {sheetHeaders.length} kolom
-                  </Typography>
-                </Box>
-                <Button onClick={handleSaveForPdf} disabled={savingPdf || pdfSaved}
-                  startIcon={savingPdf ? <CircularProgress size={13} color="inherit" /> : pdfSaved ? <CheckCircleOutlineRoundedIcon sx={{ fontSize: 15 }} /> : <PictureAsPdfRoundedIcon sx={{ fontSize: 15 }} />}
-                  sx={{ height: 36, px: 2, borderRadius: "9px", fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 600, textTransform: "none", bgcolor: pdfSaved ? T.green : T.brand, color: "#fff", boxShadow: "none", flexShrink: 0, "&:hover": { bgcolor: pdfSaved ? "#0a3228" : T.brandDark, boxShadow: "none" }, "&:disabled": { opacity: 0.7 } }}>
-                  {pdfSaved ? "Tersimpan untuk PDF" : "Simpan untuk Generate PDF"}
-                </Button>
-              </>
-            )}
-          </Box>
-
-          {gsheetUrlEdit && gsheetUrl && !gsheetUrl.includes("/spreadsheets/d/") && (
-            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11, color: T.red }}>
-              URL tidak valid. Gunakan link Google Sheets yang benar.
-            </Typography>
-          )}
-        </Box>
-      </Panel>
-
-      {/* ── Tabel Data INPUT Sheet ── */}
-      <Panel>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 1.75, borderBottom: `1px solid ${T.line}`, bgcolor: `${T.brand}06` }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-            <Box sx={{ width: 4, height: 18, borderRadius: "3px", bgcolor: T.brand, flexShrink: 0 }} />
-            <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: `${T.brand}14`, display: "grid", placeItems: "center", "& svg": { fontSize: 15, color: T.brand } }}>
-              <TableChartRoundedIcon />
+      {/* ── Header portal (Sync + GSheet link) ── */}
+      {headerSlot && createPortal(
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          {gsheetSavedUrlRef.current ? (
+            <Box component="a" href={gsheetSavedUrlRef.current} target="_blank" rel="noopener noreferrer"
+              sx={{ display: "flex", alignItems: "center", gap: 0.5, height: 32, px: 1.25, borderRadius: "8px", fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, color: "#fff", textDecoration: "none", border: "1.5px solid rgba(255,255,255,0.45)", bgcolor: "rgba(255,255,255,0.18)", transition: "all 0.2s", "&:hover": { bgcolor: "rgba(255,255,255,0.28)", borderColor: "rgba(255,255,255,0.7)" } }}>
+              <TableChartRoundedIcon sx={{ fontSize: 14 }} />
+              Buka Google Sheet
+              <OpenInNewRoundedIcon sx={{ fontSize: 11, opacity: 0.8 }} />
             </Box>
-            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13.5, fontWeight: 600, color: T.ink }}>
+          ) : (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, height: 32, px: 1.25, borderRadius: "8px", fontFamily: FONT_SANS, fontSize: 12, color: "rgba(255,255,255,0.55)", fontStyle: "italic", border: "1px solid rgba(255,255,255,0.15)", bgcolor: "rgba(255,255,255,0.08)" }}>
+              <TableChartRoundedIcon sx={{ fontSize: 14 }} />
+              Belum dikonfigurasi
+            </Box>
+          )}
+          <Button onClick={handleSync} disabled={syncing || !gsheetSavedUrlRef.current}
+            startIcon={syncing ? <CircularProgress size={12} sx={{ color: T.brand }} /> : <SyncRoundedIcon sx={{ fontSize: 15 }} />}
+            sx={{ height: 32, px: 1.5, borderRadius: "8px", fontFamily: FONT_SANS, fontSize: 12, fontWeight: 700, textTransform: "none", color: T.brand, bgcolor: "rgba(255,255,255,0.95)", border: "none", boxShadow: "0 1px 6px rgba(0,0,0,0.2)", transition: "all 0.2s", "&:hover": { bgcolor: "#fff", boxShadow: "0 2px 10px rgba(0,0,0,0.25)" }, "&:disabled": { bgcolor: "rgba(255,255,255,0.45)", color: "rgba(26,75,168,0.5)", boxShadow: "none" } }}>
+            {syncing ? "Menyinkron..." : "Sync"}
+          </Button>
+        </Box>,
+        headerSlot
+      )}
+
+      {/* ── Main Table Card ── */}
+      <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0, borderRadius: "14px", border: `1px solid ${T.line}`, boxShadow: "0 4px 20px rgba(0,0,0,0.08)", bgcolor: T.white, overflow: "hidden" }}>
+
+        {/* Card header */}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, py: 1.25, borderBottom: `1px solid ${T.line}`, bgcolor: T.white, gap: 1.5, flexWrap: "wrap", flexShrink: 0 }}>
+          {/* Left: title + stats */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+            <TableChartRoundedIcon sx={{ fontSize: 17, color: T.brand }} />
+            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: T.ink }}>
               Sheet INPUT
-              {sheetRows.length > 0 && (
-                <Box component="span" sx={{ fontFamily: FONT_MONO, fontSize: 11.5, color: T.muted, ml: 0.75 }}>({sheetRows.length} baris)</Box>
-              )}
             </Typography>
+            {sheetRows.length > 0 && (
+              <Box sx={{ px: 1, py: 0.25, borderRadius: "5px", bgcolor: T.brandLight, border: `1px solid ${T.brandBorder}` }}>
+                <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11, color: T.brand, fontWeight: 600 }}>
+                  {sheetRows.length} baris &bull; {sheetHeaders.length} kolom
+                </Typography>
+              </Box>
+            )}
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.subtle, display: { xs: "none", md: "block" } }}>
-              Klik sel · Enter ↓ · Tab → · Esc batal
-            </Typography>
-            {sheetHeaders.length > 0 && (
-              <Button onClick={addRow} startIcon={<AddRoundedIcon sx={{ fontSize: 16 }} />}
-                sx={{ height: 32, px: 1.75, borderRadius: "8px", fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 600, textTransform: "none", border: `1.5px solid ${T.brandBorder}`, color: T.brand, bgcolor: T.brandLight, boxShadow: "none", "&:hover": { bgcolor: "#dce7f9", boxShadow: "none" } }}>
-                Tambah Baris
+
+          {/* Right: search + save + add */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            <TextField size="small"
+              placeholder="Cari..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon sx={{ fontSize: 14, color: T.muted }} /></InputAdornment> }}
+              sx={{ width: 145, "& .MuiOutlinedInput-root": { fontFamily: FONT_SANS, fontSize: 12, borderRadius: "8px", height: 32, "& fieldset": { borderColor: T.line }, "&:hover fieldset": { borderColor: T.brandBorder }, "&.Mui-focused fieldset": { borderColor: T.brand } } }}
+            />
+            {sheetRows.length > 0 && (
+              <Button onClick={handleSaveForPdf} disabled={savingPdf || pdfSaved}
+                startIcon={savingPdf ? <CircularProgress size={12} color="inherit" /> : pdfSaved ? <CheckCircleOutlineRoundedIcon sx={{ fontSize: 14 }} /> : <PictureAsPdfRoundedIcon sx={{ fontSize: 14 }} />}
+                sx={{ height: 32, px: 1.5, borderRadius: "8px", fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, textTransform: "none", bgcolor: pdfSaved ? T.green : T.brand, color: "#fff", boxShadow: "none", flexShrink: 0, "&:hover": { bgcolor: pdfSaved ? "#0a3228" : T.brandDark, boxShadow: "none" }, "&:disabled": { opacity: 0.7 } }}>
+                {pdfSaved ? "Tersimpan" : "Simpan ke PDF"}
               </Button>
             )}
           </Box>
         </Box>
 
-        {sheetRows.length === 0 ? (
-          <Box sx={{ p: 6, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
-            <TableChartRoundedIcon sx={{ fontSize: 44, color: T.subtle }} />
+        {/* Pagination bar */}
+        {filteredRows.length > 0 && (
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, py: 0.75, borderBottom: `1px solid ${T.line}`, bgcolor: T.surface, flexWrap: "wrap", gap: 1, flexShrink: 0 }}>
+            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.muted }}>
+              {page * rowsPerPage + 1}–{Math.min((page + 1) * rowsPerPage, filteredRows.length)} dari {filteredRows.length} baris
+              {searchQuery && <Box component="span" sx={{ ml: 0.75, color: T.brand, fontWeight: 600 }}>· filter aktif</Box>}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.subtle }}>Tampilkan:</Typography>
+              <Select size="small" value={rowsPerPage} onChange={(e) => { setRowsPerPage(e.target.value); setPage(0); }}
+                sx={{ height: 26, fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: 600, color: T.brand, bgcolor: T.brandLight, "& .MuiOutlinedInput-notchedOutline": { border: `1px solid ${T.brandBorder}`, borderRadius: "6px" }, "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: T.brand }, "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: T.brand }, "& .MuiSelect-select": { py: 0, pl: 1, pr: 3 } }}>
+                <MenuItem value={25} sx={{ fontFamily: FONT_MONO, fontSize: 12 }}>25 baris</MenuItem>
+                <MenuItem value={50} sx={{ fontFamily: FONT_MONO, fontSize: 12 }}>50 baris</MenuItem>
+                <MenuItem value={100} sx={{ fontFamily: FONT_MONO, fontSize: 12 }}>100 baris</MenuItem>
+              </Select>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <IconButton size="small" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
+                sx={{ width: 26, height: 26, color: T.brand, "&:disabled": { opacity: 0.3 } }}>
+                <ChevronLeftRoundedIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+              <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11.5, color: T.ink, minWidth: 44, textAlign: "center" }}>
+                {page + 1} / {totalPages}
+              </Typography>
+              <IconButton size="small" onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
+                sx={{ width: 26, height: 26, color: T.brand, "&:disabled": { opacity: 0.3 } }}>
+                <ChevronRightRoundedIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Box>
+          </Box>
+        )}
+
+        {syncing && sheetRows.length > 0 && (
+          <Box sx={{ px: 2, py: 0.9, borderBottom: `1px solid ${T.line}`, bgcolor: `${T.brand}05`, flexShrink: 0 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, color: T.brand }}>
+                Menyinkronkan data terbaru dari Google Sheet...
+              </Typography>
+              <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11, color: T.muted }}>
+                mohon tunggu
+              </Typography>
+            </Box>
+            <LinearProgress sx={{ mt: 0.8, height: 4, borderRadius: 999, bgcolor: T.brandLight, "& .MuiLinearProgress-bar": { borderRadius: 999, bgcolor: T.brand } }} />
+          </Box>
+        )}
+
+        {/* Empty state */}
+        {showFullLoadingState ? (
+          <LoadingTableState syncing={syncing} />
+        ) : sheetRows.length === 0 ? (
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1.5, p: 6 }}>
+            <TableChartRoundedIcon sx={{ fontSize: 42, color: T.subtle }} />
             <Typography sx={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 600, color: T.muted }}>Belum ada data</Typography>
-            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: T.subtle }}>
-              Klik <strong>Sync dari GSheet</strong> untuk memuat sheet INPUT
+            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: T.subtle, textAlign: "center" }}>
+              Klik <strong>Sync</strong> di header untuk memuat data dari sheet INPUT
             </Typography>
             {gsheetSavedUrlRef.current && (
               <Button onClick={handleSync} disabled={syncing}
                 startIcon={syncing ? <CircularProgress size={13} color="inherit" /> : <SyncRoundedIcon sx={{ fontSize: 15 }} />}
-                sx={{ mt: 0.5, height: 38, px: 2.5, borderRadius: "9px", fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, textTransform: "none", bgcolor: T.brand, color: "#fff", boxShadow: "none", "&:hover": { bgcolor: T.brandDark, boxShadow: "none" } }}>
+                sx={{ mt: 0.5, height: 36, px: 2.5, borderRadius: "8px", fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 600, textTransform: "none", bgcolor: T.brand, color: "#fff", boxShadow: "none", "&:hover": { bgcolor: T.brandDark, boxShadow: "none" } }}>
                 {syncing ? "Memuat..." : "Sync Sekarang"}
               </Button>
             )}
           </Box>
         ) : (
-          <Box sx={{ overflowX: "auto" }}>
+          <Box sx={{ overflow: "auto", flexGrow: 1, minHeight: 0 }}>
             <Box component="table" sx={{ width: "100%", borderCollapse: "collapse", fontFamily: FONT_SANS, fontSize: 12 }}>
-              <Box component="thead">
-                <Box component="tr" sx={{ bgcolor: T.brandDark }}>
-                  <Box component="th" sx={{ color: "#fff", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", px: 1.5, py: 1.1, whiteSpace: "nowrap", width: 36, userSelect: "none" }}>No</Box>
+              <Box component="thead" sx={{ position: "sticky", top: 0, zIndex: 10 }}>
+                <Box component="tr" sx={{ bgcolor: T.brandLight, borderBottom: `2px solid ${T.brandBorder}` }}>
+                  <Box component="th" sx={{ color: T.brandDark, fontSize: 11, fontWeight: 700, px: 2, py: 1.25, width: 40, userSelect: "none", textAlign: "center" }}>No</Box>
                   {sheetHeaders.map((h) => {
                     const field = pdfFieldLabel(h.key);
                     return (
                       <Box component="th" key={h.key}
-                        sx={{ color: "#fff", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", px: 1.5, py: 1.1, whiteSpace: "nowrap", textAlign: "left", position: "relative" }}>
+                        sx={{ color: T.brandDark, fontSize: 11, fontWeight: 700, px: 2, py: 1.25, whiteSpace: "nowrap", textAlign: "left" }}>
                         {h.label}
                         {field && (
-                          <Box component="span" sx={{ display: "block", fontSize: 9, fontWeight: 400, color: `${T.brandLight}aa`, textTransform: "none", letterSpacing: 0, mt: 0.2 }}>
-                            → {field}
+                          <Box component="span" sx={{ display: "inline-block", fontSize: 9, fontWeight: 600, color: T.brand, bgcolor: T.white, px: 0.6, py: 0.2, borderRadius: "4px", ml: 1, border: `1px solid ${T.brandBorder}` }}>
+                            {field}
                           </Box>
                         )}
                       </Box>
                     );
                   })}
-                  <Box component="th" sx={{ width: 36 }} />
+                  <Box component="th" sx={{ width: 40 }} />
                 </Box>
               </Box>
               <Box component="tbody">
-                {sheetRows.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((row, pageIdx) => {
-                  const i = page * rowsPerPage + pageIdx;
+                {filteredRows.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map(({ row, index: i }) => {
                   const isCell = (k) => editingCell?.row === i && editingCell?.colKey === k;
                   return (
                     <Box component="tr" key={i}
-                      sx={{ borderBottom: `1px solid ${T.line}`, "&:last-child": { borderBottom: "none" }, "&:nth-of-type(even)": { bgcolor: editingCell?.row === i ? "unset" : T.surface } }}>
-                      <Box component="td" sx={{ px: 1.5, py: 0.8, color: T.subtle, fontSize: 10.5, userSelect: "none" }}>{i + 1}</Box>
+                      sx={{ borderBottom: `1px solid ${T.line}`, transition: "background-color 0.1s", "&:last-child": { borderBottom: "none" }, bgcolor: i % 2 !== 0 ? T.surface : T.white, "&:hover": { bgcolor: T.brandLight } }}>
+                      <Box component="td" sx={{ px: 2, py: 1, color: T.subtle, fontSize: 11, fontWeight: 500, userSelect: "none", textAlign: "center" }}>{i + 1}</Box>
                       {sheetHeaders.map((h) => {
                         const active = isCell(h.key);
                         const isMapped = isPdfCol(h.key);
                         const raw = row[h.key];
-                        // Format currency for tagihan column
-                        const tagihanKey = pdfMapping.tagihan;
-                        const displayText = (h.key === tagihanKey && raw && !active)
-                          ? formatCurrency(raw)
-                          : String(raw ?? "");
+                        const displayText = (h.key === pdfMapping.tagihan && raw && !active)
+                          ? formatCurrency(raw) : String(raw ?? "");
                         return (
                           <Box component="td" key={h.key}
                             onClick={() => handleCellClick(i, h.key)}
                             sx={{
-                              px: 1.5, py: 0.8, minWidth: 90,
-                              ...(active
-                                ? { bgcolor: `${T.brand}08` }
-                                : { "&:hover": { bgcolor: isMapped ? `${T.brand}06` : `${T.brand}03`, cursor: "text" } }),
+                              px: 1.5, py: 0.875, minWidth: 90, cursor: "text",
+                              ...(active ? { bgcolor: T.brandLight } : {}),
                               ...(isMapped ? { borderLeft: `2px solid ${T.brandBorder}` } : {}),
                             }}>
                             {active ? (
@@ -441,8 +498,8 @@ export default function InputPage() {
                                 fontWeight: h.key === pdfMapping.customer ? 600 : h.key === pdfMapping.noInvoice ? 700 : 400,
                                 color: h.key === pdfMapping.tagihan ? T.green
                                   : h.key === pdfMapping.noInvoice ? T.brand
-                                  : h.key === pdfMapping.customer ? T.ink
-                                  : T.text,
+                                  : h.key === pdfMapping.customer ? T.ink : T.text,
+                                lineHeight: 1.4,
                               }}>
                                 {displayText || <Box component="span" sx={{ color: T.subtle, fontStyle: "italic", fontWeight: 400, fontFamily: FONT_SANS }}>—</Box>}
                               </Typography>
@@ -450,74 +507,41 @@ export default function InputPage() {
                           </Box>
                         );
                       })}
-                      <Box component="td" sx={{ px: 0.5, py: 0.5, textAlign: "center", width: 36, userSelect: "none" }}>
+                      <Box component="td" sx={{ px: 0.5, textAlign: "center", width: 40, userSelect: "none" }}>
                         <Tooltip title="Hapus baris">
-                          <IconButton size="small" onClick={() => deleteRow(i)} sx={{ color: T.subtle, "&:hover": { color: T.red, bgcolor: T.redBg } }}>
-                            <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
+                          <IconButton
+                            size="small"
+                            onClick={() => deleteRow(i)}
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              color: T.subtle,
+                              borderRadius: "8px",
+                              transition: "all 0.16s ease",
+                              "&:hover": {
+                                color: T.red,
+                                bgcolor: T.redBg,
+                                transform: "translateY(-1px)",
+                              },
+                            }}
+                          >
+                            <DeleteForeverRoundedIcon sx={{ fontSize: 16 }} />
                           </IconButton>
                         </Tooltip>
                       </Box>
                     </Box>
                   );
                 })}
-
-                {/* Add row */}
-                <Box component="tr" onClick={addRow}
-                  sx={{ borderTop: `1px dashed ${T.line}`, cursor: "pointer", "&:hover": { bgcolor: T.brandLight } }}>
-                  <Box component="td" colSpan={sheetHeaders.length + 2} sx={{ px: 2, py: 1 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                      <AddRoundedIcon sx={{ fontSize: 14, color: T.muted }} />
-                      <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.muted }}>Tambah baris</Typography>
-                    </Box>
-                  </Box>
-                </Box>
               </Box>
             </Box>
           </Box>
         )}
+      </Box>
 
-        {/* Pagination bar */}
-        {sheetRows.length > 0 && (
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 1.25, borderTop: `1px solid ${T.line}`, bgcolor: T.surface, flexWrap: "wrap", gap: 1 }}>
-            {/* Info */}
-            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12, color: T.muted }}>
-              {page * rowsPerPage + 1}–{Math.min((page + 1) * rowsPerPage, sheetRows.length)} dari {sheetRows.length} baris
-            </Typography>
-
-            {/* Rows per page */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.muted, mr: 0.5 }}>Tampilkan:</Typography>
-              {[25, 50, 100].map((n) => (
-                <Button key={n} onClick={() => { setRowsPerPage(n); setPage(0); }}
-                  sx={{ minWidth: 38, height: 26, px: 0.75, borderRadius: "6px", fontFamily: FONT_MONO, fontSize: 12, fontWeight: rowsPerPage === n ? 700 : 400, textTransform: "none", color: rowsPerPage === n ? T.brand : T.muted, bgcolor: rowsPerPage === n ? T.brandLight : "transparent", border: `1px solid ${rowsPerPage === n ? T.brandBorder : "transparent"}`, boxShadow: "none", "&:hover": { bgcolor: T.brandLight, boxShadow: "none" } }}>
-                  {n}
-                </Button>
-              ))}
-            </Box>
-
-            {/* Prev / Next */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <IconButton size="small" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
-                sx={{ color: T.brand, "&:disabled": { opacity: 0.3 } }}>
-                <ChevronLeftRoundedIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-              <Typography sx={{ fontFamily: FONT_MONO, fontSize: 12, color: T.ink, minWidth: 52, textAlign: "center" }}>
-                {page + 1} / {Math.max(1, Math.ceil(sheetRows.length / rowsPerPage))}
-              </Typography>
-              <IconButton size="small" onClick={() => setPage((p) => Math.min(Math.ceil(sheetRows.length / rowsPerPage) - 1, p + 1))}
-                disabled={(page + 1) * rowsPerPage >= sheetRows.length}
-                sx={{ color: T.brand, "&:disabled": { opacity: 0.3 } }}>
-                <ChevronRightRoundedIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            </Box>
-          </Box>
-        )}
-      </Panel>
-
-      {/* Legend */}
+      {/* Legend (Dipindah ke dalam card, tapi di footer agar tidak merusak scroll height) */}
       {sheetHeaders.length > 0 && Object.keys(pdfMapping).length > 0 && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 0.5 }}>
-          <Box sx={{ width: 10, height: 10, borderLeft: `2px solid ${T.brandBorder}`, flexShrink: 0 }} />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, py: 1, bgcolor: T.white, borderTop: `1px solid ${T.line}`, borderBottomLeftRadius: "14px", borderBottomRightRadius: "14px" }}>
+          <Box sx={{ width: 12, height: 12, borderLeft: `2.5px solid ${T.brandBorder}`, flexShrink: 0 }} />
           <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11, color: T.muted }}>
             Kolom dengan garis biru digunakan untuk Generate PDF
           </Typography>

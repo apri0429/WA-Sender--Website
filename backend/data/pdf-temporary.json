@@ -10,15 +10,42 @@
   ],
   "rows": [
     {
-      "noInvoice": "SI260100032",
-      "tanggalInvoice": "02/01/2026",
-      "termin": "3 Bulan",
-      "tempo": "02/04/2026",
-      "customer": "MARANATHA TEKNIK",
-      "tagihan": 1869221.61,
-      "penagih": "Rina Rahayu"
+      "noInvoice": "SI20210300970",
+      "tanggalInvoice": "04/03/2021",
+      "termin": "Net 90",
+      "tempo": "04/06/2021",
+      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
+      "tagihan": 10588406,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI20210300856",
+      "tanggalInvoice": "17/03/2021",
+      "termin": "Net 90",
+      "tempo": "17/06/2021",
+      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
+      "tagihan": 45000000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI20210301010",
+      "tanggalInvoice": "24/03/2021",
+      "termin": "Net 90",
+      "tempo": "24/06/2021",
+      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
+      "tagihan": 102400000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI20210301162",
+      "tanggalInvoice": "29/03/2021",
+      "termin": "Net 90",
+      "tempo": "29/06/2021",
+      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
+      "tagihan": 17200000,
+      "penagih": "Shoona Kabila Mahaaba"
     }
   ],
-  "generatedAt": "2026-05-12T03:41:30.397Z",
+  "generatedAt": "2026-05-13T09:00:31.696Z",
   "sourceSheet": "Google Sheet"
 }

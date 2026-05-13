@@ -1,17 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import {
   Alert,
   Box,
   Button,
   CardContent,
+  CircularProgress,
   Chip,
+  Grid,
   InputAdornment,
   Snackbar,
   TextField,
   Typography,
   IconButton,
   Tooltip,
+  Switch,
 } from "@mui/material";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
@@ -23,6 +26,12 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
+import CloudDoneRoundedIcon from "@mui/icons-material/CloudDoneRounded";
+import FolderOpenRoundedIcon from "@mui/icons-material/FolderOpenRounded";
+import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 
 // ─────────────────────────────────────────────
 // Design Tokens (disamakan dengan Code 1)
@@ -95,6 +104,20 @@ function maskGsheetUrl(url) {
     const clean = url.replace(/^https?:\/\//, "");
     return clean.slice(0, 22) + "••••••••••••";
   }
+}
+
+function extractDriveFolderId(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const match = raw.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : raw;
+}
+
+function maskSecret(value, visible = 6) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.length <= visible) return "•".repeat(raw.length);
+  return `${"•".repeat(Math.max(raw.length - visible, 8))}${raw.slice(-visible)}`;
 }
 
 // ─────────────────────────────────────────────
@@ -381,12 +404,37 @@ export default function SettingsCard({
 
   const [editingUrl, setEditingUrl] = useState(false);
   const [urlDraft, setUrlDraft] = useState("");
+  const [editingDrive, setEditingDrive] = useState(false);
+  const [driveDraft, setDriveDraft] = useState({ folderId: "", enabled: false, scriptUrl: "" });
+
+  const [driveConfig, setDriveConfig] = useState({ folderId: "", enabled: false, scriptUrl: "" });
+  const [driveLoading, setDriveLoading] = useState(false);
+  const [hasLogo, setHasLogo] = useState(false);
+  const [logoLoading, setLogoLoading] = useState(false);
 
   const [toast, setToast] = useState({
     open: false,
     message: "",
     severity: "success",
   });
+  const logoRef = useRef(null);
+
+  const currentDriveConfig = editingDrive ? driveDraft : driveConfig;
+  const driveReady = !!currentDriveConfig.enabled && !!currentDriveConfig.scriptUrl && !!currentDriveConfig.folderId;
+  const driveStatusLabel = driveReady
+    ? "Siap upload"
+    : currentDriveConfig.scriptUrl
+      ? currentDriveConfig.enabled
+        ? "Folder belum diisi"
+        : "Nonaktif"
+      : currentDriveConfig.folderId
+        ? "Script belum diisi"
+        : "Belum diisi";
+  const driveStatusColor = driveReady
+    ? "blue"
+    : currentDriveConfig.scriptUrl || currentDriveConfig.folderId
+      ? "amber"
+      : "gray";
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -421,9 +469,11 @@ export default function SettingsCard({
 
     const loadInitial = async () => {
       try {
-        const [templateRes, gsheetRes] = await Promise.allSettled([
+        const [templateRes, gsheetRes, driveRes, pdfStatusRes] = await Promise.allSettled([
           api.get("/template"),
           api.get("/gsheet"),
+          api.get("/pdf/drive-config"),
+          api.get("/pdf/status"),
         ]);
 
         if (!active) return;
@@ -439,6 +489,17 @@ export default function SettingsCard({
             selectedSheet: d.selectedSheet || "",
             autoSync: !!d.autoSync,
           });
+        }
+
+        if (driveRes.status === "fulfilled") {
+          const d = driveRes.value?.data || {};
+          const nextDriveConfig = { folderId: d.folderId || "", enabled: !!d.enabled, scriptUrl: d.scriptUrl || "" };
+          setDriveConfig(nextDriveConfig);
+          setDriveDraft(nextDriveConfig);
+        }
+
+        if (pdfStatusRes.status === "fulfilled") {
+          setHasLogo(!!pdfStatusRes.value?.data?.hasLogo);
         }
       } catch {
         // intentional
@@ -495,6 +556,51 @@ export default function SettingsCard({
     }
   };
 
+  const handleSaveDriveConfig = async () => {
+    setDriveLoading(true);
+    try {
+      await api.post("/pdf/drive-config", driveDraft);
+      setDriveConfig(driveDraft);
+      setEditingDrive(false);
+      showToast("Konfigurasi Google Drive disimpan", "success");
+    } catch {
+      showToast("Gagal menyimpan konfigurasi Google Drive", "error");
+    } finally {
+      setDriveLoading(false);
+    }
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setLogoLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("logo", file);
+      await api.post("/pdf/logo", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      setHasLogo(true);
+      showToast("Logo PDF berhasil disimpan", "success");
+    } catch {
+      showToast("Gagal upload logo PDF", "error");
+    } finally {
+      setLogoLoading(false);
+    }
+  };
+
+  const handleDeleteLogo = async () => {
+    setLogoLoading(true);
+    try {
+      await api.delete("/pdf/logo");
+      setHasLogo(false);
+      showToast("Logo PDF dihapus", "success");
+    } catch {
+      showToast("Gagal menghapus logo PDF", "error");
+    } finally {
+      setLogoLoading(false);
+    }
+  };
+
   const handleStartEdit = () => {
     setUrlDraft("");
     setEditingUrl(true);
@@ -503,6 +609,16 @@ export default function SettingsCard({
   const handleCancelEdit = () => {
     setUrlDraft("");
     setEditingUrl(false);
+  };
+
+  const handleStartDriveEdit = () => {
+    setDriveDraft(driveConfig);
+    setEditingDrive(true);
+  };
+
+  const handleCancelDriveEdit = () => {
+    setDriveDraft(driveConfig);
+    setEditingDrive(false);
   };
 
   return (
@@ -516,8 +632,11 @@ export default function SettingsCard({
         },
       }}
     >
+      <input ref={logoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogoUpload} />
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Panel>
+        <Grid container spacing={2}>
+          <Grid item xs={12} lg={4}>
+            <Panel sx={{ height: "100%" }}>
           <SectionTitle
             icon={<AccessTimeRoundedIcon />}
             accentColor={T.brand}
@@ -575,8 +694,10 @@ export default function SettingsCard({
             />
           </Box>
         </Panel>
+          </Grid>
 
-        <Panel>
+          <Grid item xs={12} lg={8}>
+            <Panel sx={{ height: "100%" }}>
           <SectionTitle
             icon={<DescriptionRoundedIcon />}
             accentColor={T.brand}
@@ -642,8 +763,10 @@ export default function SettingsCard({
             </ActionBtn>
           </Box>
         </Panel>
+          </Grid>
 
-        <Panel>
+          <Grid item xs={12} lg={7}>
+            <Panel sx={{ height: "100%" }}>
           <SectionTitle
             icon={<TableChartRoundedIcon />}
             accentColor={T.brand}
@@ -803,21 +926,6 @@ export default function SettingsCard({
               >
                 {editingUrl ? "Simpan URL Baru" : "Simpan URL"}
               </ActionBtn>
-
-              {localGsheet && !editingUrl && (
-                <ActionBtn
-                  variant="outline"
-                  color="brand"
-                  size="md"
-                  component="a"
-                  href={localGsheet}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  startIcon={<OpenInNewRoundedIcon sx={{ fontSize: "15px !important" }} />}
-                >
-                  Buka Sheet
-                </ActionBtn>
-              )}
             </Box>
 
             <Box
@@ -833,6 +941,314 @@ export default function SettingsCard({
               <DataRow label="Sheet aktif" value={localGsheetMeta.selectedSheet || "—"} />
               <DataRow label="Auto sync" value={localGsheetMeta.autoSync ? "Aktif" : "Nonaktif"} />
             </Box>
+          </Box>
+        </Panel>
+          </Grid>
+
+          <Grid item xs={12} lg={5}>
+            <Panel sx={{ height: "100%" }}>
+          <SectionTitle
+            icon={<ImageRoundedIcon />}
+            accentColor={T.brand}
+            action={<StatusPill label={hasLogo ? "Terpasang" : "Belum ada"} color={hasLogo ? "green" : "gray"} />}
+          >
+            Logo PDF
+          </SectionTitle>
+
+          <Box sx={{ p: 2.5 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                p: 1.75,
+                borderRadius: "10px",
+                bgcolor: T.surface,
+                border: `1px solid ${T.line}`,
+                mb: 1.5,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "10px",
+                  border: `1px solid ${T.line}`,
+                  bgcolor: T.white,
+                  display: "grid",
+                  placeItems: "center",
+                  flexShrink: 0,
+                }}
+              >
+                {hasLogo ? <CheckCircleOutlineRoundedIcon sx={{ fontSize: 24, color: T.brand }} /> : <ImageRoundedIcon sx={{ fontSize: 24, color: T.subtle }} />}
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: T.ink2 }}>
+                  {hasLogo ? "Logo PDF aktif" : "Belum ada logo PDF"}
+                </Typography>
+                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12, color: T.muted, lineHeight: 1.6 }}>
+                  {hasLogo ? "Logo ini akan tampil di header PDF yang digenerate." : "Upload PNG atau JPG untuk dipakai di header PDF."}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              <ActionBtn
+                color="brand"
+                size="md"
+                onClick={() => logoRef.current?.click()}
+                disabled={logoLoading}
+                startIcon={logoLoading ? <CircularProgress size={14} color="inherit" /> : <ImageRoundedIcon sx={{ fontSize: "16px !important" }} />}
+              >
+                {hasLogo ? "Ganti Logo" : "Upload Logo"}
+              </ActionBtn>
+
+              {hasLogo && (
+                <ActionBtn
+                  variant="outline"
+                  color="red"
+                  size="md"
+                  onClick={handleDeleteLogo}
+                  disabled={logoLoading}
+                  startIcon={<DeleteOutlineRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                >
+                  Hapus Logo
+                </ActionBtn>
+              )}
+            </Box>
+          </Box>
+        </Panel>
+          </Grid>
+        </Grid>
+
+        <Panel>
+          <SectionTitle
+            icon={<CloudUploadRoundedIcon />}
+            accentColor="#1a73e8"
+            action={
+              <StatusPill
+                label={driveStatusLabel}
+                color={driveStatusColor}
+              />
+            }
+          >
+            Google Drive Integration
+          </SectionTitle>
+
+          <Box sx={{ p: 2.5 }}>
+            <Box
+              sx={{
+                p: 1.75,
+                borderRadius: "8px",
+                bgcolor: "#f0f4fc",
+                border: "1px solid #d2e3fc",
+                mb: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: FONT_SANS,
+                  fontSize: 12.5,
+                  color: "#1a73e8",
+                  lineHeight: 1.7,
+                }}
+              >
+                Atur pengunggahan otomatis setiap PDF yang digenerate langsung ke folder Google Drive Anda.
+              </Typography>
+            </Box>
+
+            {!editingDrive ? (
+              <>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    px: 1.5,
+                    py: 1.25,
+                    borderRadius: "8px",
+                    bgcolor: T.surface,
+                    border: `1px solid ${T.line}`,
+                    mb: 2,
+                  }}
+                >
+                  <LockRoundedIcon sx={{ fontSize: 16, color: T.subtle, flexShrink: 0 }} />
+                  <Typography
+                    sx={{
+                      fontFamily: FONT_SANS,
+                      fontSize: 13,
+                      color: driveConfig.scriptUrl || driveConfig.folderId ? T.text : T.subtle,
+                      flex: 1,
+                      fontStyle: driveConfig.scriptUrl || driveConfig.folderId ? "normal" : "italic",
+                      letterSpacing: driveConfig.scriptUrl || driveConfig.folderId ? "0.02em" : "normal",
+                      wordBreak: "break-all",
+                    }}
+                  >
+                    {driveConfig.scriptUrl || driveConfig.folderId
+                      ? `Apps Script: ${maskSecret(driveConfig.scriptUrl, 10)} | Folder: ${maskSecret(driveConfig.folderId, 8)}`
+                      : "Konfigurasi Drive belum diisi"}
+                  </Typography>
+
+                  <Tooltip title="Ubah konfigurasi" placement="top">
+                    <IconButton
+                      size="small"
+                      onClick={handleStartDriveEdit}
+                      sx={{
+                        color: "#1a73e8",
+                        bgcolor: "#e8f0fe",
+                        border: "1px solid #c5d8fb",
+                        borderRadius: "8px",
+                        width: 30,
+                        height: 30,
+                        flexShrink: 0,
+                        "&:hover": { bgcolor: "#dbe7fd" },
+                      }}
+                    >
+                      <EditRoundedIcon sx={{ fontSize: 15 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+
+                <Typography
+                  sx={{
+                    fontFamily: FONT_SANS,
+                    fontSize: 12,
+                    color: T.subtle,
+                    mt: -1.1,
+                    mb: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                  }}
+                >
+                  <LockRoundedIcon sx={{ fontSize: 13 }} />
+                  Konfigurasi tidak akan ditampilkan penuh setelah disimpan demi keamanan.
+                </Typography>
+              </>
+            ) : (
+              <Box sx={{ mb: 2 }}>
+                <TextField
+                  label="Apps Script URL"
+                  fullWidth
+                  size="small"
+                  placeholder="https://script.google.com/macros/s/.../exec"
+                  value={driveDraft.scriptUrl}
+                  onChange={(e) => setDriveDraft((p) => ({ ...p, scriptUrl: e.target.value }))}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LinkRoundedIcon sx={{ fontSize: 18, color: T.subtle }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Tooltip title="Batal" placement="top">
+                          <IconButton
+                            size="small"
+                            onClick={handleCancelDriveEdit}
+                            sx={{ color: T.subtle, "&:hover": { color: T.red } }}
+                          >
+                            <CloseRoundedIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ ...fieldStyle, mb: 1.5 }}
+                />
+
+                <TextField
+                  label="Folder ID / Link Folder"
+                  fullWidth
+                  size="small"
+                  placeholder="https://drive.google.com/drive/folders/... atau ID folder"
+                  value={driveDraft.folderId}
+                  onChange={(e) => setDriveDraft((p) => ({ ...p, folderId: extractDriveFolderId(e.target.value) }))}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <FolderOpenRoundedIcon sx={{ fontSize: 18, color: T.subtle }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ ...fieldStyle, mb: 1.25 }}
+                />
+
+                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12, color: T.subtle, display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <LockRoundedIcon sx={{ fontSize: 13 }} />
+                  Link Drive tetap bisa ditempel langsung, tapi setelah disimpan akan ditampilkan dalam bentuk aman.
+                </Typography>
+              </Box>
+            )}
+
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                <Switch
+                  size="small"
+                  checked={currentDriveConfig.enabled}
+                  onChange={(e) =>
+                    editingDrive
+                      ? setDriveDraft((p) => ({ ...p, enabled: e.target.checked }))
+                      : setDriveConfig((p) => ({ ...p, enabled: e.target.checked }))
+                  }
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#1a73e8" },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "#1a73e8" },
+                  }}
+                />
+                <Typography
+                  sx={{
+                    fontFamily: FONT_SANS,
+                    fontSize: 13,
+                    color: currentDriveConfig.enabled ? "#1a73e8" : T.muted,
+                    fontWeight: currentDriveConfig.enabled ? 600 : 400,
+                  }}
+                >
+                  {currentDriveConfig.enabled ? "Upload ke Drive Aktif" : "Upload ke Drive Nonaktif"}
+                </Typography>
+              </Box>
+              <ActionBtn
+                color="blue"
+                size="md"
+                startIcon={<SaveRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                onClick={editingDrive ? handleSaveDriveConfig : handleStartDriveEdit}
+                disabled={driveLoading || (editingDrive && !driveDraft.scriptUrl.trim())}
+              >
+                {editingDrive ? "Simpan Config" : "Ubah Config"}
+              </ActionBtn>
+            </Box>
+
+            {currentDriveConfig.enabled && !currentDriveConfig.scriptUrl && (
+              <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 2, borderRadius: "8px" }}>
+                Harap isi Apps Script URL agar upload otomatis dapat berfungsi.
+              </Alert>
+            )}
+
+            {currentDriveConfig.enabled && currentDriveConfig.scriptUrl && !currentDriveConfig.folderId && (
+              <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 2, borderRadius: "8px" }}>
+                Isi link atau ID folder Google Drive dulu agar file tahu harus diupload ke folder mana.
+              </Alert>
+            )}
+
+            {driveReady && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.25,
+                  px: 1.75,
+                  py: 1.25,
+                  borderRadius: "8px",
+                  bgcolor: "#e8f0fe",
+                  border: "1px solid #c5d8fb",
+                }}
+              >
+                <CloudDoneRoundedIcon sx={{ fontSize: 18, color: "#1a73e8" }} />
+                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: "#1a73e8", fontWeight: 600 }}>
+                  Apps Script telah diatur.
+                </Typography>
+              </Box>
+            )}
           </Box>
         </Panel>
       </Box>

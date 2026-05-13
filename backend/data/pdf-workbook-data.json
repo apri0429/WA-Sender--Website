@@ -1,744 +1,951 @@
 {
   "rows": [
     {
-      "noInvoice": "SI260100032",
-      "tanggalInvoice": 46024,
-      "termin": "3 Bulan",
-      "tempo": 46114,
-      "customer": "MARANATHA TEKNIK",
-      "tagihan": 1869221.61,
-      "penagih": "Rina Rahayu",
+      "noInvoice": "SI20210300970",
+      "tanggalInvoice": 44259,
+      "termin": "Net 90",
+      "tempo": 44351,
+      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
+      "tagihan": 10588406,
+      "penagih": "Shoona Kabila Mahaaba",
       "sourceRow": 2
+    },
+    {
+      "noInvoice": "SI20210300856",
+      "tanggalInvoice": 44272,
+      "termin": "Net 90",
+      "tempo": 44364,
+      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
+      "tagihan": 45000000,
+      "penagih": "Shoona Kabila Mahaaba",
+      "sourceRow": 3
+    },
+    {
+      "noInvoice": "SI20210301010",
+      "tanggalInvoice": 44279,
+      "termin": "Net 90",
+      "tempo": 44371,
+      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
+      "tagihan": 102400000,
+      "penagih": "Shoona Kabila Mahaaba",
+      "sourceRow": 4
+    },
+    {
+      "noInvoice": "SI20210301162",
+      "tanggalInvoice": 44284,
+      "termin": "Net 90",
+      "tempo": 44376,
+      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
+      "tagihan": 17200000,
+      "penagih": "Shoona Kabila Mahaaba",
+      "sourceRow": 5
     }
   ],
   "masterData": {
     "pt bhakti ratutama jaya": {
+      "nama": "BHAKTI RATUTAMA JAYA, PT",
       "phone": "6287714332158",
       "wilayah": "Luar Kota"
     },
     "cv anugrah teknik jaya": {
+      "nama": "ANUGRAH TEKNIK JAYA, CV",
       "phone": "628115425532",
       "wilayah": "Luar Kota"
     },
     "cv banua jaya": {
+      "nama": "BANUA JAYA, CV",
       "phone": "628123131083",
       "wilayah": "Luar Kota"
     },
     "cv sumber bahagia teknik": {
+      "nama": "SUMBER BAHAGIA TEKNIK, CV",
       "phone": "628118683988",
       "wilayah": "Dalam Kota"
     },
     "steven": {
+      "nama": "STEVEN",
       "phone": "6281352189999",
       "wilayah": "Luar Kota"
     },
     "kris": {
+      "nama": "KRIS",
       "phone": "628119941333",
       "wilayah": "Dalam Kota"
     },
     "cv sintesa teknik": {
+      "nama": "SINTESA TEKNIK, CV",
       "phone": "6281255593343",
       "wilayah": "Luar Kota"
     },
     "kurnia jaya": {
+      "nama": "KURNIA JAYA",
       "phone": "6282246027295",
       "wilayah": "Luar Kota"
     },
     "mega kharisma": {
+      "nama": "MEGA KHARISMA",
       "phone": "62811578503",
       "wilayah": "Luar Kota"
     },
     "ud baja utama teknik": {
+      "nama": "BAJA UTAMA TEKNIK, UD",
       "phone": "62811514120",
       "wilayah": "Luar Kota"
     },
     "metro teknik": {
+      "nama": "METRO TEKNIK",
       "phone": "6281237415254",
       "wilayah": "Luar Kota"
     },
     "pt interindo sukses abadi": {
+      "nama": "INTERINDO SUKSES ABADI, PT",
       "phone": "6282112781975",
       "wilayah": "Dalam Kota"
     },
     "cv karya pratama perkasa": {
+      "nama": "KARYA PRATAMA PERKASA, CV",
       "phone": "628113994466",
       "wilayah": "Luar Kota"
     },
     "pt nelayan maritim jaya": {
+      "nama": "NELAYAN MARITIM JAYA, PT",
       "phone": "6281346582323",
       "wilayah": "Luar Kota"
     },
     "cv mitra abadi sukses": {
+      "nama": "MITRA ABADI SUKSES, CV",
       "phone": "628115702525",
       "wilayah": "Luar Kota"
     },
     "cv mitra gemilang sukses": {
+      "nama": "MITRA GEMILANG SUKSES, CV",
       "phone": "6285245318128",
       "wilayah": "Luar Kota"
     },
     "cv toolsindo berkat sejahtera": {
+      "nama": "TOOLSINDO BERKAT SEJAHTERA, CV",
       "phone": "6285821506285",
       "wilayah": "Luar Kota"
     },
     "cv sumber mitra": {
+      "nama": "SUMBER MITRA, CV",
       "phone": "628125597777",
       "wilayah": "Luar Kota"
     },
     "cv kawijaya teknik mandiri": {
+      "nama": "KAWIJAYA TEKNIK MANDIRI, CV",
       "phone": "6285333578999",
       "wilayah": "Luar Kota"
     },
     "cv rukun abadi jaya": {
+      "nama": "RUKUN ABADI JAYA, CV",
       "phone": "6281346369328",
       "wilayah": "Luar Kota"
     },
     "pt javatec trimitra utama ": {
+      "nama": "JAVATEC TRIMITRA UTAMA , PT",
       "phone": "6285156548119",
       "wilayah": "Luar Kota"
     },
     "cv panca logam teknik sukses": {
+      "nama": "PANCA LOGAM TEKNIK SUKSES, CV",
       "phone": "6285267957013",
       "wilayah": "Luar Kota"
     },
     "cv kuat giat ninigi": {
+      "nama": "KUAT GIAT NINIGI, CV",
       "phone": "6285959711635",
       "wilayah": "Dalam Kota"
     },
     "pt kuat ninigi indonesia": {
+      "nama": "KUAT NINIGI INDONESIA, PT",
       "phone": "6289531422922",
       "wilayah": "Dalam Kota"
     },
     "cv cipta pratama abadi": {
+      "nama": "CIPTA PRATAMA ABADI, CV",
       "phone": "62811747687",
       "wilayah": "Luar Kota"
     },
     "cv sentral safety": {
+      "nama": "SENTRAL SAFETY, CV",
       "phone": "6281399339558",
       "wilayah": "Luar Kota"
     },
     "melinda": {
+      "nama": "MELINDA",
       "phone": "628126607718",
       "wilayah": "Luar Kota"
     },
     "pt global teknik multikarya": {
+      "nama": "GLOBAL TEKNIK MULTIKARYA, PT",
       "phone": "6285658962533",
       "wilayah": "Luar Kota"
     },
     "agnis industri matriks": {
+      "nama": "AGNIS INDUSTRI MATRIKS",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "cv satrya tehnik machinery": {
+      "nama": "SATRYA TEHNIK MACHINERY, CV",
       "phone": "62895616047198",
       "wilayah": "Luar Kota"
     },
     "sumber bahagia abadi": {
+      "nama": "SUMBER BAHAGIA ABADI",
       "phone": "628127124625",
       "wilayah": "Luar Kota"
     },
     "cv semangat maju": {
+      "nama": "SEMANGAT MAJU, CV",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "pt andal jaya perkasa": {
+      "nama": "ANDAL JAYA PERKASA, PT",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "kim teknik": {
+      "nama": "KIM TEKNIK",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "cv laju jaya teknik": {
+      "nama": "LAJU JAYA TEKNIK, CV",
       "phone": "6283832251382",
       "wilayah": "Luar Kota"
     },
     "pt persada mandiri jakarta": {
+      "nama": "PERSADA MANDIRI JAKARTA, PT",
       "phone": "6281255550078",
       "wilayah": "Dalam Kota"
     },
     "pt canne berniaga berkah": {
+      "nama": "CANNE BERNIAGA BERKAH, PT",
       "phone": "6281342520888",
       "wilayah": "Luar Kota"
     },
     "hadisun": {
+      "nama": "HADISUN",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "rajawali teknik jakarta": {
+      "nama": "RAJAWALI TEKNIK JAKARTA",
       "phone": "6289521687878",
       "wilayah": "Dalam Kota"
     },
     "maranatha teknik": {
-      "phone": "6281283636605",
+      "nama": "MARANATHA TEKNIK",
+      "phone": "6281385173258",
       "wilayah": "Dalam Kota"
     },
     "sinar bangunan ii": {
+      "nama": "SINAR BANGUNAN II",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "cv mega sejahtera lestari": {
+      "nama": "MEGA SEJAHTERA LESTARI, CV",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "pt gracia abadi semesta": {
+      "nama": "GRACIA ABADI SEMESTA, PT",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "cv maju lancar sentosa": {
+      "nama": "MAJU LANCAR SENTOSA, CV",
       "phone": "6281231058888",
       "wilayah": "Luar Kota"
     },
     "pt bentang persada internusa": {
+      "nama": "BENTANG PERSADA INTERNUSA, PT",
       "phone": "628113526178",
       "wilayah": "Luar Kota"
     },
     "cv million jaya abadi": {
+      "nama": "MILLION JAYA ABADI, CV",
       "phone": "6281259006038",
       "wilayah": "Luar Kota"
     },
     "cv maju jaya hardware": {
+      "nama": "MAJU JAYA HARDWARE, CV",
       "phone": "6282131045714",
       "wilayah": "Luar Kota"
     },
     "(d) sama maju": {
+      "nama": "(d) SAMA MAJU",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "cv jaya teknik": {
+      "nama": "JAYA TEKNIK, CV",
       "phone": "6281239122828",
       "wilayah": "Luar Kota"
     },
     "cv rajawali marketing": {
+      "nama": "RAJAWALI MARKETING, CV",
       "phone": "6282336533226",
       "wilayah": "Luar Kota"
     },
     "cv baja utama sejahtera": {
+      "nama": "BAJA UTAMA SEJAHTERA, CV",
       "phone": "6282190925825",
       "wilayah": "Luar Kota"
     },
     "cv super inti perkakas": {
+      "nama": "SUPER INTI PERKAKAS, CV",
       "phone": "6281285977788",
       "wilayah": "Luar Kota"
     },
     "cv cahaya perkasa mandiri": {
+      "nama": "CAHAYA PERKASA MANDIRI, CV",
       "phone": "6281243337006",
       "wilayah": "Luar Kota"
     },
     "cv karya bersama teknik": {
+      "nama": "KARYA BERSAMA TEKNIK, CV",
       "phone": "6281243033252",
       "wilayah": "Luar Kota"
     },
     "pt alga pratama nusantara": {
+      "nama": "ALGA PRATAMA NUSANTARA, PT",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "pt indotool sukses makmur": {
+      "nama": "INDOTOOL SUKSES MAKMUR, PT",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "pt anekatama makmur abadi": {
+      "nama": "ANEKATAMA MAKMUR ABADI, PT",
       "phone": "6287820909103",
       "wilayah": "Dalam Kota"
     },
     "pt pilar teknik andalan indonesia": {
+      "nama": "PILAR TEKNIK ANDALAN INDONESIA, PT",
       "phone": "6282125515570",
       "wilayah": "Luar Kota"
     },
     "setia teknik": {
+      "nama": "SETIA TEKNIK",
       "phone": "6281277974443",
       "wilayah": "Luar Kota"
     },
     "cv gunung mas sejahtera": {
+      "nama": "GUNUNG MAS SEJAHTERA, CV",
       "phone": "6281269627621",
       "wilayah": "Luar Kota"
     },
     "kawan baru": {
+      "nama": "KAWAN BARU",
       "phone": "6285262365254",
       "wilayah": "Luar Kota"
     },
     "sarana baru": {
+      "nama": "SARANA BARU",
       "phone": "628127654409",
       "wilayah": "Luar Kota"
     },
     "abdullah": {
+      "nama": "ABDULLAH",
       "phone": "6282163228863",
       "wilayah": "Luar Kota"
     },
     "mhd arief hidayat": {
+      "nama": "MHD. ARIEF HIDAYAT",
       "phone": "62811646487",
       "wilayah": "Luar Kota"
     },
     "cv cv bhina karya persada": {
+      "nama": "CV. BHINA KARYA PERSADA, CV",
       "phone": "6281260512333",
       "wilayah": "Luar Kota"
     },
     "pt cahaya surga teknik indonesia": {
+      "nama": "CAHAYA SURGA TEKNIK INDONESIA, PT",
       "phone": "6285370353447",
       "wilayah": "Luar Kota"
     },
     "m yahya": {
+      "nama": "M. YAHYA",
       "phone": "6281361331788",
       "wilayah": "Luar Kota"
     },
     "pt riau paramita tenindo": {
+      "nama": "RIAU PARAMITA TENINDO, PT",
       "phone": "6281275372595",
       "wilayah": "Luar Kota"
     },
     "cv buana jaya teknik": {
+      "nama": "BUANA JAYA TEKNIK, CV",
       "phone": "6285365502242",
       "wilayah": "Luar Kota"
     },
     "mk": {
+      "nama": "MK",
       "phone": "6281375686356",
       "wilayah": "Luar Kota"
     },
     "pt global spex mandiri": {
+      "nama": "GLOBAL SPEX MANDIRI, PT",
       "phone": "6281554522342",
       "wilayah": "Luar Kota"
     },
     "cv empat jaya": {
+      "nama": "EMPAT JAYA, CV",
       "phone": "628983803622",
       "wilayah": "Luar Kota"
     },
     "cv tekad jaya": {
+      "nama": "TEKAD JAYA, CV",
       "phone": "6281329941951",
       "wilayah": "Luar Kota"
     },
     "tjitrosantoso sion": {
+      "nama": "TJITROSANTOSO SION",
       "phone": "6285218180181",
       "wilayah": "Luar Kota"
     },
     "pt aneka hutama persada": {
+      "nama": "ANEKA HUTAMA PERSADA, PT",
       "phone": "6287837091191",
       "wilayah": "Dalam Kota"
     },
     "adi lestari": {
+      "nama": "ADI LESTARI",
       "phone": "6285264857986",
       "wilayah": "Luar Kota"
     },
     "cv sumber bahagia": {
+      "nama": "SUMBER BAHAGIA, CV",
       "phone": "6282375858888",
       "wilayah": "Luar Kota"
     },
     "cv setia teknik": {
+      "nama": "SETIA TEKNIK, CV",
       "phone": "6281277974443",
       "wilayah": "Luar Kota"
     },
     "mandiri teknik": {
+      "nama": "MANDIRI TEKNIK",
       "phone": "6281280205027",
       "wilayah": "Luar Kota"
     },
     "cahaya abadi": {
+      "nama": "CAHAYA ABADI",
       "phone": "6281367013512",
       "wilayah": "Luar Kota"
     },
     "cv timur jaya anugerah": {
+      "nama": "TIMUR JAYA ANUGERAH, CV",
       "phone": "62811205273",
       "wilayah": "Luar Kota"
     },
     "pt intani jaya semesta": {
+      "nama": "INTANI JAYA SEMESTA, PT",
       "phone": "6281615003534",
       "wilayah": "Luar Kota"
     },
     "cv sekawan mulia abadi": {
+      "nama": "SEKAWAN MULIA ABADI, CV",
       "phone": "62895806626967",
       "wilayah": "Luar Kota"
     },
     "sinar jaya": {
+      "nama": "SINAR JAYA",
       "phone": "62811442168",
       "wilayah": "Luar Kota"
     },
     "kwee ing han": {
+      "nama": "KWEE ING HAN",
       "phone": "6281328099903",
       "wilayah": "Luar Kota"
     },
     "cv mitra graha putra": {
+      "nama": "MITRA GRAHA PUTRA, CV",
       "phone": "6285728093088",
       "wilayah": "Luar Kota"
     },
     "cv mulia agung sentosa": {
+      "nama": "MULIA AGUNG SENTOSA, CV",
       "phone": "62895806626967",
       "wilayah": "Luar Kota"
     },
     "adi eka prasetyo": {
+      "nama": "ADI EKA PRASETYO",
       "phone": "6287722158960",
       "wilayah": "Luar Kota"
     },
     "cv cahyo waskito": {
+      "nama": "CAHYO WASKITO, CV",
       "phone": "6281802476688",
       "wilayah": "Luar Kota"
     },
     "pt graha baja marindo": {
+      "nama": "GRAHA BAJA MARINDO, PT",
       "phone": "628113358877",
       "wilayah": "Luar Kota"
     },
     "pt damas raya utama": {
+      "nama": "DAMAS RAYA UTAMA, PT",
       "phone": "628116616789",
       "wilayah": "Luar Kota"
     },
     "pt fajar agung pratama": {
+      "nama": "FAJAR AGUNG PRATAMA, PT",
       "phone": "6285896766714",
       "wilayah": "Luar Kota"
     },
     "johny": {
+      "nama": "JOHNY",
       "phone": "6285268077096",
       "wilayah": "Luar Kota"
     },
     "cv cahaya laut abadi": {
+      "nama": "CAHAYA LAUT ABADI, CV",
       "phone": "6282295103321",
       "wilayah": "Luar Kota"
     },
     "pt multi selaras teknik": {
+      "nama": "MULTI SELARAS TEKNIK, PT",
       "phone": "6281378400078",
       "wilayah": "Luar Kota"
     },
     "pt nikysay karya sukses": {
+      "nama": "NIKYSAY KARYA SUKSES, PT",
       "phone": "6281908783333",
       "wilayah": "Luar Kota"
     },
     "cv indomulti prakarsa mandiri": {
+      "nama": "INDOMULTI PRAKARSA MANDIRI, CV",
       "phone": "6281374244344",
       "wilayah": "Luar Kota"
     },
     "baja utama teknik": {
+      "nama": "BAJA UTAMA TEKNIK",
       "phone": "6282191003993",
       "wilayah": "Luar Kota"
     },
     "sap": {
+      "nama": "SAP",
       "phone": "628126602564",
       "wilayah": "Luar Kota"
     },
     "pt kharisma wdindo abadi": {
+      "nama": "KHARISMA WDINDO ABADI, PT",
       "phone": "6282391734058",
       "wilayah": "Luar Kota"
     },
     "pt surya controtama indah": {
+      "nama": "SURYA CONTROTAMA INDAH, PT",
       "phone": "6281362298848",
       "wilayah": "Luar Kota"
     },
     "tanijar": {
+      "nama": "TANIJAR",
       "phone": "6285370353447",
       "wilayah": "Luar Kota"
     },
     "pt global solution project": {
+      "nama": "GLOBAL SOLUTION PROJECT, PT",
       "phone": "6281268286715",
       "wilayah": "Luar Kota"
     },
     "sinar logam": {
+      "nama": "SINAR LOGAM",
       "phone": "6287766396924",
       "wilayah": "Luar Kota"
     },
     "cv putra fanghin sejahtera": {
+      "nama": "PUTRA FANGHIN SEJAHTERA, CV",
       "phone": "628116384050",
       "wilayah": "Luar Kota"
     },
     "pt antara tetap jaya": {
+      "nama": "ANTARA TETAP JAYA, PT",
       "phone": "628116529890",
       "wilayah": "Luar Kota"
     },
     "pt yanmarindo perkasa": {
+      "nama": "YANMARINDO PERKASA, PT",
       "phone": "6289524699159",
       "wilayah": "Luar Kota"
     },
     "pt aneka niaga sentral perkakas": {
+      "nama": "ANEKA NIAGA SENTRAL PERKAKAS, PT",
       "phone": "6281247968878",
       "wilayah": "Luar Kota"
     },
     "protecta": {
+      "nama": "PROTECTA",
       "phone": "6281268792799",
       "wilayah": "Luar Kota"
     },
     "pt biondi jaya perkasa": {
+      "nama": "BIONDI JAYA PERKASA, PT",
       "phone": "6281388920193",
       "wilayah": "Dalam Kota"
     },
     "biondi teknik": {
+      "nama": "BIONDI TEKNIK",
       "phone": "6281388920193",
       "wilayah": "Dalam Kota"
     },
     "pt adijaya buana perkasa": {
+      "nama": "ADIJAYA BUANA PERKASA, PT",
       "phone": "6282312608905",
       "wilayah": "Dalam Kota"
     },
     "pt samudra teknik sejahtera": {
+      "nama": "SAMUDRA TEKNIK SEJAHTERA, PT",
       "phone": "6282211964204",
       "wilayah": "Dalam Kota"
     },
     "pt yunika trijaya sentosa": {
+      "nama": "YUNIKA TRIJAYA SENTOSA, PT",
       "phone": "6281916005146",
       "wilayah": "Luar Kota"
     },
     "pt pundi mas aryota": {
+      "nama": "PUNDI MAS ARYOTA, PT",
       "phone": "6282112178006",
       "wilayah": "Dalam Kota"
     },
     "cv logam jaya prosperindo": {
+      "nama": "LOGAM JAYA PROSPERINDO, CV",
       "phone": "628125603122",
       "wilayah": "Luar Kota"
     },
     "cv mahajaya golden ocean": {
+      "nama": "MAHAJAYA GOLDEN OCEAN, CV",
       "phone": "6283159033408",
       "wilayah": "Luar Kota"
     },
     "tet hiung": {
+      "nama": "TET HIUNG",
       "phone": "6285347402066",
       "wilayah": "Luar Kota"
     },
     "cv mitra jaya abadi": {
+      "nama": "MITRA JAYA ABADI, CV",
       "phone": "6285365956188",
       "wilayah": "Luar Kota"
     },
     "cv sido semi makmur": {
+      "nama": "SIDO SEMI MAKMUR, CV",
       "phone": "628123005512",
       "wilayah": "Luar Kota"
     },
     "pt faedah teknik": {
+      "nama": "FAEDAH TEKNIK, PT",
       "phone": "628116328484",
       "wilayah": "Luar Kota"
     },
     "pt papasari": {
+      "nama": "PAPASARI, PT",
       "phone": "6285885659438",
       "wilayah": "Dalam Kota"
     },
     "cv indomas jaya": {
+      "nama": "INDOMAS JAYA, CV",
       "phone": "6282154370858",
       "wilayah": "Luar Kota"
     },
     "cv pionir mandiri": {
+      "nama": "PIONIR MANDIRI, CV",
       "phone": "6285251833388",
       "wilayah": "Luar Kota"
     },
     "juni fatimah": {
+      "nama": "JUNI FATIMAH",
       "phone": "6282367629999",
       "wilayah": "Luar Kota"
     },
     "cv maseba teknik": {
+      "nama": "MASEBA TEKNIK, CV",
       "phone": "6282250665233",
       "wilayah": "Luar Kota"
     },
     "cv kota baru mandiri": {
+      "nama": "KOTA BARU MANDIRI, CV",
       "phone": "6285931562575",
       "wilayah": "Dalam Kota"
     },
     "pt central jaya tama abadi": {
+      "nama": "CENTRAL JAYA TAMA ABADI, PT",
       "phone": "62811549533",
       "wilayah": "Luar Kota"
     },
     "pt indo prima perkakas": {
+      "nama": "INDO PRIMA PERKAKAS, PT",
       "phone": "6281378870688",
       "wilayah": "KOSONG"
     },
     "bonari": {
+      "nama": "BONARI",
       "phone": "6281268229000",
       "wilayah": "KOSONG"
     },
     "indo perkakas": {
+      "nama": "INDO PERKAKAS",
       "phone": "628117621999",
       "wilayah": "KOSONG"
     },
     "dunia tehnik": {
+      "nama": "DUNIA TEHNIK",
       "phone": "6285275615008",
       "wilayah": "KOSONG"
     },
     "pang donny wijaya": {
+      "nama": "PANG DONNY WIJAYA",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "pt maju bersama jayakarta": {
+      "nama": "MAJU BERSAMA JAYAKARTA, PT",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "tan tjie kiong": {
+      "nama": "TAN TJIE KIONG",
       "phone": "628126018187",
       "wilayah": "KOSONG"
     },
     "pan tji hwa": {
+      "nama": "PAN TJI HWA",
       "phone": "6281361382009",
       "wilayah": "KOSONG"
     },
     "cv glorindo teknik sejahtera": {
+      "nama": "GLORINDO TEKNIK SEJAHTERA, CV",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "cv bintang prima sentosa": {
+      "nama": "BINTANG PRIMA SENTOSA, CV",
       "phone": "628127584811",
       "wilayah": "KOSONG"
     },
     "frans haryanto": {
+      "nama": "FRANS HARYANTO",
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
     "cv arya teknik": {
+      "nama": "ARYA TEKNIK, CV",
       "phone": "6285362627338",
       "wilayah": "KOSONG"
     },
     "pt aryateknik makmursentosa": {
+      "nama": "ARYATEKNIK MAKMURSENTOSA, PT",
       "phone": "6285362627338",
       "wilayah": "KOSONG"
     },
     "kinari widjaja": {
+      "nama": "KINARI WIDJAJA",
       "phone": "628126052657",
       "wilayah": "KOSONG"
     },
     "pt glistagen": {
+      "nama": "GLISTAGEN, PT",
       "phone": "6282172129597",
       "wilayah": "Dalam Kota"
     },
     "cv surya wijaya sakti": {
+      "nama": "SURYA WIJAYA SAKTI, CV",
       "phone": "628129568570",
       "wilayah": "Luar Kota"
     },
     "cv meiar": {
+      "nama": "MeiAR, CV",
       "phone": "6285169770057",
       "wilayah": "Luar Kota"
     },
     "cv mulyo rejeki": {
+      "nama": "MULYO REJEKI, CV",
       "phone": "6281325153777",
       "wilayah": "Luar Kota"
     },
     "cv cahaya material indonesia": {
+      "nama": "CAHAYA MATERIAL INDONESIA, CV",
       "phone": "6281232004403",
       "wilayah": "Luar Kota"
     },
     "lie lian": {
+      "nama": "LIE LIAN",
       "phone": "628156015238",
       "wilayah": "Luar Kota"
     },
     "aj safety equipment": {
+      "nama": "AJ SAFETY EQUIPMENT",
       "phone": "6282331093136",
       "wilayah": "Luar Kota"
     },
     "cv sentosa teknik": {
+      "nama": "SENTOSA TEKNIK, CV",
       "phone": "628122863846",
       "wilayah": "Luar Kota"
     },
     "cv modern teknik": {
+      "nama": "MODERN TEKNIK, CV",
       "phone": "6281325851135",
       "wilayah": "Luar Kota"
     },
     "istana jaya sejahteracv": {
+      "nama": "ISTANA JAYA SEJAHTERA,CV",
       "phone": "628164882120",
       "wilayah": "Luar Kota"
     },
     "maria g ngajung": {
+      "nama": "MARIA G NGAJUNG",
       "phone": "6285714306271",
       "wilayah": "Dalam Kota"
     },
     "mitra safety": {
+      "nama": "MITRA SAFETY",
       "phone": "6281291883355",
       "wilayah": "Dalam Kota"
     },
     "sumber baut": {
+      "nama": "SUMBER BAUT",
       "phone": "6289523113858",
       "wilayah": "Luar Kota"
     },
     "cv sumber teknik": {
+      "nama": "SUMBER TEKNIK, CV",
       "phone": "6281919564514",
       "wilayah": "Luar Kota"
     },
     "ina/andy": {
+      "nama": "INA/ANDY",
       "phone": "6285100045459",
       "wilayah": "Luar Kota"
     },
     "hauw hian": {
+      "nama": "HAUW HIAN",
       "phone": "628112147788",
       "wilayah": "Luar Kota"
     },
     "pt jafian welding indonesia": {
+      "nama": "JAFIAN WELDING INDONESIA, PT",
       "phone": "6287888121990",
       "wilayah": "Dalam Kota"
     },
     "cobra steel indonesia": {
+      "nama": "COBRA STEEL INDONESIA",
       "phone": "6287888121990",
       "wilayah": "Dalam Kota"
     },
     "pt safety equipment indonesia": {
+      "nama": "SAFETY EQUIPMENT INDONESIA, PT",
       "phone": "6287888502925",
       "wilayah": "Dalam Kota"
     },
     "pt ragil jaya sejahtera": {
+      "nama": "RAGIL JAYA SEJAHTERA, PT",
       "phone": "628568883900",
       "wilayah": "Luar Kota"
     },
     "cv bukit mas raya": {
+      "nama": "BUKIT MAS RAYA, CV",
       "phone": "6281374243714",
       "wilayah": "Luar Kota"
     },
     "pt rian jaya darma": {
+      "nama": "RIAN JAYA DARMA, PT",
       "phone": "6281318101966",
       "wilayah": "Dalam Kota"
     },
     "pt tunas baru djaya": {
+      "nama": "TUNAS BARU DJAYA, PT",
       "phone": "6281548857291",
       "wilayah": "Dalam Kota"
     },
     "ang alihansyah soehanto": {
+      "nama": "ANG, ALIHANSYAH SOEHANTO",
       "phone": "6285230037105",
       "wilayah": "Dalam Kota"
     },
     "lukas ardianto purnomo": {
+      "nama": "LUKAS ARDIANTO PURNOMO",
       "phone": "6285210678930",
       "wilayah": "Luar Kota"
     },
     "surya teknik": {
+      "nama": "SURYA TEKNIK",
       "phone": "6281357813084",
       "wilayah": "Luar Kota"
     },
     "cv sinar logam jaya": {
+      "nama": "SINAR LOGAM JAYA, CV",
       "phone": "62811663572",
       "wilayah": "Luar Kota"
     },
     "cv anugrah baru tehnik": {
+      "nama": "ANUGRAH BARU TEHNIK, CV",
       "phone": "6287875716688",
       "wilayah": "Luar Kota"
     },
     "herry lys": {
+      "nama": "HERRY LYS",
       "phone": "62811430079",
       "wilayah": "Luar Kota"
     },
     "pt sinar logam bangun sejati": {
+      "nama": "SINAR LOGAM BANGUN SEJATI, PT",
       "phone": "628127820156",
       "wilayah": "Luar Kota"
     },
     "cv angka baru": {
+      "nama": "ANGKA BARU, CV",
       "phone": "628123140951",
       "wilayah": "Luar Kota"
     },
     "pt karya bersama teknindo": {
+      "nama": "KARYA BERSAMA TEKNINDO, PT",
       "phone": "6281243033252",
       "wilayah": "Luar Kota"
     },
     "matsum tjiawi": {
+      "nama": "MATSUM TJIAWI",
       "phone": "628116060825",
       "wilayah": "KOSONG"
     },
     "cv aji nusa jaya": {
+      "nama": "AJI NUSA JAYA, CV",
       "phone": "628121717878",
       "wilayah": "Luar Kota"
     },
     "surya teknik mandiri jaya": {
+      "nama": "SURYA TEKNIK MANDIRI JAYA",
       "phone": "6281380901307",
       "wilayah": "Dalam Kota"
     },
     "pt jameson permai": {
+      "nama": "JAMESON PERMAI, PT",
       "phone": "KOSONG",
       "wilayah": "Dalam Kota"
     },
     "pt samudra baut teknik": {
+      "nama": "SAMUDRA BAUT TEKNIK, PT",
       "phone": "6282295103321",
       "wilayah": "Luar Kota"
     },
     "cv indah jaya teknik": {
+      "nama": "INDAH JAYA TEKNIK, CV",
       "phone": "KOSONG",
       "wilayah": "Luar Kota"
     },
-    "luar kota": {
-      "phone": "KOSONG",
-      "wilayah": "KOSONG"
-    },
-    "dalam kota": {
-      "phone": "KOSONG",
-      "wilayah": "KOSONG"
+    "total perkakas sejahtera": {
+      "nama": "TOTAL PERKAKAS SEJAHTERA",
+      "phone": "6281283636605",
+      "wilayah": "Luar Kota"
     }
   },
   "periodeData": {
@@ -2181,5 +2388,5 @@
       "Januari 2026": 3663000
     }
   },
-  "savedAt": "2026-05-12T03:41:30.393Z"
+  "savedAt": "2026-05-13T09:01:42.822Z"
 }

@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, XClose } from '@untitledui/icons'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 import './templateComponents.css'
 import {
@@ -100,7 +100,7 @@ function SidebarNavItem({
       return
     }
 
-    event.preventDefault()
+    // Call onSelect for external logic (like closing mobile sidebar)
     onSelect?.(item)
   }
 
@@ -118,7 +118,7 @@ function SidebarNavItem({
         >
           {content}
         </button>
-      ) : (
+      ) : isExternalUrl(item.href) ? (
         <a
           href={item.href}
           className={className}
@@ -128,6 +128,16 @@ function SidebarNavItem({
         >
           {content}
         </a>
+      ) : (
+        <Link
+          to={item.href}
+          className={className}
+          data-tooltip={collapsed ? item.label : undefined}
+          aria-current={active ? 'page' : undefined}
+          onClick={handleClick}
+        >
+          {content}
+        </Link>
       )}
 
       {hasChildren && !collapsed ? (
@@ -158,8 +168,8 @@ function Sidebar({
   collapsed = false,
   mobileOpen = false,
   activePath = '/dashboard',
-  userName = 'Apriyanto',
-  userRole = 'IT Support',
+  userName = 'IT PIAGAM',
+  userRole = 'IT Team',
   primaryItems = primaryNavigationItems,
   secondaryItems = secondaryNavigationItems,
   onAction,
@@ -225,13 +235,14 @@ function Sidebar({
       if (mobileOpen) {
         onCloseMobile?.()
       }
-
-      window.location.assign(item.href)
       return
     }
 
     setSelectedPath(item.href)
-    navigate(item.href)
+    
+    // For specific items that need programmatic navigation (like logout above), 
+    // we use navigate. But for normal Links, react-router-dom handles the navigation.
+    // However, since we removed e.preventDefault() from <Link>, we don't need to call navigate() here.
 
     if (mobileOpen) {
       onCloseMobile?.()
@@ -367,7 +378,7 @@ function Sidebar({
               letterSpacing: '0.01em',
               userSelect: 'none',
             }}>
-              Developed by IT Team PT Pilar Niaga Makmur
+              Developed by IT Team 
             </p>
           </div>
         )}

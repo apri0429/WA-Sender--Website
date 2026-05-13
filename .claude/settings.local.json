@@ -12,7 +12,8 @@
       "Read(//c/nginx/**)",
       "Read(//c/nginx/conf/**)",
       "Bash(./nginx.exe -t)",
-      "Bash(./nginx.exe -s reload)"
+      "Bash(./nginx.exe -s reload)",
+      "Bash(python -c ' *)"
     ],
     "additionalDirectories": [
       "c:\\nginx\\nginx\\conf"

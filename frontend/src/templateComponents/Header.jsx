@@ -20,7 +20,7 @@ import {
 } from './departmentFilter.js'
 
 function Header({
-  title = 'Pilar Group',
+  title = 'Sendline',
   breadcrumb = [
     { label: 'All', href: '#' },
     { label: 'Finance', href: '#', active: true },
