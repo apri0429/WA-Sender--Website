@@ -52,7 +52,7 @@ import socket from "../services/socket";
 const picCache = new Map(); // chatId -> url | null | "pending"
 const picSubs = new Map();  // chatId -> Set of setUrl fns
 
-const API_RAW = import.meta.env.DEV ? "http://192.168.1.254:8090" : "";
+const API_RAW = import.meta.env.DEV ? "http://192.168.1.254:8098" : "";
 function mkMediaUrl(serializedId) {
   return `${API_RAW}/api/messages/${encodeURIComponent(serializedId)}/media`;
 }

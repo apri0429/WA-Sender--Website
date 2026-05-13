@@ -50,7 +50,7 @@ const T = {
   waBorder: "#9fe3b7",
 };
 
-const API_RAW = import.meta.env.DEV ? "http://192.168.1.254:8090" : "";
+const API_RAW = import.meta.env.DEV ? "http://192.168.1.254:8098" : "";
 
 export default function HasilPdfPage() {
   const [logRows, setLogRows] = useState([]);

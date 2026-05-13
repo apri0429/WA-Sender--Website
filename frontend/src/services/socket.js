@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 
 const SOCKET_URL = import.meta.env.DEV
-  ? "http://192.168.1.254:8090"
+  ? "http://192.168.1.254:8098"
   : "";
 
 const socket = io(SOCKET_URL, {
