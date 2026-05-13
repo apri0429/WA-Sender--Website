@@ -15,7 +15,7 @@ module.exports = {
       restart_delay: 3000,
       env: {
         NODE_ENV: 'production',
-        PORT: 8090,
+        PORT: 8098,
       },
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
       error_file: path.join(ROOT_DIR, 'backend', 'server.err.log'),
