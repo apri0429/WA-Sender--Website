@@ -1,14 +1,9 @@
 import { ChevronLeft, ChevronRight, XClose } from '@untitledui/icons'
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
-import './templateComponents.css'
-import {
-  defaultNavigationPath,
-  primaryNavigationItems,
-  secondaryNavigationItems,
-} from './navigation.js'
-import { submitLogout } from './logoutService.js'
+import '../styles/layout.css'
+import { submitLogout } from '../lib/logoutService.js'
 
 function getInitials(name) {
   return name
@@ -170,8 +165,8 @@ function Sidebar({
   activePath = '/dashboard',
   userName = 'IT PIAGAM',
   userRole = 'IT Team',
-  primaryItems = primaryNavigationItems,
-  secondaryItems = secondaryNavigationItems,
+  primaryItems = [],
+  secondaryItems = [],
   onAction,
   onToggleCollapse,
   onCloseMobile,
@@ -188,7 +183,6 @@ function Sidebar({
     getInitiallyExpandedGroups([...primaryItems, ...secondaryItems], activePath)
   )
   const initials = getInitials(userName)
-  const navigate = useNavigate()
 
   useEffect(() => {
     setSelectedPath(activePath)
@@ -239,10 +233,6 @@ function Sidebar({
     }
 
     setSelectedPath(item.href)
-    
-    // For specific items that need programmatic navigation (like logout above), 
-    // we use navigate. But for normal Links, react-router-dom handles the navigation.
-    // However, since we removed e.preventDefault() from <Link>, we don't need to call navigate() here.
 
     if (mobileOpen) {
       onCloseMobile?.()

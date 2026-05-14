@@ -1,5 +1,5 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
-import Layout from "./components/Layout";
+import AppLayout from "./layout/AppLayout";
 import DashboardPage from "./pages/DashboardPage";
 import SettingsCard from "./pages/SettingsCard";
 import ChatInboxPage from "./pages/ChatInboxPage";
@@ -13,7 +13,7 @@ export default function App() {
   return (
     <HashRouter>
       <Routes>
-        <Route element={<Layout />}>
+        <Route element={<AppLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/chats" element={<ChatInboxPage />} />
           <Route path="/input" element={<InputPage />} />

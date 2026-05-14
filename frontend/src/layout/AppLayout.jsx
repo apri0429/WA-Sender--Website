@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { BarChartSquare02, MessageChatSquare, Settings01, FilePlus02, FileCheck02, Table, Database01, CalendarDate } from "@untitledui/icons";
 
-import TemplateSidebar from "../templateComponents/Sidebar";
-import TemplateHeader from "../templateComponents/Header";
-import BackgroundMain from "../templateComponents/BackgroundMain";
+import AppSidebar from "./components/AppSidebar";
+import AppHeader from "./components/AppHeader";
+import BackgroundMain from "./components/BackgroundMain";
 
 const waPrimaryItems = [
   { label: "Dashboard", href: "/", icon: BarChartSquare02 },
@@ -41,7 +41,7 @@ const pageBreadcrumbs = {
 };
 
 
-export default function Layout() {
+export default function AppLayout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -65,7 +65,7 @@ export default function Layout() {
         collapsed ? " dashboard-shell--sidebar-collapsed" : ""
       }`}
     >
-      <TemplateSidebar
+      <AppSidebar
         collapsed={collapsed}
         mobileOpen={mobileOpen}
         activePath={location.pathname}
@@ -81,7 +81,7 @@ export default function Layout() {
       />
 
       <div className="dashboard-stage">
-        <TemplateHeader
+        <AppHeader
           title="Sendline"
           breadcrumb={breadcrumb}
           showMenuButton={true}

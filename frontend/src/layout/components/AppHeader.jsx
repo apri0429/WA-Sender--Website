@@ -9,15 +9,15 @@ import {
   XClose,
 } from '@untitledui/icons'
 
-import logoPiagam from './assets/logo-piagam.png'
-import logoPiagamTransparent from './assets/logo-piagam2.png'
-import './templateComponents.css'
+import logoPiagam from '../assets/logo-piagam.png'
+import logoPiagamTransparent from '../assets/logo-piagam2.png'
+import '../styles/layout.css'
 import {
   ALL_DEPARTMENTS_FILTER_ID,
   ALL_DEPARTMENTS_FILTER_LABEL,
   getDepartmentFilterOptions,
   getSelectedDepartmentFilterLabel,
-} from './departmentFilter.js'
+} from '../lib/departmentFilter.js'
 
 function Header({
   title = 'Sendline',
