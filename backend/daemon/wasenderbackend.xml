@@ -1,0 +1,32 @@
+<service>
+	<id>wasenderbackend.exe</id>
+	<name>WA-Sender Backend</name>
+	<description>WhatsApp Sender Backend Service (Node.js)</description>
+	<executable>C:\Program Files\nodejs\node.exe</executable>
+	<argument>C:\Users\IT\Documents\WEBSITE\WA-Sender  Website\backend\node_modules\node-windows\lib\wrapper.js</argument>
+	<argument>--file</argument>
+	<argument>C:\Users\IT\Documents\WEBSITE\WA-Sender  Website\backend\server.js</argument>
+	<argument>--scriptoptions=</argument>
+	<argument>--log</argument>
+	<argument>WA-Sender Backend wrapper</argument>
+	<argument>--grow</argument>
+	<argument>0.5</argument>
+	<argument>--wait</argument>
+	<argument>2</argument>
+	<argument>--maxrestarts</argument>
+	<argument>5</argument>
+	<argument>--abortonerror</argument>
+	<argument>n</argument>
+	<argument>--stopparentfirst</argument>
+	<argument>undefined</argument>
+	<logmode>rotate</logmode>
+	<stoptimeout>30sec</stoptimeout>
+	<env name="NODE_ENV" value="production"/>
+	<env name="PORT" value="8098"/>
+	<serviceaccount>
+		<domain>LAPTOP-FO3VV43J</domain>
+		<user>LocalSystem</user>
+		<password></password>
+	</serviceaccount>
+	<workingdirectory>C:\Users\IT\Documents\WEBSITE\WA-Sender  Website\backend</workingdirectory>
+</service>
