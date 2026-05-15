@@ -13,7 +13,8 @@
       "Read(//c/nginx/conf/**)",
       "Bash(./nginx.exe -t)",
       "Bash(./nginx.exe -s reload)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "PowerShell(pm2 restart wa-backend 2>&1)"
     ],
     "additionalDirectories": [
       "c:\\nginx\\nginx\\conf"

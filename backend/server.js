@@ -148,10 +148,14 @@ function clearChatHistory() {
 function serializeMessage(msg) {
   const qd = msg._data?.quotedMsg;
   const mediaLikeTypes = new Set(["image", "video", "audio", "ptt", "document", "sticker"]);
+  // fromMe may be a getter (not own-prop) on browser-side model objects serialized over
+  // puppeteer IPC — fall back to id.fromMe which is always serialized as plain data
+  const fromMe = !!(msg.fromMe ?? msg.id?.fromMe ?? false);
+  const quotedFromMe = !!(qd?.fromMe ?? qd?.id?.fromMe ?? false);
   return {
     id: msg.id?.id || String(Date.now()),
     serializedId: msg.id?._serialized || null,
-    from: msg.fromMe ? "me" : "them",
+    from: fromMe ? "me" : "them",
     body: msg.body || "",
     timestamp: msg.timestamp ? msg.timestamp * 1000 : Date.now(),
     type: msg.type || "chat",
@@ -162,7 +166,7 @@ function serializeMessage(msg) {
     quotedMsg: qd ? {
       body: qd.body || "",
       type: qd.type || "chat",
-      from: qd.fromMe ? "me" : "them",
+      from: quotedFromMe ? "me" : "them",
       authorName: qd.notifyName || "",
     } : null,
   };
@@ -3471,7 +3475,15 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
           }
 
           allMessages.sort((a, b) => (a.t > b.t ? 1 : -1));
-          return allMessages.map((m) => window.WWebJS.getMessageModel(m));
+          return allMessages.map((m) => {
+            const model = window.WWebJS.getMessageModel(m);
+            // fromMe may be a getter on the prototype — force it onto the plain object
+            // so it survives puppeteer JSON serialization across IPC
+            if (model && typeof model.fromMe === "undefined") {
+              model.fromMe = !!(m.id && m.id.fromMe);
+            }
+            return model;
+          });
         }, chatId);
       } else {
         msgs = await chat.fetchMessages({ limit });

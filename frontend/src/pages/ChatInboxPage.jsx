@@ -649,6 +649,8 @@ export default function ChatInboxPage() {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [headerSlotEl, setHeaderSlotEl] = useState(null);
   const [sessionMenuAnchor, setSessionMenuAnchor] = useState(null);
+  const [dragState, setDragState] = useState({ msgId: null, offset: 0, triggered: false });
+  const dragRef = useRef({ active: false, msgId: null, fromMe: false, startX: 0, offset: 0, triggered: false, replyFn: null });
   const messageListRef = useRef(null);
   const shouldSnapToLatestRef = useRef(true);
   const fileInputRef = useRef(null);
@@ -656,6 +658,44 @@ export default function ChatInboxPage() {
   const emojiPickerRef = useRef(null);
 
   useEffect(() => { setHeaderSlotEl(document.getElementById("header-wa-slot")); }, []);
+
+  // Drag-to-reply: global mouse listeners
+  useEffect(() => {
+    const THRESHOLD = 65;
+    const onMove = (e) => {
+      const d = dragRef.current;
+      if (!d.active) return;
+      const raw = (e.clientX ?? e.touches?.[0]?.clientX ?? 0) - d.startX;
+      // For received (fromMe=false): drag right (+). For sent (fromMe=true): drag left (-).
+      const clamped = d.fromMe
+        ? Math.max(-THRESHOLD - 10, Math.min(0, raw))
+        : Math.max(0, Math.min(THRESHOLD + 10, raw));
+      const triggered = d.fromMe ? clamped <= -THRESHOLD : clamped >= THRESHOLD;
+      if (triggered && !d.triggered) {
+        d.triggered = true;
+        d.replyFn?.();
+      }
+      d.offset = clamped;
+      setDragState({ msgId: d.msgId, offset: clamped, triggered });
+    };
+    const onUp = () => {
+      if (!dragRef.current.active) return;
+      dragRef.current.active = false;
+      dragRef.current.offset = 0;
+      dragRef.current.triggered = false;
+      setDragState({ msgId: null, offset: 0, triggered: false });
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    document.addEventListener("touchmove", onMove, { passive: true });
+    document.addEventListener("touchend", onUp);
+    return () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      document.removeEventListener("touchmove", onMove);
+      document.removeEventListener("touchend", onUp);
+    };
+  }, []);
 
   const showToast = (message, severity = "success") => setToast({ open: true, message, severity });
 
@@ -1136,34 +1176,55 @@ export default function ChatInboxPage() {
                       const fromMe = msg?.from === "me";
                       const msgId = msg.id || msg.serializedId;
                       const isHovered = hoveredMsgId === msgId;
+                      const isDragging = dragState.msgId === msgId;
+                      const dragOffset = isDragging ? dragState.offset : 0;
+                      const DRAG_THRESHOLD = 65;
+                      const dragProgress = Math.min(1, Math.abs(dragOffset) / DRAG_THRESHOLD);
+                      const doReply = () => setReplyingTo({
+                        serializedId: msg.serializedId, id: msg.id, body: msg.body || "",
+                        type: msg.type || "chat", from: msg.from,
+                        authorName: fromMe ? "Kamu" : (selectedChat?.name || selectedChat?.phone || ""),
+                      });
                       return (
                         <Box key={item.key}
                           onMouseEnter={() => setHoveredMsgId(msgId)}
                           onMouseLeave={() => setHoveredMsgId(null)}
                           onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ open: true, anchorEl: e.currentTarget, msg }); }}
-                          sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", width: "100%", mb: 0.5, alignItems: "flex-end", gap: 0.5 }}>
+                          sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", width: "100%", mb: 0.5, alignItems: "center", gap: 0.5, position: "relative" }}>
 
-                          {/* Reply btn — kiri untuk pesan masuk */}
+                          {/* Swipe/drag reply indicator — kiri untuk pesan masuk */}
                           {!fromMe && (
-                            <Box sx={{ flexShrink: 0, mb: 0.5, opacity: isHovered ? 1 : 0, transition: "opacity 0.15s" }}>
-                              <Tooltip title="Balas" placement="left">
-                                <IconButton size="small"
-                                  onClick={() => setReplyingTo({ serializedId: msg.serializedId, id: msg.id, body: msg.body || "", type: msg.type || "chat", from: msg.from, authorName: selectedChat?.name || selectedChat?.phone || "" })}
-                                  sx={{ color: WA.sidebarSub, p: 0.4, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", "&:hover": { bgcolor: "#fff" } }}>
-                                  <ReplyRoundedIcon sx={{ fontSize: 15 }} />
-                                </IconButton>
-                              </Tooltip>
+                            <Box sx={{ flexShrink: 0, opacity: isDragging ? dragProgress : (isHovered ? 1 : 0), transition: isDragging ? "none" : "opacity 0.15s",
+                              transform: isDragging ? `scale(${0.7 + 0.3 * dragProgress})` : "scale(1)" }}>
+                              <IconButton size="small" onClick={doReply}
+                                sx={{ color: WA.sidebarSub, p: 0.4, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", "&:hover": { bgcolor: "#fff" } }}>
+                                <ReplyRoundedIcon sx={{ fontSize: 15 }} />
+                              </IconButton>
                             </Box>
                           )}
 
                           {/* Bubble */}
-                          <Box sx={{ position: "relative", maxWidth: "72%", px: 1.4, py: 0.8,
-                            bgcolor: fromMe ? WA.sentBg : WA.recvBg, color: WA.msgText,
-                            borderRadius: fromMe ? "8px 8px 0 8px" : "8px 8px 8px 0",
-                            boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
-                            "&::before": { content: '""', position: "absolute", bottom: 0, ...(fromMe ? { right: -8 } : { left: -8 }), width: 8, height: 13, backgroundColor: fromMe ? WA.sentBg : WA.recvBg, ...(fromMe ? { borderBottomLeftRadius: 8 } : { borderBottomRightRadius: 8 }) },
-                            "&::after": { content: '""', position: "absolute", bottom: -2, ...(fromMe ? { right: -10 } : { left: -10 }), width: 10, height: 10, backgroundColor: WA.chatBg, ...(fromMe ? { borderBottomLeftRadius: 6 } : { borderBottomRightRadius: 6 }) },
-                          }}>
+                          <Box
+                            onMouseDown={(e) => {
+                              if (e.button !== 0) return;
+                              dragRef.current = { active: true, msgId, fromMe, startX: e.clientX, offset: 0, triggered: false, replyFn: doReply };
+                              setDragState({ msgId, offset: 0, triggered: false });
+                            }}
+                            onTouchStart={(e) => {
+                              const t = e.touches[0];
+                              dragRef.current = { active: true, msgId, fromMe, startX: t.clientX, offset: 0, triggered: false, replyFn: doReply };
+                              setDragState({ msgId, offset: 0, triggered: false });
+                            }}
+                            sx={{ position: "relative", maxWidth: "72%", px: 1.4, py: 0.8,
+                              bgcolor: fromMe ? WA.sentBg : WA.recvBg, color: WA.msgText,
+                              borderRadius: fromMe ? "8px 8px 0 8px" : "8px 8px 8px 0",
+                              boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+                              cursor: "grab",
+                              transform: `translateX(${dragOffset}px)`,
+                              transition: isDragging ? "none" : "transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94)",
+                              "&::before": { content: '""', position: "absolute", bottom: 0, ...(fromMe ? { right: -8 } : { left: -8 }), width: 8, height: 13, backgroundColor: fromMe ? WA.sentBg : WA.recvBg, ...(fromMe ? { borderBottomLeftRadius: 8 } : { borderBottomRightRadius: 8 }) },
+                              "&::after": { content: '""', position: "absolute", bottom: -2, ...(fromMe ? { right: -10 } : { left: -10 }), width: 10, height: 10, backgroundColor: WA.chatBg, ...(fromMe ? { borderBottomLeftRadius: 6 } : { borderBottomRightRadius: 6 }) },
+                            }}>
                             {/* Dropdown ▾ di pojok bubble */}
                             <Box sx={{ position: "absolute", top: 2, ...(fromMe ? { left: -26 } : { right: -26 }), opacity: isHovered ? 1 : 0, transition: "opacity 0.15s", zIndex: 1 }}>
                               <IconButton size="small"
@@ -1187,16 +1248,14 @@ export default function ChatInboxPage() {
                             </Box>
                           </Box>
 
-                          {/* Reply btn — kanan untuk pesan keluar */}
+                          {/* Swipe/drag reply indicator — kanan untuk pesan keluar */}
                           {fromMe && (
-                            <Box sx={{ flexShrink: 0, mb: 0.5, opacity: isHovered ? 1 : 0, transition: "opacity 0.15s" }}>
-                              <Tooltip title="Balas" placement="right">
-                                <IconButton size="small"
-                                  onClick={() => setReplyingTo({ serializedId: msg.serializedId, id: msg.id, body: msg.body || "", type: msg.type || "chat", from: msg.from, authorName: "Kamu" })}
-                                  sx={{ color: WA.sidebarSub, p: 0.4, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", transform: "scaleX(-1)", "&:hover": { bgcolor: "#fff" } }}>
-                                  <ReplyRoundedIcon sx={{ fontSize: 15 }} />
-                                </IconButton>
-                              </Tooltip>
+                            <Box sx={{ flexShrink: 0, opacity: isDragging ? dragProgress : (isHovered ? 1 : 0), transition: isDragging ? "none" : "opacity 0.15s",
+                              transform: isDragging ? `scale(${0.7 + 0.3 * dragProgress})` : "scale(1)" }}>
+                              <IconButton size="small" onClick={doReply}
+                                sx={{ color: WA.sidebarSub, p: 0.4, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", transform: "scaleX(-1)", "&:hover": { bgcolor: "#fff" } }}>
+                                <ReplyRoundedIcon sx={{ fontSize: 15 }} />
+                              </IconButton>
                             </Box>
                           )}
                         </Box>
