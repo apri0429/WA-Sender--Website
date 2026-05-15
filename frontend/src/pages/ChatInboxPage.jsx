@@ -54,7 +54,6 @@ import socket from "../services/socket";
 
 const picCache = new Map();
 const picSubs = new Map();
-const HIDDEN_MESSAGES_STORAGE_KEY = "waInboxHiddenMessagesV1";
 
 const API_RAW = import.meta.env.DEV ? "http://192.168.1.254:8098" : "";
 function mkMediaUrl(serializedId, download = false) {
@@ -227,14 +226,14 @@ function sortChatsByActivity(items = []) {
   return [...items].sort((a, b) => (b?.lastMessage?.timestamp || 0) - (a?.lastMessage?.timestamp || 0));
 }
 
-function loadHiddenMessagesMap() {
-  try {
-    const raw = window.localStorage.getItem(HIDDEN_MESSAGES_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : {};
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
+function forceDownload(url, filename = "") {
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename || "";
+  link.rel = "noopener noreferrer";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 // ─── WA text rendering ───────────────────────────────────────────────────────
@@ -397,12 +396,19 @@ function MediaBubble({ msg, fromMe }) {
   const { Icon } = meta;
   const caption = String(msg?.body || "").trim();
   const sid = msg?.serializedId;
+  const downloadName = msg?.filename || caption || `${msg?.type || "media"}-${sid || "file"}`;
   const mediaCapableTypes = new Set(["image", "sticker", "video", "audio", "ptt", "document"]);
   const canTryMedia = sid && (msg?.hasMedia || mediaCapableTypes.has(msg?.type));
   const mUrl = canTryMedia ? mkMediaUrl(sid) : null;
   const downloadUrl = canTryMedia ? mkMediaUrl(sid, true) : null;
   const iconColor = fromMe ? "#057C5D" : WA.green;
   const bgColor = fromMe ? "rgba(0,0,0,0.08)" : "#F0F2F5";
+  const handleDownload = (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    if (!downloadUrl) return;
+    forceDownload(downloadUrl, downloadName);
+  };
 
   if (msg.type === "revoked") {
     return (
@@ -425,7 +431,7 @@ function MediaBubble({ msg, fromMe }) {
         {downloadUrl && (
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 0.5 }}>
             <Tooltip title="Download gambar">
-              <IconButton size="small" component="a" href={downloadUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} sx={{ color: iconColor }}>
+              <IconButton size="small" onClick={handleDownload} sx={{ color: iconColor }}>
                 <DownloadRoundedIcon sx={{ fontSize: 18 }} />
               </IconButton>
             </Tooltip>
@@ -441,11 +447,7 @@ function MediaBubble({ msg, fromMe }) {
             </IconButton>
             {downloadUrl && (
               <IconButton
-                component="a"
-                href={downloadUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={handleDownload}
                 sx={{ position: "absolute", top: -16, right: 28, color: "#fff", zIndex: 1, bgcolor: "rgba(255,255,255,0.18)", "&:hover": { bgcolor: "rgba(255,255,255,0.32)" } }}
               >
                 <DownloadRoundedIcon sx={{ fontSize: 18 }} />
@@ -469,7 +471,7 @@ function MediaBubble({ msg, fromMe }) {
         {downloadUrl && (
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 0.5 }}>
             <Tooltip title="Download video">
-              <IconButton size="small" component="a" href={downloadUrl} target="_blank" rel="noopener noreferrer" sx={{ color: iconColor }}>
+              <IconButton size="small" onClick={handleDownload} sx={{ color: iconColor }}>
                 <DownloadRoundedIcon sx={{ fontSize: 18 }} />
               </IconButton>
             </Tooltip>
@@ -489,7 +491,7 @@ function MediaBubble({ msg, fromMe }) {
             sx={{ height: 36, minWidth: 180, maxWidth: 240, display: "block" }} />
           {downloadUrl && (
             <Tooltip title="Download audio">
-              <IconButton size="small" component="a" href={downloadUrl} target="_blank" rel="noopener noreferrer" sx={{ color: iconColor, flexShrink: 0 }}>
+              <IconButton size="small" onClick={handleDownload} sx={{ color: iconColor, flexShrink: 0 }}>
                 <DownloadRoundedIcon sx={{ fontSize: 18 }} />
               </IconButton>
             </Tooltip>
@@ -518,7 +520,7 @@ function MediaBubble({ msg, fromMe }) {
                 </IconButton>
               </Tooltip>
               <Tooltip title="Download">
-                <IconButton size="small" component="a" href={downloadUrl} target="_blank" rel="noopener noreferrer" sx={{ color: iconColor }}>
+                <IconButton size="small" onClick={handleDownload} sx={{ color: iconColor }}>
                   <DownloadRoundedIcon sx={{ fontSize: 18 }} />
                 </IconButton>
               </Tooltip>
@@ -613,7 +615,6 @@ export default function ChatInboxPage() {
   const [chats, setChats] = useState([]);
   const [selectedChatId, setSelectedChatId] = useState("");
   const [messages, setMessages] = useState([]);
-  const [hiddenMessagesMap, setHiddenMessagesMap] = useState(loadHiddenMessagesMap);
   const [messageMeta, setMessageMeta] = useState({ source: "", note: "", limit: 0 });
   const [messageDraft, setMessageDraft] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
@@ -803,22 +804,6 @@ export default function ChatInboxPage() {
     }
   };
 
-  const handleDeleteForMe = useCallback((msg) => {
-    if (!selectedChatId || !msg) return;
-    const msgKey = msg.serializedId || msg.id;
-    if (!msgKey) return;
-    setHiddenMessagesMap((prev) => {
-      const current = Array.isArray(prev[selectedChatId]) ? prev[selectedChatId] : [];
-      if (current.includes(msgKey)) return prev;
-      return {
-        ...prev,
-        [selectedChatId]: [...current, msgKey],
-      };
-    });
-    setCtxMenu({ open: false, anchorEl: null, msg: null });
-    showToast("Pesan disembunyikan dari tampilan ini", "success");
-  }, [selectedChatId]);
-
   const scrollToBottom = (behavior = "smooth") => {
     if (messageListRef.current) messageListRef.current.scrollTo({ top: messageListRef.current.scrollHeight, behavior });
   };
@@ -840,11 +825,6 @@ export default function ChatInboxPage() {
   }, [showEmojiPicker]);
 
   useEffect(() => { ensureWhatsappSession(); }, []);
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(HIDDEN_MESSAGES_STORAGE_KEY, JSON.stringify(hiddenMessagesMap));
-    } catch {}
-  }, [hiddenMessagesMap]);
   useEffect(() => {
     if (!whatsappReady) return;
     loadChats();
@@ -899,8 +879,6 @@ export default function ChatInboxPage() {
   }, [activeWaSessionId, selectedChatId, waAccount, waSessions]);
 
   const selectedChat = chats.find((c) => c.id === selectedChatId) || null;
-  const hiddenMessageIds = new Set(hiddenMessagesMap[selectedChatId] || []);
-  const visibleMessages = messages.filter((msg) => !hiddenMessageIds.has(msg.serializedId || msg.id));
   const filteredChats = chats.filter((c) => {
     const kw = chatSearch.trim().toLowerCase();
     if (!kw) return true;
@@ -909,8 +887,8 @@ export default function ChatInboxPage() {
 
   // Build messages with date separators
   const messagesWithSeparators = [];
-  visibleMessages.forEach((msg, i) => {
-    const prev = visibleMessages[i - 1];
+  messages.forEach((msg, i) => {
+    const prev = messages[i - 1];
     if (!prev || !isSameDay(prev.timestamp, msg.timestamp)) {
       messagesWithSeparators.push({ type: "separator", ts: msg.timestamp, key: `sep-${i}` });
     }
@@ -1183,9 +1161,7 @@ export default function ChatInboxPage() {
                   }) : (
                     <Box sx={{ textAlign: "center", pt: 5 }}>
                       <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, color: WA.msgMeta }}>
-                        {messages.length && !visibleMessages.length
-                          ? "Semua pesan di chat ini sedang disembunyikan dari tampilan."
-                          : (messageMeta.note || "Belum ada riwayat pesan. Buka chat di WhatsApp lalu klik Sync.")}
+                        {messageMeta.note || "Belum ada riwayat pesan. Buka chat di WhatsApp lalu klik Sync."}
                       </Typography>
                     </Box>
                   )}
@@ -1311,8 +1287,15 @@ export default function ChatInboxPage() {
               <ContentCopyRoundedIcon sx={{ fontSize: 17, color: WA.sidebarSub }} /> Salin teks
             </MenuItem>
           )}
-          <MenuItem onClick={() => handleDeleteForMe(ctxMenu.msg)} sx={{ fontFamily: FONT_SANS, fontSize: 13, gap: 1.5, py: 1 }}>
-            <DeleteOutlineRoundedIcon sx={{ fontSize: 17, color: WA.sidebarSub }} /> Hapus dari tampilan
+          <MenuItem onClick={async () => {
+            const chatId = selectedChatId;
+            setCtxMenu({ open: false, anchorEl: null, msg: null });
+            if (!chatId) return;
+            await loadMessages(chatId);
+            await loadChats({ preserveSelection: true });
+            showToast("Pesan berhasil ditarik dari WhatsApp", "success");
+          }} sx={{ fontFamily: FONT_SANS, fontSize: 13, gap: 1.5, py: 1 }}>
+            <RefreshRoundedIcon sx={{ fontSize: 17, color: WA.sidebarSub }} /> Tarik pesan
           </MenuItem>
           {ctxMenu.msg?.from === "me" && (
             <MenuItem onClick={() => {
