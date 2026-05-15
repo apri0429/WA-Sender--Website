@@ -194,9 +194,6 @@ function mergeStoredMessages(storedChat, messages = []) {
   });
 
   storedChat.messages.sort((a, b) => a.timestamp - b.timestamp);
-  if (storedChat.messages.length > CHAT_MESSAGE_LIMIT) {
-    storedChat.messages.splice(0, storedChat.messages.length - CHAT_MESSAGE_LIMIT);
-  }
 
   return storedChat.messages;
 }

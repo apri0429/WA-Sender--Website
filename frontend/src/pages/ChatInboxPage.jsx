@@ -54,6 +54,7 @@ import socket from "../services/socket";
 
 const picCache = new Map();
 const picSubs = new Map();
+const HIDDEN_MESSAGES_STORAGE_KEY = "waInboxHiddenMessagesV1";
 
 const API_RAW = import.meta.env.DEV ? "http://192.168.1.254:8098" : "";
 function mkMediaUrl(serializedId, download = false) {
@@ -226,6 +227,16 @@ function sortChatsByActivity(items = []) {
   return [...items].sort((a, b) => (b?.lastMessage?.timestamp || 0) - (a?.lastMessage?.timestamp || 0));
 }
 
+function loadHiddenMessagesMap() {
+  try {
+    const raw = window.localStorage.getItem(HIDDEN_MESSAGES_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 // ─── WA text rendering ───────────────────────────────────────────────────────
 
 const URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/g;
@@ -390,6 +401,17 @@ function MediaBubble({ msg, fromMe }) {
   const downloadUrl = sid && msg?.hasMedia ? mkMediaUrl(sid, true) : null;
   const iconColor = fromMe ? "#057C5D" : WA.green;
   const bgColor = fromMe ? "rgba(0,0,0,0.08)" : "#F0F2F5";
+
+  if (msg.type === "revoked") {
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, py: 0.2 }}>
+        <BlockOutlinedIcon sx={{ fontSize: 16, color: WA.msgMeta, flexShrink: 0 }} />
+        <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, fontStyle: "italic", color: WA.msgMeta }}>
+          Pesan ini telah dihapus
+        </Typography>
+      </Box>
+    );
+  }
 
   if ((msg.type === "image" || msg.type === "sticker") && mUrl && !mediaError) {
     return (
@@ -589,6 +611,7 @@ export default function ChatInboxPage() {
   const [chats, setChats] = useState([]);
   const [selectedChatId, setSelectedChatId] = useState("");
   const [messages, setMessages] = useState([]);
+  const [hiddenMessagesMap, setHiddenMessagesMap] = useState(loadHiddenMessagesMap);
   const [messageMeta, setMessageMeta] = useState({ source: "", note: "", limit: 0 });
   const [messageDraft, setMessageDraft] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
@@ -766,13 +789,33 @@ export default function ChatInboxPage() {
     if (!msg?.serializedId) return;
     try {
       await api.post(`/messages/${encodeURIComponent(msg.serializedId)}/delete`);
-      setMessages((prev) => prev.filter((m) => m.serializedId !== msg.serializedId));
+      setMessages((prev) => prev.map((m) => (
+        m.serializedId === msg.serializedId
+          ? { ...m, type: "revoked", body: "", hasMedia: false, quotedMsg: null }
+          : m
+      )));
       await loadChats({ preserveSelection: true });
       showToast("Pesan dihapus untuk semua", "success");
     } catch (err) {
       showToast(err?.response?.data?.message || "Gagal menghapus pesan", "error");
     }
   };
+
+  const handleDeleteForMe = useCallback((msg) => {
+    if (!selectedChatId || !msg) return;
+    const msgKey = msg.serializedId || msg.id;
+    if (!msgKey) return;
+    setHiddenMessagesMap((prev) => {
+      const current = Array.isArray(prev[selectedChatId]) ? prev[selectedChatId] : [];
+      if (current.includes(msgKey)) return prev;
+      return {
+        ...prev,
+        [selectedChatId]: [...current, msgKey],
+      };
+    });
+    setCtxMenu({ open: false, anchorEl: null, msg: null });
+    showToast("Pesan disembunyikan dari tampilan ini", "success");
+  }, [selectedChatId]);
 
   const scrollToBottom = (behavior = "smooth") => {
     if (messageListRef.current) messageListRef.current.scrollTo({ top: messageListRef.current.scrollHeight, behavior });
@@ -795,6 +838,11 @@ export default function ChatInboxPage() {
   }, [showEmojiPicker]);
 
   useEffect(() => { ensureWhatsappSession(); }, []);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(HIDDEN_MESSAGES_STORAGE_KEY, JSON.stringify(hiddenMessagesMap));
+    } catch {}
+  }, [hiddenMessagesMap]);
   useEffect(() => {
     if (!whatsappReady) return;
     loadChats();
@@ -849,6 +897,8 @@ export default function ChatInboxPage() {
   }, [activeWaSessionId, selectedChatId, waAccount, waSessions]);
 
   const selectedChat = chats.find((c) => c.id === selectedChatId) || null;
+  const hiddenMessageIds = new Set(hiddenMessagesMap[selectedChatId] || []);
+  const visibleMessages = messages.filter((msg) => !hiddenMessageIds.has(msg.serializedId || msg.id));
   const filteredChats = chats.filter((c) => {
     const kw = chatSearch.trim().toLowerCase();
     if (!kw) return true;
@@ -857,8 +907,8 @@ export default function ChatInboxPage() {
 
   // Build messages with date separators
   const messagesWithSeparators = [];
-  messages.forEach((msg, i) => {
-    const prev = messages[i - 1];
+  visibleMessages.forEach((msg, i) => {
+    const prev = visibleMessages[i - 1];
     if (!prev || !isSameDay(prev.timestamp, msg.timestamp)) {
       messagesWithSeparators.push({ type: "separator", ts: msg.timestamp, key: `sep-${i}` });
     }
@@ -1131,7 +1181,9 @@ export default function ChatInboxPage() {
                   }) : (
                     <Box sx={{ textAlign: "center", pt: 5 }}>
                       <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, color: WA.msgMeta }}>
-                        {messageMeta.note || "Belum ada riwayat pesan. Buka chat di WhatsApp lalu klik Sync."}
+                        {messages.length && !visibleMessages.length
+                          ? "Semua pesan di chat ini sedang disembunyikan dari tampilan."
+                          : (messageMeta.note || "Belum ada riwayat pesan. Buka chat di WhatsApp lalu klik Sync.")}
                       </Typography>
                     </Box>
                   )}
@@ -1257,6 +1309,9 @@ export default function ChatInboxPage() {
               <ContentCopyRoundedIcon sx={{ fontSize: 17, color: WA.sidebarSub }} /> Salin teks
             </MenuItem>
           )}
+          <MenuItem onClick={() => handleDeleteForMe(ctxMenu.msg)} sx={{ fontFamily: FONT_SANS, fontSize: 13, gap: 1.5, py: 1 }}>
+            <DeleteOutlineRoundedIcon sx={{ fontSize: 17, color: WA.sidebarSub }} /> Hapus dari tampilan
+          </MenuItem>
           {ctxMenu.msg?.from === "me" && (
             <MenuItem onClick={() => {
               setDeleteConfirm({ open: true, msg: ctxMenu.msg });
