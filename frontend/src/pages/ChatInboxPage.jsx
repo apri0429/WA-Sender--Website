@@ -257,21 +257,41 @@ function parseWaText(text) {
 
 function applyMarkdown(text) {
   // Returns array of {style, value} segments
+  // WA rules: delimiter must border non-space content, and must NOT be mid-word
+  // e.g. *bold*, _italic_, ~strike~, `mono`
+  // user_name or 1_000 must NOT trigger italic
   const segments = [];
-  // Patterns: bold *x*, italic _x_, strikethrough ~x~, mono `x`
-  const re = /(\*([^*]+)\*|_([^_]+)_|~([^~]+)~|`([^`]+)`)/g;
+  const BOLD   = /(?<![*\w])\*(?!\s)([\s\S]*?)(?<!\s)\*(?![*\w])/g;
+  const ITALIC = /(?<![\w_])_(?!\s)([\s\S]*?)(?<!\s)_(?![\w_])/g;
+  const STRIKE = /(?<![\w~])~(?!\s)([\s\S]*?)(?<!\s)~(?![\w~])/g;
+  const MONO   = /`([^`]+)`/g;
+
+  // Collect all matches with their positions
+  const matches = [];
+  let m;
+  const runners = [
+    { re: BOLD,   style: "bold" },
+    { re: ITALIC, style: "italic" },
+    { re: STRIKE, style: "strike" },
+    { re: MONO,   style: "mono" },
+  ];
+  for (const { re, style } of runners) {
+    re.lastIndex = 0;
+    while ((m = re.exec(text)) !== null) {
+      matches.push({ start: m.index, end: m.index + m[0].length, value: m[1], style });
+    }
+  }
+  // Sort by start position, remove overlaps
+  matches.sort((a, b) => a.start - b.start);
   let last = 0;
-  let mt;
-  while ((mt = re.exec(text)) !== null) {
-    if (mt.index > last) segments.push({ style: "normal", value: text.slice(last, mt.index) });
-    if (mt[2] !== undefined) segments.push({ style: "bold", value: mt[2] });
-    else if (mt[3] !== undefined) segments.push({ style: "italic", value: mt[3] });
-    else if (mt[4] !== undefined) segments.push({ style: "strike", value: mt[4] });
-    else if (mt[5] !== undefined) segments.push({ style: "mono", value: mt[5] });
-    last = mt.index + mt[0].length;
+  for (const match of matches) {
+    if (match.start < last) continue; // overlapping — skip
+    if (match.start > last) segments.push({ style: "normal", value: text.slice(last, match.start) });
+    segments.push({ style: match.style, value: match.value });
+    last = match.end;
   }
   if (last < text.length) segments.push({ style: "normal", value: text.slice(last) });
-  return segments;
+  return segments.length ? segments : [{ style: "normal", value: text }];
 }
 
 function WaText({ text, fromMe }) {
@@ -624,6 +644,7 @@ export default function ChatInboxPage() {
   const [sendingMedia, setSendingMedia] = useState(false);
   const [myPicUrl, setMyPicUrl] = useState(null);
   const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
+  const [hoveredMsgId, setHoveredMsgId] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [headerSlotEl, setHeaderSlotEl] = useState(null);
@@ -1101,93 +1122,104 @@ export default function ChatInboxPage() {
                   </Box>
                 )}
 
-                {/* Messages */}
-                <Box ref={messageListRef} onScroll={handleMsgListScroll}
-                  sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, py: 1.5, bgcolor: WA.chatBg, position: "relative", scrollbarWidth: "thin", scrollbarColor: "#C0B9AE transparent", "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "#C0B9AE", borderRadius: 2 } }}>
-                  {loadingMessages ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", pt: 5 }}><CircularProgress size={26} sx={{ color: WA.green }} /></Box>
-                  ) : messagesWithSeparators.length ? messagesWithSeparators.map((item) => {
-                    if (item.type === "separator") {
-                      return <DateSeparator key={item.key} label={formatDateLabel(item.ts)} />;
-                    }
-                    const msg = item.msg;
-                    const fromMe = msg?.from === "me";
-                    return (
-                      <Box key={item.key}
-                        onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ open: true, anchorEl: e.currentTarget, msg, x: e.clientX, y: e.clientY }); }}
-                        sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", width: "100%", mb: 0.5, alignItems: "flex-end", gap: 0.5 }}>
+                {/* Messages + FAB wrapper */}
+                <Box sx={{ flex: 1, minHeight: 0, position: "relative", display: "flex", flexDirection: "column" }}>
+                  <Box ref={messageListRef} onScroll={handleMsgListScroll}
+                    sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, py: 1.5, bgcolor: WA.chatBg, scrollbarWidth: "thin", scrollbarColor: "#C0B9AE transparent", "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "#C0B9AE", borderRadius: 2 } }}>
+                    {loadingMessages ? (
+                      <Box sx={{ display: "flex", justifyContent: "center", pt: 5 }}><CircularProgress size={26} sx={{ color: WA.green }} /></Box>
+                    ) : messagesWithSeparators.length ? messagesWithSeparators.map((item) => {
+                      if (item.type === "separator") {
+                        return <DateSeparator key={item.key} label={formatDateLabel(item.ts)} />;
+                      }
+                      const msg = item.msg;
+                      const fromMe = msg?.from === "me";
+                      const msgId = msg.id || msg.serializedId;
+                      const isHovered = hoveredMsgId === msgId;
+                      return (
+                        <Box key={item.key}
+                          onMouseEnter={() => setHoveredMsgId(msgId)}
+                          onMouseLeave={() => setHoveredMsgId(null)}
+                          onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ open: true, anchorEl: e.currentTarget, msg }); }}
+                          sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", width: "100%", mb: 0.5, alignItems: "flex-end", gap: 0.5 }}>
 
-                        {!fromMe && (
-                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, flexShrink: 0, mb: 0.5, opacity: 0, transition: "opacity 0.15s", "&:hover": { opacity: 1 }, ".msg-row:hover &": { opacity: 1 } }}>
-                            <Tooltip title="Balas" placement="left">
-                              <IconButton size="small" onClick={() => setReplyingTo({ serializedId: msg.serializedId, id: msg.id, body: msg.body || "", type: msg.type || "chat", from: msg.from, authorName: selectedChat?.name || selectedChat?.phone || "" })}
-                                sx={{ color: WA.sidebarSub, p: 0.4, bgcolor: "rgba(255,255,255,0.85)", borderRadius: "50%", "&:hover": { bgcolor: "#fff" } }}>
-                                <ReplyRoundedIcon sx={{ fontSize: 15 }} />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        )}
+                          {/* Reply btn — kiri untuk pesan masuk */}
+                          {!fromMe && (
+                            <Box sx={{ flexShrink: 0, mb: 0.5, opacity: isHovered ? 1 : 0, transition: "opacity 0.15s" }}>
+                              <Tooltip title="Balas" placement="left">
+                                <IconButton size="small"
+                                  onClick={() => setReplyingTo({ serializedId: msg.serializedId, id: msg.id, body: msg.body || "", type: msg.type || "chat", from: msg.from, authorName: selectedChat?.name || selectedChat?.phone || "" })}
+                                  sx={{ color: WA.sidebarSub, p: 0.4, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", "&:hover": { bgcolor: "#fff" } }}>
+                                  <ReplyRoundedIcon sx={{ fontSize: 15 }} />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          )}
 
-                        <Box
-                          className="msg-row"
-                          sx={{ position: "relative", maxWidth: "72%", ml: fromMe ? "auto" : 0, mr: fromMe ? 0 : "auto", px: 1.4, py: 0.8, bgcolor: fromMe ? WA.sentBg : WA.recvBg, color: WA.msgText, borderRadius: fromMe ? "8px 8px 0 8px" : "8px 8px 8px 0", boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+                          {/* Bubble */}
+                          <Box sx={{ position: "relative", maxWidth: "72%", px: 1.4, py: 0.8,
+                            bgcolor: fromMe ? WA.sentBg : WA.recvBg, color: WA.msgText,
+                            borderRadius: fromMe ? "8px 8px 0 8px" : "8px 8px 8px 0",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
                             "&::before": { content: '""', position: "absolute", bottom: 0, ...(fromMe ? { right: -8 } : { left: -8 }), width: 8, height: 13, backgroundColor: fromMe ? WA.sentBg : WA.recvBg, ...(fromMe ? { borderBottomLeftRadius: 8 } : { borderBottomRightRadius: 8 }) },
                             "&::after": { content: '""', position: "absolute", bottom: -2, ...(fromMe ? { right: -10 } : { left: -10 }), width: 10, height: 10, backgroundColor: WA.chatBg, ...(fromMe ? { borderBottomLeftRadius: 6 } : { borderBottomRightRadius: 6 }) },
-                            "&:hover .msg-actions": { opacity: 1 },
-                          }}
-                        >
-                          {/* Hover action button */}
-                          <Box className="msg-actions" sx={{ position: "absolute", top: 4, ...(fromMe ? { left: -32 } : { right: -32 }), opacity: 0, transition: "opacity 0.15s", zIndex: 1 }}>
-                            <IconButton size="small" onClick={(e) => setCtxMenu({ open: true, anchorEl: e.currentTarget, msg })}
-                              sx={{ color: WA.sidebarSub, p: 0.3, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.15)", "&:hover": { bgcolor: "#fff" } }}>
-                              <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16 }} />
-                            </IconButton>
-                          </Box>
-
-                          <QuotedMsgBlock quotedMsg={msg.quotedMsg} fromMe={fromMe} />
-                          {MSG_TYPE[msg?.type] ? (
-                            <MediaBubble msg={msg} fromMe={fromMe} />
-                          ) : (
-                            <WaText text={msg?.body || ""} fromMe={fromMe} />
-                          )}
-                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.4, mt: 0.25 }}>
-                            <Typography sx={{ fontFamily: FONT_MONO, fontSize: 10.5, color: WA.msgMeta }}>
-                              {formatTime(msg?.timestamp)}
-                            </Typography>
-                            {fromMe && <MsgTick ack={msg?.ack} />}
-                          </Box>
-                        </Box>
-
-                        {fromMe && (
-                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, flexShrink: 0, mb: 0.5, opacity: 0, transition: "opacity 0.15s", "&:hover": { opacity: 1 }, ".msg-row:hover &": { opacity: 1 } }}>
-                            <Tooltip title="Balas" placement="right">
-                              <IconButton size="small" onClick={() => setReplyingTo({ serializedId: msg.serializedId, id: msg.id, body: msg.body || "", type: msg.type || "chat", from: msg.from, authorName: "Kamu" })}
-                                sx={{ color: WA.sidebarSub, p: 0.4, bgcolor: "rgba(255,255,255,0.85)", borderRadius: "50%", transform: "scaleX(-1)", "&:hover": { bgcolor: "#fff" } }}>
-                                <ReplyRoundedIcon sx={{ fontSize: 15 }} />
+                          }}>
+                            {/* Dropdown ▾ di pojok bubble */}
+                            <Box sx={{ position: "absolute", top: 2, ...(fromMe ? { left: -26 } : { right: -26 }), opacity: isHovered ? 1 : 0, transition: "opacity 0.15s", zIndex: 1 }}>
+                              <IconButton size="small"
+                                onClick={(e) => setCtxMenu({ open: true, anchorEl: e.currentTarget, msg })}
+                                sx={{ color: WA.sidebarSub, p: 0.25, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", "&:hover": { bgcolor: "#fff" } }}>
+                                <KeyboardArrowDownRoundedIcon sx={{ fontSize: 14 }} />
                               </IconButton>
-                            </Tooltip>
+                            </Box>
+
+                            <QuotedMsgBlock quotedMsg={msg.quotedMsg} fromMe={fromMe} />
+                            {MSG_TYPE[msg?.type] ? (
+                              <MediaBubble msg={msg} fromMe={fromMe} />
+                            ) : (
+                              <WaText text={msg?.body || ""} fromMe={fromMe} />
+                            )}
+                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.4, mt: 0.25 }}>
+                              <Typography sx={{ fontFamily: FONT_MONO, fontSize: 10.5, color: WA.msgMeta }}>
+                                {formatTime(msg?.timestamp)}
+                              </Typography>
+                              {fromMe && <MsgTick ack={msg?.ack} />}
+                            </Box>
                           </Box>
-                        )}
+
+                          {/* Reply btn — kanan untuk pesan keluar */}
+                          {fromMe && (
+                            <Box sx={{ flexShrink: 0, mb: 0.5, opacity: isHovered ? 1 : 0, transition: "opacity 0.15s" }}>
+                              <Tooltip title="Balas" placement="right">
+                                <IconButton size="small"
+                                  onClick={() => setReplyingTo({ serializedId: msg.serializedId, id: msg.id, body: msg.body || "", type: msg.type || "chat", from: msg.from, authorName: "Kamu" })}
+                                  sx={{ color: WA.sidebarSub, p: 0.4, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", transform: "scaleX(-1)", "&:hover": { bgcolor: "#fff" } }}>
+                                  <ReplyRoundedIcon sx={{ fontSize: 15 }} />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          )}
+                        </Box>
+                      );
+                    }) : (
+                      <Box sx={{ textAlign: "center", pt: 5 }}>
+                        <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, color: WA.msgMeta }}>
+                          {messageMeta.note || "Belum ada riwayat pesan. Buka chat di WhatsApp lalu klik Sync."}
+                        </Typography>
                       </Box>
-                    );
-                  }) : (
-                    <Box sx={{ textAlign: "center", pt: 5 }}>
-                      <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, color: WA.msgMeta }}>
-                        {messageMeta.note || "Belum ada riwayat pesan. Buka chat di WhatsApp lalu klik Sync."}
-                      </Typography>
+                    )}
+                  </Box>
+
+                  {/* Scroll to bottom FAB — di luar area scroll, tetap di posisinya */}
+                  {showScrollBtn && (
+                    <Box sx={{ position: "absolute", bottom: 12, right: 16, zIndex: 10 }}>
+                      <IconButton onClick={() => scrollToBottom("smooth")}
+                        sx={{ bgcolor: P.white, boxShadow: "0 2px 8px rgba(0,0,0,0.2)", color: WA.sidebarSub, width: 36, height: 36, "&:hover": { bgcolor: WA.sidebarBg } }}>
+                        <KeyboardArrowUpRoundedIcon sx={{ fontSize: 20, transform: "rotate(180deg)" }} />
+                      </IconButton>
                     </Box>
                   )}
                 </Box>
-
-                {/* Scroll to bottom FAB */}
-                {showScrollBtn && (
-                  <Box sx={{ position: "absolute", bottom: 90, right: 24, zIndex: 10 }}>
-                    <IconButton onClick={() => scrollToBottom("smooth")}
-                      sx={{ bgcolor: P.white, boxShadow: "0 2px 8px rgba(0,0,0,0.2)", color: WA.sidebarSub, width: 36, height: 36, "&:hover": { bgcolor: WA.sidebarBg } }}>
-                      <KeyboardArrowUpRoundedIcon sx={{ fontSize: 20, transform: "rotate(180deg)" }} />
-                    </IconButton>
-                  </Box>
-                )}
 
                 {/* Input bar */}
                 <Box sx={{ px: 1.25, py: 0.75, bgcolor: WA.inputBar, borderTop: `1px solid ${WA.sidebarBorder}`, flexShrink: 0 }}>
