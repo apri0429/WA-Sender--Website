@@ -256,36 +256,29 @@ function parseWaText(text) {
 }
 
 function applyMarkdown(text) {
-  // Returns array of {style, value} segments
-  // WA rules: delimiter must border non-space content, and must NOT be mid-word
-  // e.g. *bold*, _italic_, ~strike~, `mono`
-  // user_name or 1_000 must NOT trigger italic
+  // WA markdown: *bold*, _italic_, ~strike~
+  // Rules: delimiter must NOT be adjacent to a word char on the outside (prevents mid-word matching)
+  // and must NOT have whitespace on the inside.
+  // Backtick/mono intentionally excluded — makes normal messages look like code.
   const segments = [];
   const BOLD   = /(?<![*\w])\*(?!\s)([\s\S]*?)(?<!\s)\*(?![*\w])/g;
   const ITALIC = /(?<![\w_])_(?!\s)([\s\S]*?)(?<!\s)_(?![\w_])/g;
   const STRIKE = /(?<![\w~])~(?!\s)([\s\S]*?)(?<!\s)~(?![\w~])/g;
-  const MONO   = /`([^`]+)`/g;
 
-  // Collect all matches with their positions
   const matches = [];
   let m;
-  const runners = [
-    { re: BOLD,   style: "bold" },
-    { re: ITALIC, style: "italic" },
-    { re: STRIKE, style: "strike" },
-    { re: MONO,   style: "mono" },
-  ];
-  for (const { re, style } of runners) {
+  for (const { re, style } of [
+    { re: BOLD, style: "bold" }, { re: ITALIC, style: "italic" }, { re: STRIKE, style: "strike" },
+  ]) {
     re.lastIndex = 0;
     while ((m = re.exec(text)) !== null) {
       matches.push({ start: m.index, end: m.index + m[0].length, value: m[1], style });
     }
   }
-  // Sort by start position, remove overlaps
   matches.sort((a, b) => a.start - b.start);
   let last = 0;
   for (const match of matches) {
-    if (match.start < last) continue; // overlapping — skip
+    if (match.start < last) continue;
     if (match.start > last) segments.push({ style: "normal", value: text.slice(last, match.start) });
     segments.push({ style: match.style, value: match.value });
     last = match.end;
@@ -317,7 +310,6 @@ function WaText({ text, fromMe }) {
           if (seg.style === "bold") return <Box key={`${pi}-${si}`} component="span" sx={{ fontWeight: 700 }}>{seg.value}</Box>;
           if (seg.style === "italic") return <Box key={`${pi}-${si}`} component="span" sx={{ fontStyle: "italic" }}>{seg.value}</Box>;
           if (seg.style === "strike") return <Box key={`${pi}-${si}`} component="span" sx={{ textDecoration: "line-through" }}>{seg.value}</Box>;
-          if (seg.style === "mono") return <Box key={`${pi}-${si}`} component="span" sx={{ fontFamily: FONT_MONO, fontSize: 12.5, bgcolor: fromMe ? "rgba(0,0,0,0.07)" : "#F0F2F5", px: 0.5, borderRadius: "3px" }}>{seg.value}</Box>;
           return <span key={`${pi}-${si}`}>{seg.value}</span>;
         });
       })}
@@ -1207,10 +1199,14 @@ export default function ChatInboxPage() {
                           <Box
                             onMouseDown={(e) => {
                               if (e.button !== 0) return;
+                              // Don't start drag on icon buttons
+                              if (e.target.closest("button")) return;
+                              e.preventDefault();
                               dragRef.current = { active: true, msgId, fromMe, startX: e.clientX, offset: 0, triggered: false, replyFn: doReply };
                               setDragState({ msgId, offset: 0, triggered: false });
                             }}
                             onTouchStart={(e) => {
+                              if (e.target.closest("button")) return;
                               const t = e.touches[0];
                               dragRef.current = { active: true, msgId, fromMe, startX: t.clientX, offset: 0, triggered: false, replyFn: doReply };
                               setDragState({ msgId, offset: 0, triggered: false });
@@ -1219,7 +1215,8 @@ export default function ChatInboxPage() {
                               bgcolor: fromMe ? WA.sentBg : WA.recvBg, color: WA.msgText,
                               borderRadius: fromMe ? "8px 8px 0 8px" : "8px 8px 8px 0",
                               boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
-                              cursor: "grab",
+                              cursor: isDragging ? "grabbing" : "default",
+                              userSelect: isDragging ? "none" : "text",
                               transform: `translateX(${dragOffset}px)`,
                               transition: isDragging ? "none" : "transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94)",
                               "&::before": { content: '""', position: "absolute", bottom: 0, ...(fromMe ? { right: -8 } : { left: -8 }), width: 8, height: 13, backgroundColor: fromMe ? WA.sentBg : WA.recvBg, ...(fromMe ? { borderBottomLeftRadius: 8 } : { borderBottomRightRadius: 8 }) },
