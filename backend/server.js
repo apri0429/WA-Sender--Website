@@ -2085,7 +2085,7 @@ async function sendPdfToCustomer(row) {
   if (!numberId) throw new Error("Nomor tidak terdaftar di WhatsApp");
   const template = getTemplate();
   const driveLink = String(row.driveUrl || "").trim();
-  let caption = generateMessage(
+  const caption = generateMessage(
     {
       nama: row.nama,
       nomor: row.nomor,
@@ -2096,10 +2096,6 @@ async function sendPdfToCustomer(row) {
     },
     template
   );
-
-  if (driveLink && !template.includes("{drive}")) {
-    caption = `${caption}\n\nLink Google Drive:\n${driveLink}`;
-  }
 
   if (row.pdf) {
     const pdfRelUrl = row.pdf.replace(/^\/generated\//, "");
@@ -2114,6 +2110,13 @@ async function sendPdfToCustomer(row) {
   } else {
     await waClient.sendMessage(chatId, caption);
   }
+
+  // Kirim link Drive sebagai pesan terpisah agar tampil sebagai preview card dokumen
+  if (driveLink && !template.includes("{drive}")) {
+    await sleep(randomBetween(800, 1500));
+    await waClient.sendMessage(chatId, driveLink);
+  }
+
   await sleep(randomBetween(500, 1200));
   return true;
 }
