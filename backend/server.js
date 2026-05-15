@@ -139,7 +139,6 @@ let isPdfCancelRequested = false;
 
 // Chat inbox - in-memory store
 const chatHistory = new Map(); // chatId -> { id, name, phone, unread, messages[] }
-const CHAT_LIST_LIMIT = 500;
 const CHAT_MESSAGE_LIMIT = 1500;
 
 function clearChatHistory() {
@@ -148,6 +147,7 @@ function clearChatHistory() {
 
 function serializeMessage(msg) {
   const qd = msg._data?.quotedMsg;
+  const mediaLikeTypes = new Set(["image", "video", "audio", "ptt", "document", "sticker"]);
   return {
     id: msg.id?.id || String(Date.now()),
     serializedId: msg.id?._serialized || null,
@@ -155,8 +155,10 @@ function serializeMessage(msg) {
     body: msg.body || "",
     timestamp: msg.timestamp ? msg.timestamp * 1000 : Date.now(),
     type: msg.type || "chat",
-    hasMedia: msg.hasMedia || false,
-    filename: msg.filename || null,
+    hasMedia: Boolean(msg.hasMedia || msg._data?.directPath || mediaLikeTypes.has(msg.type)),
+    filename: msg.filename || msg._data?.filename || null,
+    mimetype: msg._data?.mimetype || null,
+    ack: typeof msg.ack === "number" ? msg.ack : null,
     quotedMsg: qd ? {
       body: qd.body || "",
       type: qd.type || "chat",
@@ -3409,7 +3411,6 @@ app.get("/api/chats", async (req, res) => {
         const bTime = b?.lastMessage?.timestamp || 0;
         return bTime - aTime;
       })
-      .slice(0, CHAT_LIST_LIMIT)
       .map((c) => {
       const lastMsg = c.lastMessage;
       return {

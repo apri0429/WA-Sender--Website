@@ -397,8 +397,10 @@ function MediaBubble({ msg, fromMe }) {
   const { Icon } = meta;
   const caption = String(msg?.body || "").trim();
   const sid = msg?.serializedId;
-  const mUrl = sid && msg?.hasMedia ? mkMediaUrl(sid) : null;
-  const downloadUrl = sid && msg?.hasMedia ? mkMediaUrl(sid, true) : null;
+  const mediaCapableTypes = new Set(["image", "sticker", "video", "audio", "ptt", "document"]);
+  const canTryMedia = sid && (msg?.hasMedia || mediaCapableTypes.has(msg?.type));
+  const mUrl = canTryMedia ? mkMediaUrl(sid) : null;
+  const downloadUrl = canTryMedia ? mkMediaUrl(sid, true) : null;
   const iconColor = fromMe ? "#057C5D" : WA.green;
   const bgColor = fromMe ? "rgba(0,0,0,0.08)" : "#F0F2F5";
 
@@ -498,8 +500,8 @@ function MediaBubble({ msg, fromMe }) {
     );
   }
 
-  if (msg.type === "document" && mUrl) {
-    const filename = msg.filename || meta.label;
+  if (msg.type === "document") {
+    const filename = msg.filename || caption || meta.label;
     return (
       <Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.25, bgcolor: bgColor, borderRadius: "8px", minWidth: 220 }}>
@@ -508,22 +510,22 @@ function MediaBubble({ msg, fromMe }) {
             <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: WA.msgText, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{filename}</Typography>
             <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: WA.msgMeta }}>Dokumen</Typography>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, flexShrink: 0 }}>
-            <Tooltip title="Buka">
-              <IconButton size="small" component="a" href={mUrl} target="_blank" rel="noopener noreferrer" sx={{ color: iconColor }}>
-                <OpenInNewRoundedIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            </Tooltip>
-            {downloadUrl && (
+          {mUrl ? (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, flexShrink: 0 }}>
+              <Tooltip title="Buka">
+                <IconButton size="small" component="a" href={mUrl} target="_blank" rel="noopener noreferrer" sx={{ color: iconColor }}>
+                  <OpenInNewRoundedIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Tooltip>
               <Tooltip title="Download">
                 <IconButton size="small" component="a" href={downloadUrl} target="_blank" rel="noopener noreferrer" sx={{ color: iconColor }}>
                   <DownloadRoundedIcon sx={{ fontSize: 18 }} />
                 </IconButton>
               </Tooltip>
-            )}
-          </Box>
+            </Box>
+          ) : null}
         </Box>
-        {caption && <WaText text={caption} fromMe={fromMe} />}
+        {caption && caption !== filename && <WaText text={caption} fromMe={fromMe} />}
       </Box>
     );
   }
