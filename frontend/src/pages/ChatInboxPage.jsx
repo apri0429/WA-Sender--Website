@@ -40,6 +40,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import FlashOnIcon from "@mui/icons-material/FlashOn";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import AttachFileRoundedIcon from "@mui/icons-material/AttachFileRounded";
@@ -55,8 +56,9 @@ const picCache = new Map();
 const picSubs = new Map();
 
 const API_RAW = import.meta.env.DEV ? "http://192.168.1.254:8098" : "";
-function mkMediaUrl(serializedId) {
-  return `${API_RAW}/api/messages/${encodeURIComponent(serializedId)}/media`;
+function mkMediaUrl(serializedId, download = false) {
+  const baseUrl = `${API_RAW}/api/messages/${encodeURIComponent(serializedId)}/media`;
+  return download ? `${baseUrl}?download=1` : baseUrl;
 }
 
 const FONT_SANS = "'Plus Jakarta Sans', 'Inter', sans-serif";
@@ -385,6 +387,7 @@ function MediaBubble({ msg, fromMe }) {
   const caption = String(msg?.body || "").trim();
   const sid = msg?.serializedId;
   const mUrl = sid && msg?.hasMedia ? mkMediaUrl(sid) : null;
+  const downloadUrl = sid && msg?.hasMedia ? mkMediaUrl(sid, true) : null;
   const iconColor = fromMe ? "#057C5D" : WA.green;
   const bgColor = fromMe ? "rgba(0,0,0,0.08)" : "#F0F2F5";
 
@@ -395,6 +398,15 @@ function MediaBubble({ msg, fromMe }) {
           <Box component="img" src={mUrl} alt={meta.label} onError={() => setMediaError(true)}
             sx={{ width: "100%", display: "block", maxHeight: 300, objectFit: "cover", transition: "opacity 0.15s", "&:hover": { opacity: 0.88 } }} />
         </Box>
+        {downloadUrl && (
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 0.5 }}>
+            <Tooltip title="Download gambar">
+              <IconButton size="small" component="a" href={downloadUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} sx={{ color: iconColor }}>
+                <DownloadRoundedIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
         {caption && <WaText text={caption} fromMe={fromMe} />}
         <Dialog open={lightboxOpen} onClose={() => setLightboxOpen(false)} maxWidth={false}
           PaperProps={{ sx: { bgcolor: "rgba(0,0,0,0.88)", boxShadow: "none", borderRadius: "12px", overflow: "visible" } }}>
@@ -403,6 +415,18 @@ function MediaBubble({ msg, fromMe }) {
               sx={{ position: "absolute", top: -16, right: -16, color: "#fff", zIndex: 1, bgcolor: "rgba(255,255,255,0.18)", "&:hover": { bgcolor: "rgba(255,255,255,0.32)" } }}>
               <CloseRoundedIcon sx={{ fontSize: 20 }} />
             </IconButton>
+            {downloadUrl && (
+              <IconButton
+                component="a"
+                href={downloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                sx={{ position: "absolute", top: -16, right: 28, color: "#fff", zIndex: 1, bgcolor: "rgba(255,255,255,0.18)", "&:hover": { bgcolor: "rgba(255,255,255,0.32)" } }}
+              >
+                <DownloadRoundedIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            )}
             <Box component="img" src={mUrl} alt={meta.label}
               sx={{ display: "block", maxWidth: "88vw", maxHeight: "85vh", objectFit: "contain", borderRadius: "8px" }} />
           </Box>
@@ -418,6 +442,15 @@ function MediaBubble({ msg, fromMe }) {
           <Box component="video" src={mUrl} controls onError={() => setMediaError(true)}
             sx={{ width: "100%", display: "block", maxHeight: 280 }} />
         </Box>
+        {downloadUrl && (
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 0.5 }}>
+            <Tooltip title="Download video">
+              <IconButton size="small" component="a" href={downloadUrl} target="_blank" rel="noopener noreferrer" sx={{ color: iconColor }}>
+                <DownloadRoundedIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
         {caption && <WaText text={caption} fromMe={fromMe} />}
       </Box>
     );
@@ -430,6 +463,13 @@ function MediaBubble({ msg, fromMe }) {
           <Icon sx={{ fontSize: 20, color: iconColor, flexShrink: 0 }} />
           <Box component="audio" controls src={mUrl} onError={() => setMediaError(true)}
             sx={{ height: 36, minWidth: 180, maxWidth: 240, display: "block" }} />
+          {downloadUrl && (
+            <Tooltip title="Download audio">
+              <IconButton size="small" component="a" href={downloadUrl} target="_blank" rel="noopener noreferrer" sx={{ color: iconColor, flexShrink: 0 }}>
+                <DownloadRoundedIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
         {caption && <WaText text={caption} fromMe={fromMe} />}
       </Box>
@@ -446,11 +486,20 @@ function MediaBubble({ msg, fromMe }) {
             <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: WA.msgText, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{filename}</Typography>
             <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: WA.msgMeta }}>Dokumen</Typography>
           </Box>
-          <Tooltip title="Buka">
-            <IconButton size="small" component="a" href={mUrl} target="_blank" rel="noopener noreferrer" sx={{ color: iconColor, flexShrink: 0 }}>
-              <OpenInNewRoundedIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, flexShrink: 0 }}>
+            <Tooltip title="Buka">
+              <IconButton size="small" component="a" href={mUrl} target="_blank" rel="noopener noreferrer" sx={{ color: iconColor }}>
+                <OpenInNewRoundedIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+            {downloadUrl && (
+              <Tooltip title="Download">
+                <IconButton size="small" component="a" href={downloadUrl} target="_blank" rel="noopener noreferrer" sx={{ color: iconColor }}>
+                  <DownloadRoundedIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
         </Box>
         {caption && <WaText text={caption} fromMe={fromMe} />}
       </Box>
@@ -593,7 +642,7 @@ export default function ChatInboxPage() {
     if (!chatId) { setMessages([]); setMessageMeta({ source: "", note: "", limit: 0 }); return; }
     try {
       setLoadingMessages(true);
-      const res = await api.get(`/chats/${encodeURIComponent(chatId)}/messages`, { params: { limit: 1000 } });
+      const res = await api.get(`/chats/${encodeURIComponent(chatId)}/messages`, { params: { limit: "all" } });
       setMessages(Array.isArray(res?.data?.messages) ? res.data.messages : []);
       setMessageMeta({ source: res?.data?.source || "", note: res?.data?.note || "", limit: Number(res?.data?.limit) || 0 });
       setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, unread: 0 } : c)));

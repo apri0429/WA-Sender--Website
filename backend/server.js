@@ -177,10 +177,6 @@ function storeMessage(chatId, name, phone, msg) {
   // Hindari duplikat
   if (!chat.messages.find((m) => m.id === entry.id)) {
     chat.messages.push(entry);
-    // Batasi memory agar tetap aman tapi history recent tetap cukup panjang
-    if (chat.messages.length > CHAT_MESSAGE_LIMIT) {
-      chat.messages.splice(0, chat.messages.length - CHAT_MESSAGE_LIMIT);
-    }
   }
   if (!msg.fromMe) chat.unread += 1;
   return entry;
@@ -3443,8 +3439,9 @@ app.get("/api/chats", async (req, res) => {
 
 app.get("/api/chats/:chatId/messages", async (req, res) => {
   const chatId = decodeURIComponent(req.params.chatId);
+  const wantsAll = String(req.query.limit || "").toLowerCase() === "all";
   const requestedLimit = Number(req.query.limit) || CHAT_MESSAGE_LIMIT;
-  const limit = Math.min(Math.max(requestedLimit, 100), CHAT_MESSAGE_LIMIT);
+  const limit = wantsAll ? null : Math.min(Math.max(requestedLimit, 100), CHAT_MESSAGE_LIMIT);
 
   try {
     await ensureWhatsAppStable();
@@ -3455,7 +3452,31 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
 
     let messages;
     try {
-      const msgs = await chat.fetchMessages({ limit });
+      let msgs;
+      if (wantsAll) {
+        msgs = await waClient.pupPage.evaluate(async (targetChatId) => {
+          const chatModel = await window.WWebJS.getChat(targetChatId, {
+            getAsModel: false,
+          });
+          if (!chatModel) return [];
+
+          const msgFilter = (m) => !m.isNotification;
+          let allMessages = chatModel.msgs.getModelsArray().filter(msgFilter);
+
+          while (true) {
+            const loadedMessages = await window
+              .require("WAWebChatLoadMessages")
+              .loadEarlierMsgs({ chat: chatModel });
+            if (!loadedMessages || !loadedMessages.length) break;
+            allMessages = [...loadedMessages.filter(msgFilter), ...allMessages];
+          }
+
+          allMessages.sort((a, b) => (a.t > b.t ? 1 : -1));
+          return allMessages.map((m) => window.WWebJS.getMessageModel(m));
+        }, chatId);
+      } else {
+        msgs = await chat.fetchMessages({ limit });
+      }
       messages = msgs.map(serializeMessage);
     } catch (_fetchErr) {
       // fetchMessages failed (e.g. waitForChatLoading undefined) — return cache if available
@@ -3463,7 +3484,7 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
         const stored = chatHistory.get(chatId);
         return res.json({
           success: true,
-          messages: stored.messages.slice(-limit),
+          messages: wantsAll ? stored.messages : stored.messages.slice(-limit),
           source: "cache",
           note: "Menggunakan pesan tersimpan (WhatsApp Web tidak dapat memuat riwayat baru)",
           limit: stored.messages.length,
@@ -3489,7 +3510,7 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
       success: true,
       messages: stored.messages,
       source: "wa",
-      limit,
+      limit: stored.messages.length,
     });
   } catch (error) {
     // Final fallback: serve cached messages rather than showing an error
@@ -3497,7 +3518,7 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
       const stored = chatHistory.get(chatId);
       return res.json({
         success: true,
-        messages: stored.messages.slice(-limit),
+        messages: wantsAll ? stored.messages : stored.messages.slice(-limit),
         source: "cache",
         note: "Menggunakan pesan tersimpan",
         limit: stored.messages.length,
@@ -3592,12 +3613,13 @@ const MEDIA_TTL = 30 * 60 * 1000;
 
 app.get("/api/messages/:serializedId/media", async (req, res) => {
   const serializedId = decodeURIComponent(req.params.serializedId);
+  const wantsDownload = String(req.query.download || "") === "1";
   try {
     const cached = mediaCache.get(serializedId);
     if (cached && Date.now() < cached.expiry) {
       res.setHeader("Content-Type", cached.mimetype);
       res.setHeader("Cache-Control", "public, max-age=1800");
-      if (cached.filename) res.setHeader("Content-Disposition", `inline; filename="${cached.filename}"`);
+      if (cached.filename) res.setHeader("Content-Disposition", `${wantsDownload ? "attachment" : "inline"}; filename="${cached.filename}"`);
       return res.send(Buffer.from(cached.data, "base64"));
     }
     await ensureWhatsAppStable();
@@ -3614,7 +3636,7 @@ app.get("/api/messages/:serializedId/media", async (req, res) => {
     const buf = Buffer.from(media.data, "base64");
     res.setHeader("Content-Type", media.mimetype);
     res.setHeader("Cache-Control", "public, max-age=1800");
-    if (media.filename) res.setHeader("Content-Disposition", `inline; filename="${media.filename}"`);
+    if (media.filename) res.setHeader("Content-Disposition", `${wantsDownload ? "attachment" : "inline"}; filename="${media.filename}"`);
     res.send(buf);
   } catch (err) {
     res.status(500).json({ error: "Gagal mengunduh media" });
