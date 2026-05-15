@@ -3450,8 +3450,18 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
     await ensureWhatsAppStable();
     const chat = await waClient.getChatById(chatId);
 
+    if (wantsRefresh) {
+      try { await waClient.interface?.openChatWindow(chatId); } catch (_) {}
+      await sleep(700);
+    }
+
     // syncHistory can fail when WA Web internal API changes — always ignore errors
     try { await chat.syncHistory(); } catch (_) {}
+    if (wantsRefresh) {
+      await sleep(1200);
+      try { await chat.syncHistory(); } catch (_) {}
+      await sleep(500);
+    }
 
     let messages;
     try {

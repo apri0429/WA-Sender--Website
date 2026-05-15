@@ -793,14 +793,16 @@ export default function ChatInboxPage() {
     if (!selectedChatId || !messageDraft.trim()) return;
     try {
       setSendingMessage(true);
+      shouldSnapToLatestRef.current = true;
       await api.post(`/chats/${encodeURIComponent(selectedChatId)}/reply`, {
         message: messageDraft.trim(),
         quotedMsgId: replyingTo?.serializedId || undefined,
       });
       setMessageDraft("");
       setReplyingTo(null);
-      await loadMessages(selectedChatId);
+      await loadMessages(selectedChatId, { forceRefresh: false, snapToLatest: true });
       await loadChats({ preserveSelection: true });
+      scrollToBottom("instant");
     } catch (err) {
       showToast(err?.response?.data?.message || "Gagal mengirim pesan", "error");
     } finally {
@@ -825,6 +827,7 @@ export default function ChatInboxPage() {
     if (!selectedChatId || !mediaDialog.file) return;
     try {
       setSendingMedia(true);
+      shouldSnapToLatestRef.current = true;
       const formData = new FormData();
       formData.append("file", mediaDialog.file);
       if (mediaDialog.caption.trim()) formData.append("caption", mediaDialog.caption.trim());
@@ -832,8 +835,9 @@ export default function ChatInboxPage() {
       await api.post(`/chats/${encodeURIComponent(selectedChatId)}/reply-media`, formData, { headers: { "Content-Type": "multipart/form-data" } });
       handleCloseMediaDialog();
       setReplyingTo(null);
-      await loadMessages(selectedChatId);
+      await loadMessages(selectedChatId, { forceRefresh: false, snapToLatest: true });
       await loadChats({ preserveSelection: true });
+      scrollToBottom("instant");
     } catch (err) {
       showToast(err?.response?.data?.message || "Gagal mengirim file", "error");
     } finally {
@@ -929,6 +933,7 @@ export default function ChatInboxPage() {
         return sortChatsByActivity([next, ...prev.filter((c) => c.id !== payload.chatId)]);
       });
       if (isOpen) {
+        shouldSnapToLatestRef.current = true;
         setMessages((prev) => prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]);
         api.post(`/chats/${encodeURIComponent(payload.chatId)}/mark-read`).catch(() => {});
       }
