@@ -1563,8 +1563,13 @@ function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
 async function renderPdfFile(outputPath, html, sharedBrowser = null) {
   ensureDir(path.dirname(outputPath));
   const ownBrowser = !sharedBrowser;
+  const pdfExecPath = resolveBrowserExecutablePath("auto");
   const browser = ownBrowser
-    ? await puppeteer.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] })
+    ? await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        ...(pdfExecPath ? { executablePath: pdfExecPath } : {}),
+      })
     : sharedBrowser;
   try {
     const page = await browser.newPage();
@@ -1647,7 +1652,12 @@ async function generatePdfPerPtJob() {
   });
 
   // Launch satu browser untuk semua PDF (jauh lebih cepat)
-  const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+  const pdfExecPath = resolveBrowserExecutablePath("auto");
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    ...(pdfExecPath ? { executablePath: pdfExecPath } : {}),
+  });
 
   try {
     for (let index = 0; index < customers.length; index += 1) {
