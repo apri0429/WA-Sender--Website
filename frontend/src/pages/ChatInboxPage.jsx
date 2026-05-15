@@ -629,6 +629,7 @@ export default function ChatInboxPage() {
   const [headerSlotEl, setHeaderSlotEl] = useState(null);
   const [sessionMenuAnchor, setSessionMenuAnchor] = useState(null);
   const messageListRef = useRef(null);
+  const shouldSnapToLatestRef = useRef(true);
   const fileInputRef = useRef(null);
   const draftInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
@@ -664,11 +665,12 @@ export default function ChatInboxPage() {
     }
   }, [selectedChatId]);
 
-  const loadMessages = useCallback(async (chatId) => {
+  const loadMessages = useCallback(async (chatId, { forceRefresh = false, snapToLatest = true } = {}) => {
     if (!chatId) { setMessages([]); setMessageMeta({ source: "", note: "", limit: 0 }); return; }
     try {
       setLoadingMessages(true);
-      const res = await api.get(`/chats/${encodeURIComponent(chatId)}/messages`, { params: { limit: "all" } });
+      shouldSnapToLatestRef.current = snapToLatest;
+      const res = await api.get(`/chats/${encodeURIComponent(chatId)}/messages`, { params: { limit: "all", refresh: forceRefresh ? "1" : "0" } });
       setMessages(Array.isArray(res?.data?.messages) ? res.data.messages : []);
       setMessageMeta({ source: res?.data?.source || "", note: res?.data?.note || "", limit: Number(res?.data?.limit) || 0 });
       setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, unread: 0 } : c)));
@@ -830,7 +832,10 @@ export default function ChatInboxPage() {
     loadChats();
     api.get("/my-profile").then((r) => setMyPicUrl(r?.data?.picUrl || null)).catch(() => {});
   }, [whatsappReady]);
-  useEffect(() => { loadMessages(selectedChatId); }, [selectedChatId]);
+  useEffect(() => {
+    shouldSnapToLatestRef.current = true;
+    loadMessages(selectedChatId, { forceRefresh: true, snapToLatest: true });
+  }, [selectedChatId]);
   useEffect(() => {
     if (whatsappReady || (!waInitializing && !waQr)) return undefined;
     const t = window.setInterval(() => ensureWhatsappSession(), 5000);
@@ -838,6 +843,13 @@ export default function ChatInboxPage() {
   }, [whatsappReady, waInitializing, waQr]);
   useEffect(() => {
     if (!messageListRef.current) return;
+    if (shouldSnapToLatestRef.current) {
+      shouldSnapToLatestRef.current = false;
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => scrollToBottom("instant"));
+      });
+      return;
+    }
     const el = messageListRef.current;
     const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 200;
     if (isNearBottom) scrollToBottom("instant");
@@ -1067,7 +1079,7 @@ export default function ChatInboxPage() {
                   <Box sx={{ display: "flex", gap: 0.5 }}>
                     <Tooltip title="Sync riwayat chat">
                       <span>
-                        <IconButton size="small" onClick={async () => { await loadMessages(selectedChatId); await loadChats({ preserveSelection: true }); showToast("Chat diperbarui", "success"); }} disabled={loadingMessages} sx={{ color: WA.sidebarSub, "&:hover": { bgcolor: WA.sidebarHover } }}>
+                        <IconButton size="small" onClick={async () => { await loadMessages(selectedChatId, { forceRefresh: true, snapToLatest: true }); await loadChats({ preserveSelection: true }); showToast("Chat diperbarui", "success"); }} disabled={loadingMessages} sx={{ color: WA.sidebarSub, "&:hover": { bgcolor: WA.sidebarHover } }}>
                           {loadingMessages ? <CircularProgress size={16} sx={{ color: WA.sidebarSub }} /> : <RefreshRoundedIcon sx={{ fontSize: 20 }} />}
                         </IconButton>
                       </span>
@@ -1103,7 +1115,7 @@ export default function ChatInboxPage() {
                     return (
                       <Box key={item.key}
                         onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ open: true, anchorEl: e.currentTarget, msg, x: e.clientX, y: e.clientY }); }}
-                        sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", mb: 0.5, alignItems: "flex-end", gap: 0.5 }}>
+                        sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", width: "100%", mb: 0.5, alignItems: "flex-end", gap: 0.5 }}>
 
                         {!fromMe && (
                           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, flexShrink: 0, mb: 0.5, opacity: 0, transition: "opacity 0.15s", "&:hover": { opacity: 1 }, ".msg-row:hover &": { opacity: 1 } }}>
@@ -1118,7 +1130,7 @@ export default function ChatInboxPage() {
 
                         <Box
                           className="msg-row"
-                          sx={{ position: "relative", maxWidth: "72%", px: 1.4, py: 0.8, bgcolor: fromMe ? WA.sentBg : WA.recvBg, color: WA.msgText, borderRadius: fromMe ? "8px 8px 0 8px" : "8px 8px 8px 0", boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+                          sx={{ position: "relative", maxWidth: "72%", ml: fromMe ? "auto" : 0, mr: fromMe ? 0 : "auto", px: 1.4, py: 0.8, bgcolor: fromMe ? WA.sentBg : WA.recvBg, color: WA.msgText, borderRadius: fromMe ? "8px 8px 0 8px" : "8px 8px 8px 0", boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
                             "&::before": { content: '""', position: "absolute", bottom: 0, ...(fromMe ? { right: -8 } : { left: -8 }), width: 8, height: 13, backgroundColor: fromMe ? WA.sentBg : WA.recvBg, ...(fromMe ? { borderBottomLeftRadius: 8 } : { borderBottomRightRadius: 8 }) },
                             "&::after": { content: '""', position: "absolute", bottom: -2, ...(fromMe ? { right: -10 } : { left: -10 }), width: 10, height: 10, backgroundColor: WA.chatBg, ...(fromMe ? { borderBottomLeftRadius: 6 } : { borderBottomRightRadius: 6 }) },
                             "&:hover .msg-actions": { opacity: 1 },
@@ -1291,7 +1303,7 @@ export default function ChatInboxPage() {
             const chatId = selectedChatId;
             setCtxMenu({ open: false, anchorEl: null, msg: null });
             if (!chatId) return;
-            await loadMessages(chatId);
+            await loadMessages(chatId, { forceRefresh: true, snapToLatest: true });
             await loadChats({ preserveSelection: true });
             showToast("Pesan berhasil ditarik dari WhatsApp", "success");
           }} sx={{ fontFamily: FONT_SANS, fontSize: 13, gap: 1.5, py: 1 }}>

@@ -3438,6 +3438,7 @@ app.get("/api/chats", async (req, res) => {
 app.get("/api/chats/:chatId/messages", async (req, res) => {
   const chatId = decodeURIComponent(req.params.chatId);
   const wantsAll = String(req.query.limit || "").toLowerCase() === "all";
+  const wantsRefresh = String(req.query.refresh || "") === "1";
   const requestedLimit = Number(req.query.limit) || CHAT_MESSAGE_LIMIT;
   const limit = wantsAll ? null : Math.min(Math.max(requestedLimit, 100), CHAT_MESSAGE_LIMIT);
 
@@ -3499,6 +3500,9 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
     }
 
     const stored = chatHistory.get(chatId);
+    if (wantsRefresh) {
+      stored.messages = [];
+    }
     stored.name = name;
     stored.phone = phone;
     stored.unread = 0;
