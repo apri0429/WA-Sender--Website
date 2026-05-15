@@ -63,10 +63,24 @@ export default function HasilPdfPage() {
   const [wilayahFilter, setWilayahFilter] = useState("all");
   const [sendConfirm, setSendConfirm] = useState({ open: false, rows: [], mode: "single" });
   const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
+  const [waSessions, setWaSessions] = useState([]);
+  const [selectedSessionId, setSelectedSessionId] = useState("");
   const logRefreshTimerRef = useRef(null);
 
   const showToast = (message, severity = "success") =>
     setToast({ open: true, message, severity });
+
+  const fetchWaSessions = async () => {
+    try {
+      const res = await api.get("/status");
+      const sessions = Array.isArray(res?.data?.sessions) ? res.data.sessions : [];
+      setWaSessions(sessions);
+      const active = res?.data?.activeSessionId || sessions.find((s) => s.runtimeReady)?.id || sessions[0]?.id || "";
+      setSelectedSessionId((prev) => prev || active);
+    } catch {
+      // ignore
+    }
+  };
 
   const fetchLog = async ({ silent = false } = {}) => {
     if (!silent) setLoading(true);
@@ -83,6 +97,7 @@ export default function HasilPdfPage() {
 
   useEffect(() => {
     fetchLog();
+    fetchWaSessions();
 
     const scheduleLogRefresh = () => {
       if (logRefreshTimerRef.current) return;
@@ -113,6 +128,10 @@ export default function HasilPdfPage() {
     const onPdfLogUpdated = () => {
       scheduleLogRefresh();
     };
+    const onWaReady = (d) => {
+      if (d?.sessionId) setSelectedSessionId((prev) => prev || d.sessionId);
+      fetchWaSessions();
+    };
 
     if (socket?.on) {
       socket.on("pdf-wa-progress", onWaProgress);
@@ -121,6 +140,7 @@ export default function HasilPdfPage() {
       socket.on("pdf-progress", onPdfProgress);
       socket.on("pdf-log-updated", onPdfLogUpdated);
       socket.on("pdf-done", fetchLog);
+      socket.on("wa-ready", onWaReady);
     }
     return () => {
       if (logRefreshTimerRef.current) {
@@ -134,16 +154,21 @@ export default function HasilPdfPage() {
         socket.off("pdf-progress", onPdfProgress);
         socket.off("pdf-log-updated", onPdfLogUpdated);
         socket.off("pdf-done", fetchLog);
+        socket.off("wa-ready", onWaReady);
       }
     };
   }, []);
 
   const handleSendViaWA = async (targetRows) => {
     if (!targetRows.length) return;
+    if (!selectedSessionId) {
+      showToast("Pilih akun WhatsApp terlebih dahulu", "warning");
+      return;
+    }
     setWaSending(true);
     setWaProgress({ current: 0, total: targetRows.length, customer: "" });
     try {
-      await api.post("/pdf/send-via-wa", { rows: targetRows });
+      await api.post("/pdf/send-via-wa", { rows: targetRows, sessionId: selectedSessionId });
     } catch (err) {
       setWaSending(false);
       showToast(err?.response?.data?.message || "Gagal memulai pengiriman", "error");
@@ -242,10 +267,44 @@ export default function HasilPdfPage() {
                 ))}
               </Select>
             </Box>
+            {waSessions.length > 0 && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                <WhatsAppIcon sx={{ fontSize: 13, color: selectedSessionId && waSessions.find((s) => s.id === selectedSessionId)?.runtimeReady ? T.wa : T.subtle }} />
+                <Select
+                  size="small"
+                  value={selectedSessionId}
+                  onChange={(e) => setSelectedSessionId(e.target.value)}
+                  displayEmpty
+                  sx={{
+                    minWidth: 148,
+                    height: 32,
+                    fontFamily: FONT_SANS,
+                    fontSize: 12,
+                    borderRadius: "8px",
+                    bgcolor: T.white,
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: T.line },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: T.waBorder },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: T.wa },
+                  }}
+                >
+                  <MenuItem value="" sx={{ fontFamily: FONT_SANS, fontSize: 12, color: T.subtle }}>
+                    — Pilih akun WA —
+                  </MenuItem>
+                  {waSessions.map((s) => (
+                    <MenuItem key={s.id} value={s.id} sx={{ fontFamily: FONT_SANS, fontSize: 12 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                        <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: s.runtimeReady ? T.wa : T.subtle, flexShrink: 0 }} />
+                        {s.label || s.id}
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </Box>
+            )}
             {logRows.length > 0 && !waSending && (
               <Button
                 onClick={() => openSendConfirm(sendableRows, "bulk")}
-                disabled={!sendableRows.length}
+                disabled={!sendableRows.length || !selectedSessionId}
                 startIcon={<WhatsAppIcon sx={{ fontSize: 15 }} />}
                 sx={{ height: 32, px: 1.75, borderRadius: "8px", fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, textTransform: "none", bgcolor: T.wa, color: "#fff", boxShadow: "none", "&:hover": { bgcolor: "#1da855", boxShadow: "none" }, "&:disabled": { bgcolor: T.line, color: T.subtle } }}
               >
@@ -444,7 +503,7 @@ export default function HasilPdfPage() {
                         )}
                         <Tooltip title={row.nomor && row.nomor !== "TIDAK DITEMUKAN" ? "Kirim via WA" : "Nomor WhatsApp tidak tersedia"}>
                           <Box component="span">
-                            <IconButton size="small" onClick={() => openSendConfirm([row], "single")} disabled={waSending || !row.nomor || row.nomor === "TIDAK DITEMUKAN"}
+                            <IconButton size="small" onClick={() => openSendConfirm([row], "single")} disabled={waSending || !row.nomor || row.nomor === "TIDAK DITEMUKAN" || !selectedSessionId}
                               sx={{
                                 bgcolor: row.nomor && row.nomor !== "TIDAK DITEMUKAN" ? T.waBg : T.surface,
                                 color: row.nomor && row.nomor !== "TIDAK DITEMUKAN" ? T.wa : T.subtle,
@@ -472,12 +531,20 @@ export default function HasilPdfPage() {
         <DialogTitle sx={{ fontFamily: FONT_SANS, fontWeight: 700, fontSize: 15, color: T.ink, pb: 1 }}>
           Konfirmasi Pengiriman
         </DialogTitle>
-        <DialogContent sx={{ pb: 1 }}>
+        <DialogContent sx={{ pb: 1, display: "flex", flexDirection: "column", gap: 1 }}>
           <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: T.text }}>
             {sendConfirm.mode === "bulk"
               ? `Apakah Anda yakin ingin mengirim ${sendConfirm.rows.length} PDF lewat WhatsApp?`
               : `Apakah Anda yakin ingin mengirim PDF ke ${sendConfirm.rows[0]?.nama || "customer"} lewat WhatsApp?`}
           </Typography>
+          {selectedSessionId && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 1.25, py: 0.75, borderRadius: "8px", bgcolor: T.waBg, border: `1px solid ${T.waBorder}` }}>
+              <WhatsAppIcon sx={{ fontSize: 13, color: T.wa }} />
+              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12, color: T.green, fontWeight: 600 }}>
+                {waSessions.find((s) => s.id === selectedSessionId)?.label || selectedSessionId}
+              </Typography>
+            </Box>
+          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, pt: 0 }}>
           <Button onClick={closeSendConfirm} disabled={waSending} sx={{ fontFamily: FONT_SANS, fontSize: 12, textTransform: "none", color: T.muted }}>
