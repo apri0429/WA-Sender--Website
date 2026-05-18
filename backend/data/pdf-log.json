@@ -1,15 +1,125 @@
 {
   "rows": [
     {
-      "nama": "(d) TOTAL PERKAKAS SEJAHTERA",
-      "total": "Rp 175.188.406",
-      "tempo": "04/06/2021",
+      "nama": "MATSUM TJIAWI",
+      "total": "Rp 6.760.000",
+      "tempo": "31/03/2026",
       "pdf": null,
-      "driveUrl": "https://drive.google.com/file/d/1TCHQknznnJ5g2iszR5nmd4stn8XlwFhf/view?usp=drivesdk",
+      "driveUrl": "https://drive.google.com/file/d/18Wc2bqp8t4uvtcxjhYHJNmWy9_bfgFg7/view?usp=drivesdk",
       "driveError": "",
-      "nomor": "6281283636605",
+      "nomor": "628116060825",
       "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "BINTANG PRIMA SENTOSA, CV",
+      "total": "Rp 61.070.700",
+      "tempo": "05/04/2026",
+      "pdf": null,
+      "driveUrl": "https://drive.google.com/file/d/10kQK-0yfBr5MCZUEZMXfMXJwbA0-5abf/view?usp=drivesdk",
+      "driveError": "",
+      "nomor": "628127584811",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "PUTRA FANGHIN SEJAHTERA, CV",
+      "total": "Rp 63.887.422",
+      "tempo": "08/04/2026",
+      "pdf": null,
+      "driveUrl": "https://drive.google.com/file/d/1Ez3wnXiHmoJFLl3rSuAiJpdM_eDwfxZp/view?usp=drivesdk",
+      "driveError": "",
+      "nomor": "628116384050",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "KAWAN BARU",
+      "total": "Rp 31.971.025",
+      "tempo": "22/04/2026",
+      "pdf": null,
+      "driveUrl": "https://drive.google.com/file/d/1ZmLVZ3Bpce2bgjGY7S5tcLSYog0JY0Ex/view?usp=drivesdk",
+      "driveError": "",
+      "nomor": "6285262365254",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "JADI JAYA",
+      "total": "Rp 4.437.260",
+      "tempo": "02/05/2026",
+      "pdf": null,
+      "driveUrl": "https://drive.google.com/file/d/1Y7NsOx0gmJ8u9OidSIxWY2qd19gbi2Ba/view?usp=drivesdk",
+      "driveError": "",
+      "nomor": "6281361595022",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "TAN LIANG TJUN ALIAS MICHUN WIJAYA",
+      "total": "Rp 1.000",
+      "tempo": "02/05/2026",
+      "pdf": null,
+      "driveUrl": "https://drive.google.com/file/d/1IqrLzTzSH3HBrf6omhs2tYi9f1fJyPc4/view?usp=drivesdk",
+      "driveError": "",
+      "nomor": "628126044157",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "JOVIN LEOMANTO",
+      "total": "Rp 2.372.500",
+      "tempo": "03/05/2026",
+      "pdf": null,
+      "driveUrl": "https://drive.google.com/file/d/1nvbcDcGKUWuCOHA4YARuZ4GXVcqvVxT3/view?usp=drivesdk",
+      "driveError": "",
+      "nomor": "6287868243288",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "GLORINDO TEKNIK SEJAHTERA, CV",
+      "total": "Rp 68.011.336",
+      "tempo": "03/05/2026",
+      "pdf": null,
+      "driveUrl": "https://drive.google.com/file/d/1olF9z24ji6LxBlyPIPgKCfhq9yl8nP3w/view?usp=drivesdk",
+      "driveError": "",
+      "nomor": "6281277732279",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "PAN TJI HWA",
+      "total": "Rp 14.500.000",
+      "tempo": "03/05/2026",
+      "pdf": null,
+      "driveUrl": "https://drive.google.com/file/d/1mzWmxNC-G0Cq1WBNKC7MWQP90w6XgyKh/view?usp=drivesdk",
+      "driveError": "",
+      "nomor": "6281361382009",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MEGA JAYA TEKNIK MANDIRI, PT",
+      "total": "Rp 12.414.210",
+      "tempo": "03/05/2026",
+      "pdf": null,
+      "driveUrl": "https://drive.google.com/file/d/1JD0NAE23-IIONIogyWVQ3i8Bz_ML4tL0/view?usp=drivesdk",
+      "driveError": "",
+      "nomor": "6281239122828",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "TAN TJIE KIONG",
+      "total": "Rp 31.375.000",
+      "tempo": "03/05/2026",
+      "pdf": null,
+      "driveUrl": "https://drive.google.com/file/d/1YK2gRk4GrGoyh586Dq9c497MVjqMOx83/view?usp=drivesdk",
+      "driveError": "",
+      "nomor": "628126018187",
+      "wilayah": "Luar Kota"
+    },
+    {
+      "nama": "MAJU BERSAMA JAYAKARTA, PT",
+      "total": "Rp 217.911.541",
+      "tempo": "03/05/2026",
+      "pdf": null,
+      "driveUrl": "https://drive.google.com/file/d/1fBGqmnoFVzRhmX4NJuQ50Za65YMLY1qP/view?usp=drivesdk",
+      "driveError": "",
+      "nomor": "KOSONG",
+      "wilayah": "Dalam Kota"
     }
   ],
-  "generatedAt": "2026-05-13T09:07:40.632Z"
+  "generatedAt": "2026-05-18T07:32:46.972Z"
 }

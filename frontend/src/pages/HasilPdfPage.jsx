@@ -209,7 +209,7 @@ export default function HasilPdfPage() {
   });
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
   const pagedRows = filteredRows.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
-  const sendableRows = logRows.filter((row) => row.nomor && row.nomor !== "TIDAK DITEMUKAN");
+  const sendableRows = filteredRows.filter((row) => row.nomor && row.nomor !== "TIDAK DITEMUKAN");
 
   useEffect(() => {
     if (page > totalPages - 1) {
@@ -308,7 +308,7 @@ export default function HasilPdfPage() {
                 startIcon={<WhatsAppIcon sx={{ fontSize: 15 }} />}
                 sx={{ height: 32, px: 1.75, borderRadius: "8px", fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, textTransform: "none", bgcolor: T.wa, color: "#fff", boxShadow: "none", "&:hover": { bgcolor: "#1da855", boxShadow: "none" }, "&:disabled": { bgcolor: T.line, color: T.subtle } }}
               >
-                Kirim Semua via WA
+                {wilayahFilter === "all" ? "Kirim Semua via WA" : "Kirim Filter via WA"}
               </Button>
             )}
             <Tooltip title="Refresh">

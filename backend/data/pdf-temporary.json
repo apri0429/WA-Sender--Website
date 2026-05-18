@@ -10,42 +10,1122 @@
   ],
   "rows": [
     {
-      "noInvoice": "SI20210300970",
-      "tanggalInvoice": "04/03/2021",
-      "termin": "Net 90",
-      "tempo": "04/06/2021",
-      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
-      "tagihan": 10588406,
+      "noInvoice": "SI251212106",
+      "tanggalInvoice": "31/12/2025",
+      "termin": "3 Bulan",
+      "tempo": "31/03/2026",
+      "customer": "MATSUM TJIAWI",
+      "tagihan": 2925000,
       "penagih": "Shoona Kabila Mahaaba"
     },
     {
-      "noInvoice": "SI20210300856",
-      "tanggalInvoice": "17/03/2021",
-      "termin": "Net 90",
-      "tempo": "17/06/2021",
-      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
-      "tagihan": 45000000,
+      "noInvoice": "SI260100037",
+      "tanggalInvoice": "05/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "05/04/2026",
+      "customer": "BINTANG PRIMA SENTOSA, CV",
+      "tagihan": 1546820,
       "penagih": "Shoona Kabila Mahaaba"
     },
     {
-      "noInvoice": "SI20210301010",
-      "tanggalInvoice": "24/03/2021",
-      "termin": "Net 90",
-      "tempo": "24/06/2021",
-      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
-      "tagihan": 102400000,
+      "noInvoice": "SI260100038",
+      "tanggalInvoice": "05/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "05/04/2026",
+      "customer": "BINTANG PRIMA SENTOSA, CV",
+      "tagihan": 10363615,
       "penagih": "Shoona Kabila Mahaaba"
     },
     {
-      "noInvoice": "SI20210301162",
-      "tanggalInvoice": "29/03/2021",
-      "termin": "Net 90",
-      "tempo": "29/06/2021",
-      "customer": "(d) TOTAL PERKAKAS SEJAHTERA",
-      "tagihan": 17200000,
+      "noInvoice": "SI260100040",
+      "tanggalInvoice": "05/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "05/04/2026",
+      "customer": "BINTANG PRIMA SENTOSA, CV",
+      "tagihan": 14500000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260100395",
+      "tanggalInvoice": "05/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "05/04/2026",
+      "customer": "BINTANG PRIMA SENTOSA, CV",
+      "tagihan": 18127000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260100294",
+      "tanggalInvoice": "08/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "08/04/2026",
+      "customer": "PUTRA FANGHIN SEJAHTERA, CV",
+      "tagihan": 3018000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260100315",
+      "tanggalInvoice": "09/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "09/04/2026",
+      "customer": "MATSUM TJIAWI",
+      "tagihan": 3835000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260100556",
+      "tanggalInvoice": "15/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "15/04/2026",
+      "customer": "PUTRA FANGHIN SEJAHTERA, CV",
+      "tagihan": 15907000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260100557",
+      "tanggalInvoice": "15/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "15/04/2026",
+      "customer": "PUTRA FANGHIN SEJAHTERA, CV",
+      "tagihan": 1350000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260100662",
+      "tanggalInvoice": "19/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "19/04/2026",
+      "customer": "PUTRA FANGHIN SEJAHTERA, CV",
+      "tagihan": 29032500,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260100751",
+      "tanggalInvoice": "22/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "22/04/2026",
+      "customer": "PUTRA FANGHIN SEJAHTERA, CV",
+      "tagihan": 13154922,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260100760",
+      "tanggalInvoice": "22/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "22/04/2026",
+      "customer": "KAWAN BARU",
+      "tagihan": 31971025,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260100916",
+      "tanggalInvoice": "26/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "26/04/2026",
+      "customer": "BINTANG PRIMA SENTOSA, CV",
+      "tagihan": 2070827,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260100940",
+      "tanggalInvoice": "27/01/2026",
+      "termin": "3 Bulan",
+      "tempo": "27/04/2026",
+      "customer": "BINTANG PRIMA SENTOSA, CV",
+      "tagihan": 5230768,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201172",
+      "tanggalInvoice": "02/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "02/05/2026",
+      "customer": "JADI JAYA",
+      "tagihan": 4437260,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201174",
+      "tanggalInvoice": "02/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "02/05/2026",
+      "customer": "TAN LIANG TJUN ALIAS MICHUN WIJAYA",
+      "tagihan": 1000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201222",
+      "tanggalInvoice": "03/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "03/05/2026",
+      "customer": "JOVIN LEOMANTO",
+      "tagihan": 2372500,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201225",
+      "tanggalInvoice": "03/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "03/05/2026",
+      "customer": "GLORINDO TEKNIK SEJAHTERA, CV",
+      "tagihan": 11726760,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201227",
+      "tanggalInvoice": "03/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "03/05/2026",
+      "customer": "PAN TJI HWA",
+      "tagihan": 14500000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201229",
+      "tanggalInvoice": "03/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "03/05/2026",
+      "customer": "MEGA JAYA TEKNIK MANDIRI, PT",
+      "tagihan": 12414210,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201230",
+      "tanggalInvoice": "03/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "03/05/2026",
+      "customer": "TAN TJIE KIONG",
+      "tagihan": 31375000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201240",
+      "tanggalInvoice": "03/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "03/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 27659480,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201242",
+      "tanggalInvoice": "03/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "03/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 1550000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201246",
+      "tanggalInvoice": "03/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "03/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 1967100,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201261",
+      "tanggalInvoice": "04/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "04/05/2026",
+      "customer": "YANMARINDO PERKASA, PT",
+      "tagihan": 2283100,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201278",
+      "tanggalInvoice": "04/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "04/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 3618200,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201282",
+      "tanggalInvoice": "04/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "04/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 2050000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201301",
+      "tanggalInvoice": "04/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "04/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 3026095,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201335",
+      "tanggalInvoice": "05/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "05/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 4917750,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201336",
+      "tanggalInvoice": "05/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "05/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 16080924,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201337",
+      "tanggalInvoice": "05/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "05/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 2362416,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201338",
+      "tanggalInvoice": "05/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "05/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 10892520,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201354",
+      "tanggalInvoice": "05/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "05/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 3318000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201372",
+      "tanggalInvoice": "06/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 3001210,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201373",
+      "tanggalInvoice": "06/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 3026095,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201374",
+      "tanggalInvoice": "06/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 2832150,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201375",
+      "tanggalInvoice": "06/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 4917750,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201376",
+      "tanggalInvoice": "06/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 1341025,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201386",
+      "tanggalInvoice": "06/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 3093640,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201391",
+      "tanggalInvoice": "07/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "07/05/2026",
+      "customer": "SARANA BARU",
+      "tagihan": 2899893,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201394",
+      "tanggalInvoice": "07/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "07/05/2026",
+      "customer": "YANMARINDO PERKASA, PT",
+      "tagihan": 3100000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201399",
+      "tanggalInvoice": "07/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "07/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 10207748,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201401",
+      "tanggalInvoice": "07/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "07/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 12537300,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201409",
+      "tanggalInvoice": "09/02/2026",
+      "termin": "2 Bulan",
+      "tempo": "09/04/2026",
+      "customer": "ANTARA TETAP JAYA, PT",
+      "tagihan": 27683110,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201439",
+      "tanggalInvoice": "09/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "09/05/2026",
+      "customer": "ANTARA TETAP JAYA, PT",
+      "tagihan": 31919950,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201572",
+      "tanggalInvoice": "09/02/2026",
+      "termin": "2 Bulan",
+      "tempo": "09/04/2026",
+      "customer": "ANTARA TETAP JAYA, PT",
+      "tagihan": 6364773,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201481",
+      "tanggalInvoice": "10/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "10/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 3915240,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201533",
+      "tanggalInvoice": "11/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "11/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 3915240,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201534",
+      "tanggalInvoice": "11/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "11/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 1546820,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201579",
+      "tanggalInvoice": "12/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "12/05/2026",
+      "customer": "DUNIA TEHNIK",
+      "tagihan": 10246040,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201584",
+      "tanggalInvoice": "12/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "12/05/2026",
+      "customer": "BUANA JAYA TEKNIK, CV",
+      "tagihan": 21019056,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201588",
+      "tanggalInvoice": "12/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "12/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 6191230,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201606",
+      "tanggalInvoice": "13/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "13/05/2026",
+      "customer": "PUTRA FANGHIN SEJAHTERA, CV",
+      "tagihan": 1425000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201617",
+      "tanggalInvoice": "13/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "13/05/2026",
+      "customer": "BINTANG PRIMA SENTOSA, CV",
+      "tagihan": 8479450,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201660",
+      "tanggalInvoice": "14/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "14/05/2026",
+      "customer": "MAKMUR ABADI, CV",
+      "tagihan": 1412520,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201677",
+      "tanggalInvoice": "14/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "14/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 849250,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201682",
+      "tanggalInvoice": "18/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "18/05/2026",
+      "customer": "ABDULLAH",
+      "tagihan": 30817666,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201703",
+      "tanggalInvoice": "18/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "18/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 7160000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201712",
+      "tanggalInvoice": "18/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "18/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 11682520,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201714",
+      "tanggalInvoice": "18/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "18/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 4470768,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201723",
+      "tanggalInvoice": "19/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "19/05/2026",
+      "customer": "KARYA MANGGALA SEJAHTERA, PT",
+      "tagihan": 5052050,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201724",
+      "tanggalInvoice": "19/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "19/05/2026",
+      "customer": "KARYA MANGGALA SEJAHTERA, PT",
+      "tagihan": 8650500,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201728",
+      "tanggalInvoice": "19/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "19/05/2026",
+      "customer": "MAKMUR ABADI, CV",
+      "tagihan": 9119910,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201730",
+      "tanggalInvoice": "19/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "19/05/2026",
+      "customer": "BINTANG PRIMA SENTOSA, CV",
+      "tagihan": 752220,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201732",
+      "tanggalInvoice": "19/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "19/05/2026",
+      "customer": "MHD. ARIEF HIDAYAT",
+      "tagihan": 2641128,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201736",
+      "tanggalInvoice": "19/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "19/05/2026",
+      "customer": "M. YAHYA",
+      "tagihan": 47001600,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201746",
+      "tanggalInvoice": "19/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "19/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 2050000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201747",
+      "tanggalInvoice": "19/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "19/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 9280920,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201752",
+      "tanggalInvoice": "19/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "19/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 5370000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201753",
+      "tanggalInvoice": "19/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "19/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 983550,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201774",
+      "tanggalInvoice": "20/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "20/05/2026",
+      "customer": "MAKMUR ABADI, CV",
+      "tagihan": 3505230,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201775",
+      "tanggalInvoice": "20/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "20/05/2026",
+      "customer": "MAKMUR ABADI, CV",
+      "tagihan": 12852510,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201784",
+      "tanggalInvoice": "20/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "20/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 4703660,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201785",
+      "tanggalInvoice": "20/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "20/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 3397000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201794",
+      "tanggalInvoice": "21/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "21/05/2026",
+      "customer": "ABDULLAH",
+      "tagihan": 15238536,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201795",
+      "tanggalInvoice": "21/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "21/05/2026",
+      "customer": "ABDULLAH",
+      "tagihan": 49169746,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201811",
+      "tanggalInvoice": "21/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "21/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 11134576,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201822",
+      "tanggalInvoice": "23/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "23/05/2026",
+      "customer": "DUNIA TEHNIK",
+      "tagihan": 3281760,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201835",
+      "tanggalInvoice": "23/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "23/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 983550,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201836",
+      "tanggalInvoice": "23/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "23/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 6265000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201837",
+      "tanggalInvoice": "23/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "23/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 16985000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201845",
+      "tanggalInvoice": "23/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "23/05/2026",
+      "customer": "BUANA JAYA TEKNIK, CV",
+      "tagihan": 2295819,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201882",
+      "tanggalInvoice": "24/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "24/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 805010,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201883",
+      "tanggalInvoice": "24/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "24/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 2547750,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201891",
+      "tanggalInvoice": "24/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "24/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 827130,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201903",
+      "tanggalInvoice": "25/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "25/05/2026",
+      "customer": "RIAU PARAMITA TENINDO, PT",
+      "tagihan": 1817316,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201907",
+      "tanggalInvoice": "25/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "25/05/2026",
+      "customer": "ANTARA TETAP JAYA, PT",
+      "tagihan": 389000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201923",
+      "tanggalInvoice": "25/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "25/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 18079940,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201925",
+      "tanggalInvoice": "25/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "25/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 2287998,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201926",
+      "tanggalInvoice": "25/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "25/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 1459446,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201962",
+      "tanggalInvoice": "26/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "26/05/2026",
+      "customer": "GLORINDO TEKNIK SEJAHTERA, CV",
+      "tagihan": 29380768,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201964",
+      "tanggalInvoice": "26/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "26/05/2026",
+      "customer": "GLORINDO TEKNIK SEJAHTERA, CV",
+      "tagihan": 2026824,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201967",
+      "tanggalInvoice": "26/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "26/05/2026",
+      "customer": "M. YAHYA",
+      "tagihan": 26438400,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201972",
+      "tanggalInvoice": "26/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "26/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 15655430,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201973",
+      "tanggalInvoice": "26/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "26/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 2053210,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201987",
+      "tanggalInvoice": "26/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "26/05/2026",
+      "customer": "LUTFI",
+      "tagihan": 61260392,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201998",
+      "tanggalInvoice": "26/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "26/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 2053210,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260201999",
+      "tanggalInvoice": "26/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "26/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 2036620,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260202027",
+      "tanggalInvoice": "27/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "27/05/2026",
+      "customer": "YANMARINDO PERKASA, PT",
+      "tagihan": 1457550,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260202059",
+      "tanggalInvoice": "27/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "27/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 9145830,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260202060",
+      "tanggalInvoice": "27/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "27/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 9924432,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260202061",
+      "tanggalInvoice": "27/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "27/05/2026",
+      "customer": "PANG DONNY WIJAYA",
+      "tagihan": 2315806,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260202065",
+      "tanggalInvoice": "27/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "27/05/2026",
+      "customer": "MAJU BERSAMA JAYAKARTA, PT",
+      "tagihan": 2362416,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260202006",
+      "tanggalInvoice": "28/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "28/05/2026",
+      "customer": "KHARISMA WDINDO ABADI, PT",
+      "tagihan": 4419576,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260202008",
+      "tanggalInvoice": "28/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "28/05/2026",
+      "customer": "KHARISMA WDINDO ABADI, PT",
+      "tagihan": 22797206,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260202009",
+      "tanggalInvoice": "28/02/2026",
+      "termin": "3 Bulan",
+      "tempo": "28/05/2026",
+      "customer": "RIAU PARAMITA TENINDO, PT",
+      "tagihan": 10941342,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260302163",
+      "tanggalInvoice": "04/03/2026",
+      "termin": "2 Bulan",
+      "tempo": "04/05/2026",
+      "customer": "PROTECTA",
+      "tagihan": 11800000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260302433",
+      "tanggalInvoice": "07/03/2026",
+      "termin": "2 Bulan",
+      "tempo": "07/05/2026",
+      "customer": "GLORINDO TEKNIK SEJAHTERA, CV",
+      "tagihan": 23653310,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260302434",
+      "tanggalInvoice": "07/03/2026",
+      "termin": "2 Bulan",
+      "tempo": "07/05/2026",
+      "customer": "GLORINDO TEKNIK SEJAHTERA, CV",
+      "tagihan": 1223674,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260302673",
+      "tanggalInvoice": "09/03/2026",
+      "termin": "2 Bulan",
+      "tempo": "09/05/2026",
+      "customer": "MURIA",
+      "tagihan": 6220500,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260302674",
+      "tanggalInvoice": "11/03/2026",
+      "termin": "2 Bulan",
+      "tempo": "11/05/2026",
+      "customer": "MURIA",
+      "tagihan": 9330750,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260302564",
+      "tanggalInvoice": "25/03/2026",
+      "termin": "2 Bulan",
+      "tempo": "25/05/2026",
+      "customer": "PROTECTA",
+      "tagihan": 3580000,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260302578",
+      "tanggalInvoice": "26/03/2026",
+      "termin": "2 Bulan",
+      "tempo": "26/05/2026",
+      "customer": "PROTECTA",
+      "tagihan": 42087200,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260302612",
+      "tanggalInvoice": "28/03/2026",
+      "termin": "2 Bulan",
+      "tempo": "28/05/2026",
+      "customer": "PROTECTA",
+      "tagihan": 11992200,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260403045",
+      "tanggalInvoice": "09/04/2026",
+      "termin": "Net 30",
+      "tempo": "09/05/2026",
+      "customer": "KEMILAU INTI MEKANINDO, PT",
+      "tagihan": 30234870,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260403140",
+      "tanggalInvoice": "10/04/2026",
+      "termin": "Net 30",
+      "tempo": "10/05/2026",
+      "customer": "KEMILAU INTI MEKANINDO, PT",
+      "tagihan": 2481390,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260403481",
+      "tanggalInvoice": "20/04/2026",
+      "termin": "COD",
+      "tempo": "20/04/2026",
+      "customer": "YANMARINDO PERKASA, PT",
+      "tagihan": 34797683,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260403482",
+      "tanggalInvoice": "20/04/2026",
+      "termin": "COD",
+      "tempo": "20/04/2026",
+      "customer": "YANMARINDO PERKASA, PT",
+      "tagihan": 16475450,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260403548",
+      "tanggalInvoice": "22/04/2026",
+      "termin": "COD",
+      "tempo": "22/04/2026",
+      "customer": "METROPOLITAN, CV",
+      "tagihan": 8,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260403670",
+      "tanggalInvoice": "27/04/2026",
+      "termin": "COD",
+      "tempo": "27/04/2026",
+      "customer": "METROPOLITAN, CV",
+      "tagihan": 8710685,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260403760",
+      "tanggalInvoice": "30/04/2026",
+      "termin": "COD",
+      "tempo": "30/04/2026",
+      "customer": "SENTRAL NIAGA INDONESIA, CV",
+      "tagihan": 34841170,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260503877",
+      "tanggalInvoice": "05/05/2026",
+      "termin": "COD",
+      "tempo": "05/05/2026",
+      "customer": "METROPOLITAN, CV",
+      "tagihan": 21824224,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260504128",
+      "tanggalInvoice": "12/05/2026",
+      "termin": "CBD (Cash Before Delivery)",
+      "tempo": "12/05/2026",
+      "customer": "MAKMUR PERSADA SOLUSINDO, PT",
+      "tagihan": 9287556,
+      "penagih": "Shoona Kabila Mahaaba"
+    },
+    {
+      "noInvoice": "SI260504132",
+      "tanggalInvoice": "12/05/2026",
+      "termin": "COD",
+      "tempo": "12/05/2026",
+      "customer": "BUANA JAYA TEKNIK, CV",
+      "tagihan": 21943000,
       "penagih": "Shoona Kabila Mahaaba"
     }
   ],
-  "generatedAt": "2026-05-13T09:00:31.696Z",
+  "generatedAt": "2026-05-18T07:30:34.404Z",
   "sourceSheet": "Google Sheet"
 }

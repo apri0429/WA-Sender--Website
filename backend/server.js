@@ -816,27 +816,15 @@ function formatRupiah(value) {
 function formatExcelDate(value) {
   if (!value) return "-";
 
-  if (typeof value === "number") {
-    const excelEpoch = new Date(1899, 11, 30);
-    const date = new Date(excelEpoch.getTime() + value * 86400000);
+  const parsed = parseExcelDate(value);
+  if (!parsed || Number.isNaN(parsed.getTime())) return String(value);
 
-    return date.toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-  }
-
-  const parsed = new Date(value);
-  if (!Number.isNaN(parsed.getTime())) {
-    return parsed.toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-  }
-
-  return String(value);
+  return parsed.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Bangkok",
+  });
 }
 
 function normalizePhone(phone) {
@@ -1113,14 +1101,80 @@ function formatDateId(value) {
   }).format(date);
 }
 
-function formatMonthId(value) {
-  const date = parseExcelDate(value);
-  if (!date || Number.isNaN(date.getTime())) return "";
+const MONTH_INDEX_ID = {
+  januari: 0,
+  jan: 0,
+  februari: 1,
+  feb: 1,
+  maret: 2,
+  mar: 2,
+  april: 3,
+  apr: 3,
+  mei: 4,
+  may: 4,
+  juni: 5,
+  jun: 5,
+  juli: 6,
+  jul: 6,
+  agustus: 7,
+  agu: 7,
+  agt: 7,
+  aug: 7,
+  september: 8,
+  sep: 8,
+  oktober: 9,
+  okt: 9,
+  oct: 9,
+  november: 10,
+  nov: 10,
+  desember: 11,
+  des: 11,
+  dec: 11,
+};
+
+function formatMonthDateId(date) {
   return new Intl.DateTimeFormat("id-ID", {
     month: "long",
     year: "numeric",
     timeZone: "Asia/Bangkok",
   }).format(date);
+}
+
+function parsePeriodeMonth(value) {
+  const text = String(value || "").trim().replace(/\s+/g, " ");
+  if (!text) return null;
+
+  const date = parseExcelDate(value);
+  if (date && !Number.isNaN(date.getTime())) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    return {
+      key: `${year}-${String(month + 1).padStart(2, "0")}`,
+      label: formatMonthDateId(date),
+      sortValue: year * 12 + month,
+    };
+  }
+
+  const monthYear = text.toLowerCase().match(/^([a-z]+)\s+(\d{4})$/);
+  if (monthYear && MONTH_INDEX_ID[monthYear[1]] !== undefined) {
+    const year = Number(monthYear[2]);
+    const month = MONTH_INDEX_ID[monthYear[1]];
+    return {
+      key: `${year}-${String(month + 1).padStart(2, "0")}`,
+      label: formatMonthDateId(new Date(year, month, 1)),
+      sortValue: year * 12 + month,
+    };
+  }
+
+  return {
+    key: text.toLowerCase(),
+    label: text,
+    sortValue: Number.MAX_SAFE_INTEGER,
+  };
+}
+
+function formatMonthId(value) {
+  return parsePeriodeMonth(value)?.label || "";
 }
 
 function parseNumberish(val) {
@@ -1250,7 +1304,8 @@ function buildPeriodeSummaryMap(workbook) {
 
   matrix.slice(1).forEach((row) => {
     const customer = String(getCellValue(row, 1) || "").trim();
-    const periode = formatMonthId(getCellValue(row, 3));
+    const periodeInfo = parsePeriodeMonth(getCellValue(row, 3));
+    const periode = periodeInfo?.label || "";
     const amount = parseNumberish(getCellValue(row, 7)) || 0;
     if (!customer || !periode) return;
 
@@ -1277,12 +1332,29 @@ function getPeriodeRows(periodeMap, companyName) {
     }
   }
   if (!summary) return [];
-  return Object.keys(summary)
-    .sort()
-    .map((periode) => ({
-      periode,
-      amount: summary[periode] || 0,
-      amountText: formatCurrency(summary[periode] || 0),
+
+  const merged = new Map();
+  Object.entries(summary).forEach(([periode, amount]) => {
+    const info = parsePeriodeMonth(periode);
+    if (!info) return;
+
+    const current = merged.get(info.key) || {
+      periode: info.label,
+      amount: 0,
+      sortValue: info.sortValue,
+    };
+    current.amount += parseNumberish(amount) || 0;
+    current.periode = info.label;
+    current.sortValue = Math.min(current.sortValue, info.sortValue);
+    merged.set(info.key, current);
+  });
+
+  return [...merged.values()]
+    .sort((a, b) => (a.sortValue - b.sortValue) || a.periode.localeCompare(b.periode, "id"))
+    .map((item) => ({
+      periode: item.periode,
+      amount: item.amount,
+      amountText: formatCurrency(item.amount),
     }));
 }
 
@@ -1303,6 +1375,15 @@ function groupTemporaryRowsByCustomer(rows = []) {
     });
   });
   return grouped;
+}
+
+function filterTemporaryRows(rows = [], filter = {}) {
+  let result = Array.isArray(rows) ? rows : [];
+  const penagih = String(filter?.penagih || "").trim();
+  if (penagih && penagih !== "all") {
+    result = result.filter((row) => String(row.penagih || "").trim() === penagih);
+  }
+  return result;
 }
 
 function getClosestTempo(invoices = []) {
@@ -1471,7 +1552,7 @@ function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
     td.no{color:#d4d4d8;font-size:10px;width:22px;padding-left:2px}
     td.inv{font-weight:700;color:#27272a;font-family:monospace;font-size:12px;white-space:nowrap}
     td.date{color:#52525b;font-size:11.5px;white-space:nowrap;width:84px}
-    td.center{text-align:center;width:54px;color:#52525b}
+    td.center{text-align:center;width:74px;color:#52525b;white-space:nowrap}
     td.amt{text-align:right;font-weight:700;color:#18181b;width:132px;white-space:nowrap}
     td.amt-g{text-align:right;font-weight:700;color:#18181b;white-space:nowrap}
     .trow td{background:#f4f4f5;font-weight:700;color:#18181b;border-top:1.5px solid #e4e4e7;border-bottom:none;font-size:12.5px}
@@ -1528,7 +1609,7 @@ function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
         <th style="width:22px"></th>
         <th>Nomor Invoice</th>
         <th style="width:80px">Tgl Invoice</th>
-        <th style="width:54px;text-align:center">Termin</th>
+        <th style="width:74px;text-align:center;white-space:nowrap">Termin</th>
         <th style="width:80px">Jatuh Tempo</th>
         <th style="width:128px;text-align:right">Jumlah Tagihan</th>
       </tr>
@@ -1616,7 +1697,7 @@ async function buildPdfTemporaryFromGoogleSheet() {
   });
 }
 
-async function generatePdfPerPtJob() {
+async function generatePdfPerPtJob({ rows: selectedRows = null, filter = {} } = {}) {
   let saved = getPdfWorkbookData();
   // Fallback: jika workbookData kosong, coba pakai temporaryData
   if (!saved || !Array.isArray(saved.rows) || !saved.rows.length) {
@@ -1628,12 +1709,21 @@ async function generatePdfPerPtJob() {
     }
   }
 
-  const temporaryRows = saved.rows;
+  const sourceRows = Array.isArray(selectedRows) ? selectedRows : saved.rows;
+  const temporaryRows = filterTemporaryRows(sourceRows, filter);
+  if (!temporaryRows.length) {
+    throw new Error("Tidak ada data PDF yang siap diproses");
+  }
+
   const masterMap = new Map(Object.entries(saved.masterData || {}));
   const periodeMap = new Map(Object.entries(saved.periodeData || {}));
   const grouped = groupTemporaryRowsByCustomer(temporaryRows);
   const logoDataUrl = buildLogoDataUrl();
   const customers = [...grouped.keys()];
+  if (!customers.length) {
+    throw new Error("Tidak ada customer dengan tagihan valid untuk digenerate");
+  }
+
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const logRows = [];
   const driveConfig = getDriveConfig();
@@ -2703,6 +2793,17 @@ app.post("/api/pdf/generate-per-pt", async (req, res) => {
       });
     }
 
+    const selectedRows = Array.isArray(req.body?.rows) ? req.body.rows : null;
+    const filter = req.body?.filter && typeof req.body.filter === "object"
+      ? { penagih: String(req.body.filter.penagih || "").trim() }
+      : {};
+    if (selectedRows && !selectedRows.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Data filter kosong",
+      });
+    }
+
     isPdfGenerating = true;
     isPdfCancelRequested = false;
     savePdfProgress({
@@ -2718,7 +2819,7 @@ app.post("/api/pdf/generate-per-pt", async (req, res) => {
 
     setImmediate(async () => {
       try {
-        await generatePdfPerPtJob();
+        await generatePdfPerPtJob({ rows: selectedRows, filter });
         io.emit("pdf-done", { success: true });
       } catch (error) {
         if (error?.code === "PDF_CANCELLED") {

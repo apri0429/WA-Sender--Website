@@ -234,6 +234,10 @@ export default function PdfPage() {
       if (penagihFilter === "all") return true;
       return String(row.penagih || "").trim() === penagihFilter;
     });
+  const activePenagihFilter = penagihFilter !== "all";
+  const filteredCustomerCount = new Set(filteredRows.map(({ row }) => row.customer).filter(Boolean)).size;
+  const generateCustomerCount = activePenagihFilter ? filteredCustomerCount : customerCount;
+  const generateRowCount = activePenagihFilter ? filteredRows.length : rows.length;
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
   const pagedRows = filteredRows.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
@@ -334,15 +338,31 @@ export default function PdfPage() {
       return;
     }
 
+    const targetRows = activePenagihFilter ? filteredRows.map(({ row }) => row) : rows;
+    const targetCustomerCount = new Set(targetRows.map((row) => row.customer).filter(Boolean)).size;
+
+    if (!targetRows.length || !targetCustomerCount) {
+      showToast(
+        activePenagihFilter
+          ? `Tidak ada data untuk penagih ${penagihFilter}`
+          : "Belum ada customer yang siap diproses",
+        "warning"
+      );
+      return;
+    }
+
     if (driveConfig.enabled && !driveReady) {
       showToast("Google Drive aktif tapi konfigurasi belum lengkap. Isi Apps Script URL dan Folder ID dulu.", "warning");
       return;
     }
 
     setGenerating(true);
-    setProgress({ current: 0, total: customerCount, status: "Memulai...", ptName: "" });
+    setProgress({ current: 0, total: targetCustomerCount, status: "Memulai...", ptName: "" });
     try {
-      await api.post("/pdf/generate-per-pt");
+      await api.post(
+        "/pdf/generate-per-pt",
+        activePenagihFilter ? { filter: { penagih: penagihFilter } } : {}
+      );
     } catch (err) {
       setGenerating(false);
       showToast(err?.response?.data?.message || "Generate gagal", "error");
@@ -495,8 +515,8 @@ export default function PdfPage() {
               Setting Drive
             </Btn>
             {!generating ? (
-              <Btn color="brand" onClick={handleGenerate} disabled={!rows.length} startIcon={<PictureAsPdfRoundedIcon sx={{ fontSize: 14 }} />} sx={{ height: 34, fontSize: 12.5 }}>
-                Generate {customerCount > 0 ? `${customerCount} PDF` : "PDF"}
+              <Btn color="brand" onClick={handleGenerate} disabled={!generateRowCount} startIcon={<PictureAsPdfRoundedIcon sx={{ fontSize: 14 }} />} sx={{ height: 34, fontSize: 12.5 }}>
+                Generate {generateCustomerCount > 0 ? `${generateCustomerCount} PDF` : "PDF"}
               </Btn>
             ) : (
               <Btn color="red" onClick={handleCancelGenerate} disabled={cancelling} loading={cancelling} sx={{ height: 34, fontSize: 12.5 }}>
@@ -714,8 +734,8 @@ export default function PdfPage() {
                       <Box component="td" sx={cellSx("tempo")} onClick={() => handleCellClick(absoluteIdx, "tempo")}>
                         {isCell("tempo") ? inp("tempo", { placeholder: "dd/mm/yyyy" }) : <Typography sx={{ color: T.text, fontWeight: 500, fontSize: 12 }}>{row.tempo || "-"}</Typography>}
                       </Box>
-                      <Box component="td" sx={cellSx("termin", { textAlign: "center" })} onClick={() => handleCellClick(absoluteIdx, "termin")}>
-                        {isCell("termin") ? inp("termin", { align: "center" }) : <Typography sx={{ color: T.muted, fontSize: 12, textAlign: "center" }}>{row.termin || "-"}</Typography>}
+                      <Box component="td" sx={cellSx("termin", { textAlign: "center", minWidth: 82, whiteSpace: "nowrap" })} onClick={() => handleCellClick(absoluteIdx, "termin")}>
+                        {isCell("termin") ? inp("termin", { align: "center" }) : <Typography sx={{ color: T.muted, fontSize: 12, textAlign: "center", whiteSpace: "nowrap" }}>{row.termin || "-"}</Typography>}
                       </Box>
                       <Box component="td" sx={cellSx("tagihan", { textAlign: "right" })} onClick={() => handleCellClick(absoluteIdx, "tagihan")}>
                         {isCell("tagihan") ? inp("tagihan", { type: "number", align: "right" }) : <Typography sx={{ fontWeight: 700, color: T.green, fontSize: 12 }}>{formatCurrency(row.tagihan)}</Typography>}
