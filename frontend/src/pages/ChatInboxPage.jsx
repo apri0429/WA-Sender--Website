@@ -7,6 +7,9 @@ import {
   Button,
   CircularProgress,
   Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   IconButton,
   InputAdornment,
@@ -17,6 +20,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import CreateButton from "../components/button/CreateButton";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
@@ -35,10 +39,6 @@ import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import FlashOnIcon from "@mui/icons-material/FlashOn";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
@@ -100,24 +100,17 @@ const P = {
 };
 
 const MSG_TYPE = {
-  image:                 { Icon: ImageOutlinedIcon,           label: "Foto" },
-  video:                 { Icon: VideocamOutlinedIcon,         label: "Video" },
-  audio:                 { Icon: HeadphonesIcon,               label: "Audio" },
-  ptt:                   { Icon: MicIcon,                      label: "Pesan suara" },
-  document:              { Icon: InsertDriveFileOutlinedIcon,  label: "Dokumen" },
-  sticker:               { Icon: TagFacesIcon,                 label: "Stiker" },
-  location:              { Icon: LocationOnOutlinedIcon,       label: "Lokasi" },
-  contact:               { Icon: PersonOutlinedIcon,           label: "Kontak" },
-  contact_card_multi:    { Icon: GroupOutlinedIcon,            label: "Beberapa kontak" },
-  vcard:                 { Icon: PersonOutlinedIcon,           label: "Kontak" },
-  revoked:               { Icon: BlockOutlinedIcon,            label: "Pesan dihapus" },
-  e2e_notification:      { Icon: LockOutlinedIcon,             label: "Enkripsi end-to-end" },
-  notification_template: { Icon: InfoOutlinedIcon,             label: "Notifikasi" },
-  protocol:              { Icon: InfoOutlinedIcon,             label: "Pesan sistem" },
-  poll_creation:         { Icon: InfoOutlinedIcon,             label: "Polling" },
-  list:                  { Icon: InfoOutlinedIcon,             label: "Pesan daftar" },
-  list_response:         { Icon: InfoOutlinedIcon,             label: "Respon daftar" },
-  buttons_response:      { Icon: InfoOutlinedIcon,             label: "Respon tombol" },
+  image:              { Icon: ImageOutlinedIcon,          label: "Foto" },
+  video:              { Icon: VideocamOutlinedIcon,        label: "Video" },
+  audio:              { Icon: HeadphonesIcon,              label: "Audio" },
+  ptt:                { Icon: MicIcon,                     label: "Pesan suara" },
+  document:           { Icon: InsertDriveFileOutlinedIcon, label: "Dokumen" },
+  sticker:            { Icon: TagFacesIcon,                label: "Stiker" },
+  location:           { Icon: LocationOnOutlinedIcon,      label: "Lokasi" },
+  contact:            { Icon: PersonOutlinedIcon,          label: "Kontak" },
+  contact_card_multi: { Icon: GroupOutlinedIcon,           label: "Beberapa kontak" },
+  vcard:              { Icon: PersonOutlinedIcon,          label: "Kontak" },
+  revoked:            { Icon: BlockOutlinedIcon,           label: "Pesan dihapus" },
 };
 
 const EMOJI_LIST = [
@@ -641,8 +634,6 @@ export default function ChatInboxPage() {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [headerSlotEl, setHeaderSlotEl] = useState(null);
   const [sessionMenuAnchor, setSessionMenuAnchor] = useState(null);
-  const [dragState, setDragState] = useState({ msgId: null, offset: 0, triggered: false });
-  const dragRef = useRef({ active: false, msgId: null, fromMe: false, startX: 0, offset: 0, triggered: false, replyFn: null });
   const messageListRef = useRef(null);
   const shouldSnapToLatestRef = useRef(true);
   const fileInputRef = useRef(null);
@@ -651,43 +642,6 @@ export default function ChatInboxPage() {
 
   useEffect(() => { setHeaderSlotEl(document.getElementById("header-wa-slot")); }, []);
 
-  // Drag-to-reply: global mouse listeners
-  useEffect(() => {
-    const THRESHOLD = 65;
-    const onMove = (e) => {
-      const d = dragRef.current;
-      if (!d.active) return;
-      const raw = (e.clientX ?? e.touches?.[0]?.clientX ?? 0) - d.startX;
-      // For received (fromMe=false): drag right (+). For sent (fromMe=true): drag left (-).
-      const clamped = d.fromMe
-        ? Math.max(-THRESHOLD - 10, Math.min(0, raw))
-        : Math.max(0, Math.min(THRESHOLD + 10, raw));
-      const triggered = d.fromMe ? clamped <= -THRESHOLD : clamped >= THRESHOLD;
-      if (triggered && !d.triggered) {
-        d.triggered = true;
-        d.replyFn?.();
-      }
-      d.offset = clamped;
-      setDragState({ msgId: d.msgId, offset: clamped, triggered });
-    };
-    const onUp = () => {
-      if (!dragRef.current.active) return;
-      dragRef.current.active = false;
-      dragRef.current.offset = 0;
-      dragRef.current.triggered = false;
-      setDragState({ msgId: null, offset: 0, triggered: false });
-    };
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-    document.addEventListener("touchmove", onMove, { passive: true });
-    document.addEventListener("touchend", onUp);
-    return () => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-      document.removeEventListener("touchmove", onMove);
-      document.removeEventListener("touchend", onUp);
-    };
-  }, []);
 
   const showToast = (message, severity = "success") => setToast({ open: true, message, severity });
 
@@ -955,10 +909,23 @@ export default function ChatInboxPage() {
     return [c?.name, c?.phone, c?.lastMessage?.body].filter(Boolean).some((v) => String(v).toLowerCase().includes(kw));
   });
 
+  // Whitelist: only show these message types — everything else is a system/internal WA message
+  const VISIBLE_MSG_TYPES = new Set([
+    "chat", "image", "video", "audio", "ptt", "document", "sticker",
+    "location", "contact", "vcard", "contact_card_multi", "revoked",
+  ]);
+
+  const visibleMessages = messages.filter((m) => {
+    if (!VISIBLE_MSG_TYPES.has(m?.type)) return false;
+    // skip chat messages with no body AND no media
+    if (m.type === "chat" && !String(m.body || "").trim() && !m.hasMedia) return false;
+    return true;
+  });
+
   // Build messages with date separators
   const messagesWithSeparators = [];
-  messages.forEach((msg, i) => {
-    const prev = messages[i - 1];
+  visibleMessages.forEach((msg, i) => {
+    const prev = visibleMessages[i - 1];
     if (!prev || !isSameDay(prev.timestamp, msg.timestamp)) {
       messagesWithSeparators.push({ type: "separator", ts: msg.timestamp, key: `sep-${i}` });
     }
@@ -1148,21 +1115,11 @@ export default function ChatInboxPage() {
                   </Box>
                 </Box>
 
-                {/* Source banner */}
-                {messageMeta.source && (
-                  <Box sx={{ px: 2, py: 0.65, flexShrink: 0, bgcolor: messageMeta.source === "wa" ? "#ECFDF5" : "#FFFBEB", borderBottom: `1px solid ${messageMeta.source === "wa" ? "#BBF7D0" : "#FCD34D"}`, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75 }}>
-                    {messageMeta.source === "wa" ? <CheckCircleOutlineIcon sx={{ fontSize: 14, color: "#10B981" }} /> : <FlashOnIcon sx={{ fontSize: 14, color: "#F59E0B" }} />}
-                    <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: messageMeta.source === "wa" ? "#059669" : "#D97706" }}>
-                      {messageMeta.source === "wa" ? "Tersinkron dari WhatsApp Web" : "Dari cache sesi aktif"}
-                      {messageMeta.limit ? ` · ${messageMeta.limit} pesan` : ""}
-                    </Typography>
-                  </Box>
-                )}
 
                 {/* Messages + FAB wrapper */}
                 <Box sx={{ flex: 1, minHeight: 0, position: "relative", display: "flex", flexDirection: "column" }}>
                   <Box ref={messageListRef} onScroll={handleMsgListScroll}
-                    sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, py: 1.5, bgcolor: WA.chatBg, scrollbarWidth: "thin", scrollbarColor: "#C0B9AE transparent", "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "#C0B9AE", borderRadius: 2 } }}>
+                    sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, py: 1.5, bgcolor: WA.chatBg, scrollbarWidth: "thin", scrollbarColor: "#C0B9AE transparent", "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "#C0B9AE", borderRadius: 2 }, }}>
                     {loadingMessages ? (
                       <Box sx={{ display: "flex", justifyContent: "center", pt: 5 }}><CircularProgress size={26} sx={{ color: WA.green }} /></Box>
                     ) : messagesWithSeparators.length ? messagesWithSeparators.map((item) => {
@@ -1173,10 +1130,6 @@ export default function ChatInboxPage() {
                       const fromMe = msg?.from === "me";
                       const msgId = msg.id || msg.serializedId;
                       const isHovered = hoveredMsgId === msgId;
-                      const isDragging = dragState.msgId === msgId;
-                      const dragOffset = isDragging ? dragState.offset : 0;
-                      const DRAG_THRESHOLD = 65;
-                      const dragProgress = Math.min(1, Math.abs(dragOffset) / DRAG_THRESHOLD);
                       const doReply = () => setReplyingTo({
                         serializedId: msg.serializedId, id: msg.id, body: msg.body || "",
                         type: msg.type || "chat", from: msg.from,
@@ -1187,43 +1140,14 @@ export default function ChatInboxPage() {
                           onMouseEnter={() => setHoveredMsgId(msgId)}
                           onMouseLeave={() => setHoveredMsgId(null)}
                           onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ open: true, anchorEl: e.currentTarget, msg }); }}
-                          sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", width: "100%", mb: 0.5, alignItems: "center", gap: 0.5, position: "relative" }}>
-
-                          {/* Swipe/drag reply indicator — kiri untuk pesan masuk */}
-                          {!fromMe && (
-                            <Box sx={{ flexShrink: 0, opacity: isDragging ? dragProgress : (isHovered ? 1 : 0), transition: isDragging ? "none" : "opacity 0.15s",
-                              transform: isDragging ? `scale(${0.7 + 0.3 * dragProgress})` : "scale(1)" }}>
-                              <IconButton size="small" onClick={doReply}
-                                sx={{ color: WA.sidebarSub, p: 0.4, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", "&:hover": { bgcolor: "#fff" } }}>
-                                <ReplyRoundedIcon sx={{ fontSize: 15 }} />
-                              </IconButton>
-                            </Box>
-                          )}
+                          sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", width: "100%", mb: 0.5, alignItems: "center", position: "relative" }}>
 
                           {/* Bubble */}
                           <Box
-                            onMouseDown={(e) => {
-                              if (e.button !== 0) return;
-                              // Don't start drag on icon buttons
-                              if (e.target.closest("button")) return;
-                              e.preventDefault();
-                              dragRef.current = { active: true, msgId, fromMe, startX: e.clientX, offset: 0, triggered: false, replyFn: doReply };
-                              setDragState({ msgId, offset: 0, triggered: false });
-                            }}
-                            onTouchStart={(e) => {
-                              if (e.target.closest("button")) return;
-                              const t = e.touches[0];
-                              dragRef.current = { active: true, msgId, fromMe, startX: t.clientX, offset: 0, triggered: false, replyFn: doReply };
-                              setDragState({ msgId, offset: 0, triggered: false });
-                            }}
                             sx={{ position: "relative", maxWidth: "72%", px: 1.4, py: 0.8,
                               bgcolor: fromMe ? WA.sentBg : WA.recvBg, color: WA.msgText,
                               borderRadius: fromMe ? "8px 8px 0 8px" : "8px 8px 8px 0",
                               boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
-                              cursor: isDragging ? "grabbing" : "default",
-                              userSelect: isDragging ? "none" : "text",
-                              transform: `translateX(${dragOffset}px)`,
-                              transition: isDragging ? "none" : "transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94)",
                               "&::before": { content: '""', position: "absolute", bottom: 0, ...(fromMe ? { right: -8 } : { left: -8 }), width: 8, height: 13, backgroundColor: fromMe ? WA.sentBg : WA.recvBg, ...(fromMe ? { borderBottomLeftRadius: 8 } : { borderBottomRightRadius: 8 }) },
                               "&::after": { content: '""', position: "absolute", bottom: -2, ...(fromMe ? { right: -10 } : { left: -10 }), width: 10, height: 10, backgroundColor: WA.chatBg, ...(fromMe ? { borderBottomLeftRadius: 6 } : { borderBottomRightRadius: 6 }) },
                             }}>
@@ -1250,22 +1174,12 @@ export default function ChatInboxPage() {
                             </Box>
                           </Box>
 
-                          {/* Swipe/drag reply indicator — kanan untuk pesan keluar */}
-                          {fromMe && (
-                            <Box sx={{ flexShrink: 0, opacity: isDragging ? dragProgress : (isHovered ? 1 : 0), transition: isDragging ? "none" : "opacity 0.15s",
-                              transform: isDragging ? `scale(${0.7 + 0.3 * dragProgress})` : "scale(1)" }}>
-                              <IconButton size="small" onClick={doReply}
-                                sx={{ color: WA.sidebarSub, p: 0.4, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", transform: "scaleX(-1)", "&:hover": { bgcolor: "#fff" } }}>
-                                <ReplyRoundedIcon sx={{ fontSize: 15 }} />
-                              </IconButton>
-                            </Box>
-                          )}
                         </Box>
                       );
                     }) : (
                       <Box sx={{ textAlign: "center", pt: 5 }}>
                         <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, color: WA.msgMeta }}>
-                          {messageMeta.note || "Belum ada riwayat pesan. Buka chat di WhatsApp lalu klik Sync."}
+                          Belum ada riwayat pesan. Buka chat di WhatsApp lalu klik Sync.
                         </Typography>
                       </Box>
                     )}
@@ -1392,16 +1306,6 @@ export default function ChatInboxPage() {
               <ContentCopyRoundedIcon sx={{ fontSize: 17, color: WA.sidebarSub }} /> Salin teks
             </MenuItem>
           )}
-          <MenuItem onClick={async () => {
-            const chatId = selectedChatId;
-            setCtxMenu({ open: false, anchorEl: null, msg: null });
-            if (!chatId) return;
-            await loadMessages(chatId, { forceRefresh: true, snapToLatest: true });
-            await loadChats({ preserveSelection: true });
-            showToast("Pesan berhasil ditarik dari WhatsApp", "success");
-          }} sx={{ fontFamily: FONT_SANS, fontSize: 13, gap: 1.5, py: 1 }}>
-            <RefreshRoundedIcon sx={{ fontSize: 17, color: WA.sidebarSub }} /> Tarik pesan
-          </MenuItem>
           {ctxMenu.msg?.from === "me" && (
             <MenuItem onClick={() => {
               setDeleteConfirm({ open: true, msg: ctxMenu.msg });
@@ -1413,15 +1317,25 @@ export default function ChatInboxPage() {
         </Menu>
 
         {/* Delete confirmation */}
-        <Dialog open={deleteConfirm.open} onClose={() => setDeleteConfirm({ open: false, msg: null })} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "14px", m: 2 } }}>
-          <Box sx={{ px: 3, py: 2.5 }}>
-            <Typography sx={{ fontFamily: FONT_SANS, fontWeight: 700, fontSize: 15, color: WA.msgText, mb: 0.75 }}>Hapus pesan?</Typography>
-            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13.5, color: WA.sidebarSub, mb: 2.5 }}>Pesan ini akan dihapus untuk semua orang di chat ini.</Typography>
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-              <Button onClick={() => setDeleteConfirm({ open: false, msg: null })} variant="text" sx={{ textTransform: "none", fontFamily: FONT_SANS, color: WA.sidebarSub, borderRadius: "8px" }}>Batal</Button>
-              <Button onClick={handleConfirmDelete} variant="contained" color="error" sx={{ textTransform: "none", fontFamily: FONT_SANS, fontWeight: 600, borderRadius: "8px", px: 2 }}>Hapus untuk Semua</Button>
-            </Box>
-          </Box>
+        <Dialog open={deleteConfirm.open} onClose={() => setDeleteConfirm({ open: false, msg: null })} maxWidth="xs" fullWidth
+          PaperProps={{ sx: { borderRadius: "16px", fontFamily: FONT_SANS } }}>
+          <DialogTitle sx={{ fontFamily: FONT_SANS, fontWeight: 700, fontSize: 15, color: P.ink, pb: 1 }}>
+            Hapus Pesan?
+          </DialogTitle>
+          <DialogContent sx={{ pb: 1 }}>
+            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: "#374151" }}>
+              Pesan ini akan dihapus untuk semua orang di chat ini dan tidak bisa dikembalikan.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2.5, pt: 0, gap: 1 }}>
+            <CreateButton variant="accordion" onClick={() => setDeleteConfirm({ open: false, msg: null })} style={{ paddingInline: 16, fontSize: 12 }}>
+              Batal
+            </CreateButton>
+            <CreateButton variant="accordion" tone="danger" onClick={handleConfirmDelete} style={{ paddingInline: 16, fontSize: 12, gap: 6 }}>
+              <DeleteOutlineRoundedIcon style={{ fontSize: 15 }} />
+              Hapus untuk Semua
+            </CreateButton>
+          </DialogActions>
         </Dialog>
 
         {/* Media preview dialog */}
@@ -1447,18 +1361,20 @@ export default function ChatInboxPage() {
               size="small"
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontFamily: FONT_SANS, fontSize: 13.5, "& fieldset": { borderColor: WA.sidebarBorder }, "&.Mui-focused fieldset": { borderColor: WA.green } }, "& .MuiInputBase-input::placeholder": { color: WA.inputPlaceholder, opacity: 1 } }} />
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 1.5 }}>
-              <Button onClick={handleCloseMediaDialog} variant="text" sx={{ textTransform: "none", fontFamily: FONT_SANS, color: WA.sidebarSub, borderRadius: "8px" }}>Batal</Button>
-              <Button onClick={handleSendMediaFromDialog} variant="contained" disabled={sendingMedia}
-                startIcon={sendingMedia ? <CircularProgress size={14} color="inherit" /> : <SendRoundedIcon sx={{ fontSize: 15 }} />}
-                sx={{ textTransform: "none", fontFamily: FONT_SANS, fontWeight: 600, bgcolor: WA.green, borderRadius: "8px", px: 2, "&:hover": { bgcolor: WA.greenDark } }}>
+              <CreateButton variant="accordion" onClick={handleCloseMediaDialog} style={{ paddingInline: 16, fontSize: 12 }}>
+                Batal
+              </CreateButton>
+              <CreateButton variant="detail" onClick={handleSendMediaFromDialog} disabled={sendingMedia}
+                style={{ paddingInline: 16, fontSize: 12, gap: 6, background: WA.green, borderColor: WA.green, color: "#fff" }}>
+                {sendingMedia ? <CircularProgress size={13} sx={{ color: "#fff" }} /> : <SendRoundedIcon style={{ fontSize: 14 }} />}
                 {sendingMedia ? "Mengirim..." : "Kirim"}
-              </Button>
+              </CreateButton>
             </Box>
           </Box>
         </Dialog>
 
         <Snackbar open={toast.open} autoHideDuration={3200} onClose={() => setToast((p) => ({ ...p, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-          <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: "10px", fontFamily: FONT_SANS, alignItems: "center" }}>{toast.message}</Alert>
+          <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: "12px", fontFamily: FONT_SANS, alignItems: "center", boxShadow: "0 8px 24px rgba(0,0,0,0.14)" }}>{toast.message}</Alert>
         </Snackbar>
       </Box>
     </>

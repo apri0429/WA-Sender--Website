@@ -3577,13 +3577,19 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
           const msgFilter = (m) => !m.isNotification;
           let allMessages = chatModel.msgs.getModelsArray().filter(msgFilter);
 
-          while (true) {
-            const loadedMessages = await window
-              .require("WAWebChatLoadMessages")
-              .loadEarlierMsgs({ chat: chatModel });
-            if (!loadedMessages || !loadedMessages.length) break;
-            allMessages = [...loadedMessages.filter(msgFilter), ...allMessages];
-          }
+          // Try to load older messages via internal WA Web module.
+          // This module may be renamed/removed in newer WA Web versions — swallow any error
+          // so we still return whatever messages are already loaded in the chat model.
+          try {
+            const loadMsgsModule = window.require("WAWebChatLoadMessages");
+            if (loadMsgsModule?.loadEarlierMsgs) {
+              for (let attempt = 0; attempt < 50; attempt++) {
+                const loaded = await loadMsgsModule.loadEarlierMsgs({ chat: chatModel });
+                if (!loaded || !loaded.length) break;
+                allMessages = [...loaded.filter(msgFilter), ...allMessages];
+              }
+            }
+          } catch (_) { /* module unavailable — use messages already in model */ }
 
           allMessages.sort((a, b) => (a.t > b.t ? 1 : -1));
           return allMessages.map((m) => {
@@ -3599,20 +3605,30 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
       } else {
         msgs = await chat.fetchMessages({ limit });
       }
-      messages = msgs.map(serializeMessage);
-    } catch (_fetchErr) {
-      // fetchMessages failed (e.g. waitForChatLoading undefined) — return cache if available
-      if (chatHistory.has(chatId)) {
-        const stored = chatHistory.get(chatId);
-        return res.json({
-          success: true,
-          messages: wantsAll ? stored.messages : stored.messages.slice(-limit),
-          source: "cache",
-          note: "Menggunakan pesan tersimpan (WhatsApp Web tidak dapat memuat riwayat baru)",
-          limit: stored.messages.length,
-        });
+      // Fallback: if pupPage evaluate returned nothing, try fetchMessages with high limit
+      if (wantsAll && (!msgs || !msgs.length)) {
+        try { msgs = await chat.fetchMessages({ limit: CHAT_MESSAGE_LIMIT }); } catch (_) {}
       }
-      throw _fetchErr;
+      messages = (msgs || []).map(serializeMessage);
+    } catch (_fetchErr) {
+      // Evaluate or fetchMessages failed — try fetchMessages as last resort before cache
+      try {
+        const fallbackMsgs = await chat.fetchMessages({ limit: CHAT_MESSAGE_LIMIT });
+        messages = fallbackMsgs.map(serializeMessage);
+      } catch (_) {
+        // fetchMessages also failed — return cache if available
+        if (chatHistory.has(chatId)) {
+          const stored = chatHistory.get(chatId);
+          return res.json({
+            success: true,
+            messages: wantsAll ? stored.messages : stored.messages.slice(-limit),
+            source: "cache",
+            note: "Menggunakan pesan tersimpan (WhatsApp Web tidak dapat memuat riwayat baru)",
+            limit: stored.messages.length,
+          });
+        }
+        throw _fetchErr;
+      }
     }
 
     const contact = await waClient.getContactById(chatId).catch(() => null);

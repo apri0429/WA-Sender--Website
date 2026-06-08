@@ -1,11 +1,11 @@
 {
-  "running": true,
-  "current": 13,
-  "total": 32,
-  "ptName": "PANG DONNY WIJAYA",
-  "status": "Upload ke Google Drive",
-  "step": 3,
+  "running": false,
+  "current": 0,
+  "total": 0,
+  "ptName": "",
+  "status": "",
+  "step": 0,
   "complete": false,
   "error": "",
-  "updatedAt": "2026-05-18T07:32:49.027Z"
+  "updatedAt": "2026-06-02T02:31:25.015Z"
 }

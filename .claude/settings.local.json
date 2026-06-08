@@ -14,7 +14,13 @@
       "Bash(./nginx.exe -t)",
       "Bash(./nginx.exe -s reload)",
       "Bash(python -c ' *)",
-      "PowerShell(pm2 restart wa-backend 2>&1)"
+      "PowerShell(pm2 restart wa-backend 2>&1)",
+      "Bash(cat package.json)",
+      "Bash(cat frontend/package.json)",
+      "Bash(findstr \"LISTEN\")",
+      "Bash(findstr \":517\\\\|:300\\\\|:800\\\\|:500\")",
+      "Bash(cat vite.config.js)",
+      "Bash(cat vite.config.ts)"
     ],
     "additionalDirectories": [
       "c:\\nginx\\nginx\\conf"

@@ -71,7 +71,7 @@ export default function LogsPanel({ logs = [] }) {
   const successCount = normalized.filter((l) => l.type === "success").length;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 1.5 }}>
       {normalized.length > 0 && (
         <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
           {[
@@ -163,20 +163,11 @@ export default function LogsPanel({ logs = [] }) {
       ) : (
         <Box
           sx={{
-            maxHeight: 54 * VISIBLE_LOG_COUNT + (VISIBLE_LOG_COUNT - 1) * 6,
-            overflowY: "auto",
-            overflowX: "hidden",
+            flex: 1,
+            minHeight: 0,
             display: "flex",
             flexDirection: "column",
             gap: 0.75,
-            pr: 0.5,
-            "&::-webkit-scrollbar": { width: 3 },
-            "&::-webkit-scrollbar-track": { background: "transparent" },
-            "&::-webkit-scrollbar-thumb": {
-              background: "#b3c1d8",
-              borderRadius: 999,
-            },
-            "&::-webkit-scrollbar-thumb:hover": { background: "#233971" },
           }}
         >
           {normalized.map((log) => {
@@ -190,16 +181,12 @@ export default function LogsPanel({ logs = [] }) {
                   alignItems: "flex-start",
                   gap: 1.25,
                   px: 1.25,
-                  py: 1,
-                  borderRadius: "10px",
-                  bgcolor: s.bgCard,
-                  border: `1px solid ${s.border}`,
+                  py: 0.9,
+                  borderRadius: "8px",
                   borderLeft: `3px solid ${s.color}`,
-                  transition: "all 0.15s",
-                  "&:hover": {
-                    bgcolor: s.bg,
-                    boxShadow: "0 2px 10px rgba(35,57,113,0.09)",
-                  },
+                  bgcolor: "transparent",
+                  transition: "background 0.12s",
+                  "&:hover": { bgcolor: s.bgCard },
                 }}
               >
                 <Box
