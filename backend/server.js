@@ -1246,13 +1246,13 @@ function buildTemporaryRowsFromWorkbook(workbook) {
   }
 
   const rows = matrix.slice(1).map((row, index) => ({
-    noInvoice:      getCellValue(row, 2),   // column C
-    tanggalInvoice: getCellValue(row, 3),   // column D
-    termin:         getCellValue(row, 4),   // column E
-    customer:       getCellValue(row, 6),   // column G
-    tagihan:        getCellValue(row, 7),   // column H
-    tempo:          getCellValue(row, 15),  // column P (jatuh tempo)
-    penagih:        getCellValue(row, 17),  // column R
+    noInvoice:      getCellValue(row, 0),
+    tanggalInvoice: getCellValue(row, 1),
+    termin:         getCellValue(row, 2),
+    customer:       getCellValue(row, 4),
+    tagihan:        getCellValue(row, 6),
+    tempo:          getCellValue(row, 13),
+    penagih:        getCellValue(row, 15),
     sourceRow: index + 2,
   }));
 
@@ -2509,8 +2509,8 @@ app.get("/api/gsheet/input", async (req, res) => {
     });
 
     // Data rows — skip fully-empty rows
-    // Only convert date serials for known date column indices: D(3), P(15), T(19)
-    const DATE_COL_INDICES = new Set([3, 15, 19]);
+    // Only convert date serials for known date column indices (0-based): index 1=tanggal, 13=tempo, 17=col T
+    const DATE_COL_INDICES = new Set([1, 13, 17]);
     const isExcelDateSerial = (v) => typeof v === "number" && Number.isInteger(v) && v >= 40000 && v <= 60000;
     const rows = matrix.slice(1)
       .filter(row => headers.some(h => String(row[h.colIndex] ?? "").trim()))
@@ -2529,8 +2529,8 @@ app.get("/api/gsheet/input", async (req, res) => {
         return obj;
       });
 
-    // Base mapping — column indices from actual sheet (starts at column C = index 2)
-    const basePdfMapping = { noInvoice: "c2", tanggalInvoice: "c3", termin: "c4", customer: "c6", tagihan: "c7", tempo: "c15", penagih: "c17" };
+    // Base mapping — sheet data starts at index 0 (column A); header labels are "C","D","E"...
+    const basePdfMapping = { noInvoice: "c0", tanggalInvoice: "c1", termin: "c2", customer: "c4", tagihan: "c6", tempo: "c13", penagih: "c15" };
 
     // Override with auto-detected column keys by matching header labels (first match wins per field)
     const detected = {};
