@@ -70,9 +70,11 @@ function formatDateDisplay(v) {
 function parseAmount(v) {
   if (v === null || v === undefined || v === "") return 0;
   if (typeof v === "number") return v;
-  // strip thousand separators (dots in id-ID) and replace decimal comma
-  const clean = String(v).replace(/\./g, "").replace(",", ".");
-  return parseFloat(clean) || 0;
+  const s = String(v).trim();
+  // English format: "2,950,000.00" — ends with dot then digits → remove commas, keep dot
+  if (/\.\d+$/.test(s)) return parseFloat(s.replace(/,/g, "")) || 0;
+  // Indonesian format: "2.950.000" or "2.950.000,00" — dots=thousands, comma=decimal
+  return parseFloat(s.replace(/\./g, "").replace(",", ".")) || 0;
 }
 
 function formatCurrency(v) {
@@ -500,11 +502,8 @@ export default function InputPage() {
                         const raw      = row[h.key];
                         const hasValue = raw !== null && raw !== undefined && String(raw) !== "";
                         const isTagihan = h.key === pdfMapping.tagihan || h.label.toLowerCase().includes("tagihan");
-                        const isDateCol = h.key === pdfMapping.tanggalInvoice || h.key === pdfMapping.tempo;
                         const displayText = (isTagihan && hasValue && !active)
                           ? formatCurrency(raw)
-                          : (isDateCol && hasValue && !active)
-                          ? formatDateDisplay(raw)
                           : String(raw ?? "");
                         return (
                           <td key={h.key} onClick={() => handleCellClick(i, h.key)}

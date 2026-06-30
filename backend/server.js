@@ -2509,7 +2509,8 @@ app.get("/api/gsheet/input", async (req, res) => {
     });
 
     // Data rows — skip fully-empty rows
-    // Auto-format: Date objects (cellDates) OR Excel serial integers in year range 2009-2064
+    // Only convert date serials for known date column indices: D(3), P(15), T(19)
+    const DATE_COL_INDICES = new Set([3, 15, 19]);
     const isExcelDateSerial = (v) => typeof v === "number" && Number.isInteger(v) && v >= 40000 && v <= 60000;
     const rows = matrix.slice(1)
       .filter(row => headers.some(h => String(row[h.colIndex] ?? "").trim()))
@@ -2519,7 +2520,7 @@ app.get("/api/gsheet/input", async (req, res) => {
           const val = row[h.colIndex] ?? "";
           if (val instanceof Date && !isNaN(val.getTime())) {
             obj[h.key] = formatDateId(val);
-          } else if (isExcelDateSerial(val)) {
+          } else if (DATE_COL_INDICES.has(h.colIndex) && isExcelDateSerial(val)) {
             obj[h.key] = formatDateId(val);
           } else {
             obj[h.key] = val;
