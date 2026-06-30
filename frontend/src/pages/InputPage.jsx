@@ -20,12 +20,21 @@ import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import InfoOutlinedRoundedIcon from "@mui/icons-material/InfoOutlined";
 import api from "../services/api";
-import CreateButton from "../components/button/CreateButton";
+import CreateButton from "../piagam/button/CreateButton";
 
 const FONT_SANS = "'Plus Jakarta Sans', 'Inter', sans-serif";
 const FONT_MONO = "'JetBrains Mono', 'Fira Code', monospace";
+
+const PDF_FIELD_LABELS = {
+  noInvoice:      "No. Invoice",
+  tanggalInvoice: "Tgl. Invoice",
+  termin:         "Termin",
+  customer:       "Customer",
+  tagihan:        "Tagihan",
+  tempo:          "Tempo",
+  penagih:        "Penagih",
+};
 
 const T = {
   brand:       "#233971",
@@ -44,8 +53,30 @@ const T = {
   redBg:       "#fef2f2",
 };
 
+function formatDateDisplay(v) {
+  if (v === null || v === undefined || v === "") return "";
+  // already a formatted string (not a bare number) — show as-is
+  if (typeof v === "string" && isNaN(Number(v.trim()))) return v;
+  // Excel date serial number (range covers years ~2009–2064)
+  const n = Number(v);
+  if (!isNaN(n) && n >= 40000 && n <= 60000) {
+    const epoch = new Date(Date.UTC(1899, 11, 30));
+    const d = new Date(epoch.getTime() + n * 86400000);
+    return new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
+  }
+  return String(v);
+}
+
+function parseAmount(v) {
+  if (v === null || v === undefined || v === "") return 0;
+  if (typeof v === "number") return v;
+  // strip thousand separators (dots in id-ID) and replace decimal comma
+  const clean = String(v).replace(/\./g, "").replace(",", ".");
+  return parseFloat(clean) || 0;
+}
+
 function formatCurrency(v) {
-  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(v) || 0);
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(parseAmount(v));
 }
 
 const cellInputSx = {
@@ -338,123 +369,52 @@ export default function InputPage() {
       <section className="dashboard-panel" style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
 
         {/* ── Card Header ── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 20px", borderBottom: `1px solid ${T.line}`, gap: 12, flexWrap: "wrap", flexShrink: 0, background: T.white }}>
-
-          {/* Left: title group */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {/* Icon box */}
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: T.brandLight, border: `1.5px solid ${T.brandBorder}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <TableChartRoundedIcon style={{ fontSize: 16, color: T.brand }} />
-            </div>
-            {/* Title + badge */}
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontFamily: FONT_SANS, fontSize: 13.5, fontWeight: 700, color: T.ink, lineHeight: 1.1 }}>Sheet INPUT</span>
-                {sheetRows.length > 0 && (
-                  <span className="master-project-badge master-project-badge--active" style={{ fontFamily: FONT_MONO, fontSize: 10.5, minHeight: 20, padding: "0 8px" }}>
-                    {sheetRows.length} baris · {sheetHeaders.length} kolom
-                  </span>
-                )}
-              </div>
-              <span style={{ fontFamily: FONT_SANS, fontSize: 11, color: T.muted, display: "block", marginTop: 2 }}>
-                Data dari Google Sheet
-              </span>
-            </div>
+        <div className="dashboard-panel__header" style={{ padding: "16px 24px", borderBottom: `1px solid ${T.line}`, background: T.white, flexShrink: 0, margin: 0 }}>
+          {/* Left */}
+          <div>
+            <p className="dashboard-panel__eyebrow" style={{ fontFamily: FONT_SANS, marginBottom: 2 }}>
+              Google Sheet
+            </p>
+            <h2 className="dashboard-panel__title" style={{ margin: 0 }}>Sheet INPUT</h2>
+            {sheetRows.length > 0 && (
+              <p className="dashboard-panel__description" style={{ margin: "3px 0 0", fontFamily: FONT_MONO }}>
+                {sheetRows.length} baris · {sheetHeaders.length} kolom
+              </p>
+            )}
           </div>
-
-          {/* Right: actions */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Right – Search + Generate PDF */}
+          <div className="dashboard-panel__action" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             {/* Search */}
             <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <SearchRoundedIcon style={{ position: "absolute", left: 11, fontSize: 15, color: T.subtle, pointerEvents: "none" }} />
+              <SearchRoundedIcon style={{ position: "absolute", left: 9, fontSize: 14, color: T.subtle, pointerEvents: "none" }} />
               <input
                 type="text"
                 placeholder="Cari data..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
-                style={{
-                  height: 34, paddingLeft: 33, paddingRight: searchQuery ? 30 : 14, width: 176,
-                  fontFamily: FONT_SANS, fontSize: 12.5, color: T.ink,
-                  border: `1.5px solid ${searchQuery ? T.brand : T.line}`,
-                  borderRadius: 999, background: T.white, outline: "none",
-                  transition: "border-color 0.2s, box-shadow 0.2s, width 0.25s",
-                  boxShadow: searchQuery ? `0 0 0 3px ${T.brandLight}` : "none",
-                }}
-                onFocus={e => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = `0 0 0 3px ${T.brandLight}`; e.target.style.width = "210px"; }}
-                onBlur={e => { e.target.style.borderColor = searchQuery ? T.brand : T.line; e.target.style.boxShadow = searchQuery ? `0 0 0 3px ${T.brandLight}` : "none"; e.target.style.width = "176px"; }}
+                style={{ height: 34, paddingLeft: 30, paddingRight: searchQuery ? 28 : 12, width: 170, fontFamily: FONT_SANS, fontSize: 12, color: T.ink, border: `1.5px solid ${searchQuery ? T.brand : T.line}`, borderRadius: 8, background: T.white, outline: "none", transition: "border-color 0.15s, box-shadow 0.15s", boxShadow: searchQuery ? `0 0 0 2px ${T.brandLight}` : "none" }}
+                onFocus={e => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = `0 0 0 2px ${T.brandLight}`; }}
+                onBlur={e => { e.target.style.borderColor = searchQuery ? T.brand : T.line; e.target.style.boxShadow = searchQuery ? `0 0 0 2px ${T.brandLight}` : "none"; }}
               />
               {searchQuery && (
                 <button onClick={() => { setSearchQuery(""); setPage(0); }}
-                  style={{ position: "absolute", right: 9, width: 17, height: 17, borderRadius: "50%", background: T.subtle, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "background 0.15s" }}
+                  style={{ position: "absolute", right: 7, width: 16, height: 16, borderRadius: "50%", background: T.subtle, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
                   onMouseEnter={e => e.currentTarget.style.background = T.muted}
                   onMouseLeave={e => e.currentTarget.style.background = T.subtle}>
-                  <CloseRoundedIcon style={{ fontSize: 11, color: "#fff" }} />
+                  <CloseRoundedIcon style={{ fontSize: 10, color: "#fff" }} />
                 </button>
               )}
             </div>
-
-            {/* Generate PDF */}
             {sheetRows.length > 0 && (
               <button className="users-table-card__action" onClick={handleSaveForPdf} disabled={savingPdf || pdfSaved}
-                style={{ minHeight: "unset", height: 34, paddingInline: 16, fontSize: 12.5, gap: 6, opacity: (savingPdf || pdfSaved) ? 0.72 : 1, boxShadow: (savingPdf || pdfSaved) ? "none" : undefined }}>
-                {savingPdf
-                  ? <CircularProgress size={13} sx={{ color: "#fff" }} />
-                  : pdfSaved
-                    ? <CheckCircleOutlineRoundedIcon style={{ fontSize: 14 }} />
-                    : <PictureAsPdfRoundedIcon style={{ fontSize: 14 }} />}
+                style={{ opacity: (savingPdf || pdfSaved) ? 0.72 : 1 }}>
+                {savingPdf ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : pdfSaved ? <CheckCircleOutlineRoundedIcon style={{ fontSize: 16 }} /> : <PictureAsPdfRoundedIcon style={{ fontSize: 16 }} />}
                 {pdfSaved ? "Tersimpan ✓" : "Generate PDF"}
               </button>
             )}
           </div>
         </div>
 
-        {/* ── Pagination bar ── */}
-        {filteredRows.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "7px 20px", borderBottom: `1px solid ${T.line}`, background: T.surface, flexWrap: "wrap", gap: 8, flexShrink: 0 }}>
-            {/* Info + rows-per-page */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.muted }}>
-                <span style={{ fontWeight: 600, color: T.ink }}>{page * rowsPerPage + 1}–{Math.min((page + 1) * rowsPerPage, filteredRows.length)}</span>
-                {" "}dari{" "}
-                <span style={{ fontWeight: 600, color: T.ink }}>{filteredRows.length}</span>
-                {" "}baris
-                {searchQuery && <span style={{ marginLeft: 6, color: T.brand, fontWeight: 600 }}>· filter aktif</span>}
-              </span>
-              <span style={{ color: T.line }}>|</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.subtle }}>Tampilkan</span>
-                <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-                  <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
-                    style={{ height: 26, paddingLeft: 10, paddingRight: 26, fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: 700, color: T.brand, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 999, cursor: "pointer", outline: "none", appearance: "none", transition: "border-color 0.15s, box-shadow 0.15s" }}
-                    onFocus={e => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = `0 0 0 2px ${T.brandLight}`; }}
-                    onBlur={e => { e.target.style.borderColor = T.brandBorder; e.target.style.boxShadow = "none"; }}>
-                    {[25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                  <span style={{ position: "absolute", right: 8, pointerEvents: "none", display: "flex", alignItems: "center", color: T.brand }}>
-                    <svg width="9" height="5" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#233971" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </span>
-                </div>
-                <span style={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.subtle }}>baris</span>
-              </div>
-            </div>
-            {/* Navigation */}
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <CreateButton variant="pagination" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
-                style={{ height: 28, minHeight: "unset", paddingInline: 10, gap: 3, fontSize: 11.5 }}>
-                <ChevronLeftRoundedIcon style={{ fontSize: 14 }} />
-                Sebelumnya
-              </CreateButton>
-              <span style={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: 700, color: T.brand, minWidth: 52, textAlign: "center", background: T.brandLight, border: `1.5px solid ${T.brandBorder}`, borderRadius: 999, padding: "2px 10px" }}>
-                {page + 1} / {totalPages}
-              </span>
-              <CreateButton variant="pagination" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
-                style={{ height: 28, minHeight: "unset", paddingInline: 10, gap: 3, fontSize: 11.5 }}>
-                Berikutnya
-                <ChevronRightRoundedIcon style={{ fontSize: 14 }} />
-              </CreateButton>
-            </div>
-          </div>
-        )}
 
         {/* ── Syncing overlay banner ── */}
         {syncing && sheetRows.length > 0 && (
@@ -501,49 +461,54 @@ export default function InputPage() {
         ) : (
 
           /* Data table */
-          <div style={{ overflow: "auto", flex: 1, minHeight: 0 }}>
-            <table className="users-table" style={{ fontFamily: FONT_SANS, fontSize: 12 }}>
+          <div className="users-table-wrapper" style={{ flex: 1, minHeight: 0, margin: "10px 16px 0 16px" }}>
+            <table className="users-table" style={{ fontFamily: FONT_SANS }}>
               <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
-                <tr style={{ background: T.brandLight, borderBottom: `1.5px solid ${T.brandBorder}` }}>
-                  <th style={{ color: T.brandDark, fontSize: 10.5, fontWeight: 700, padding: "10px 16px", width: 40, userSelect: "none", textAlign: "center", background: T.brandLight, textTransform: "none", letterSpacing: 0 }}>
-                    No
-                  </th>
+                <tr>
+                  <th style={{ width: 40, textAlign: "center", userSelect: "none", background: "rgba(24,43,88,0.04)" }}>No</th>
                   {sheetHeaders.map((h) => {
                     const field = pdfFieldLabel(h.key);
                     return (
-                      <th key={h.key} style={{ color: T.brandDark, fontSize: 10.5, fontWeight: 700, padding: "10px 16px", whiteSpace: "nowrap", textAlign: "left", background: T.brandLight, textTransform: "none", letterSpacing: 0 }}>
+                      <th key={h.key} style={{ whiteSpace: "nowrap", background: "rgba(24,43,88,0.04)" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                           {h.label}
                           {field && (
-                            <span className="users-table__status users-table__status--app users-table__status--inline" style={{ fontSize: 9, letterSpacing: "0.03em" }}>
-                              {field}
+                            <span className="users-table__status users-table__status--app users-table__status--inline"
+                              style={{ fontSize: 9, textTransform: "none", display: "inline-flex", alignItems: "center", gap: 3 }}>
+                              <PictureAsPdfRoundedIcon style={{ fontSize: 9 }} />
+                              {PDF_FIELD_LABELS[field] || field}
                             </span>
                           )}
                         </div>
                       </th>
                     );
                   })}
-                  <th style={{ width: 44, background: T.brandLight }} />
+                  <th style={{ width: 44, background: "rgba(24,43,88,0.04)" }} />
                 </tr>
               </thead>
               <tbody>
                 {filteredRows.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map(({ row, index: i }) => {
                   const isCell = (k) => editingCell?.row === i && editingCell?.colKey === k;
                   return (
-                    <tr key={i} className="users-table__row" style={{ background: i % 2 !== 0 ? T.surface : T.white }}>
-                      <td style={{ padding: "8px 16px", color: T.subtle, fontSize: 11, fontWeight: 600, userSelect: "none", textAlign: "center", width: 40 }}>
+                    <tr key={i} className="users-table__row" style={{ background: i % 2 !== 0 ? T.surface : T.white, cursor: "default" }}>
+                      <td style={{ textAlign: "center", width: 40, userSelect: "none", color: T.subtle, fontWeight: 600 }}>
                         {i + 1}
                       </td>
                       {sheetHeaders.map((h) => {
                         const active   = isCell(h.key);
                         const isMapped = isPdfCol(h.key);
                         const raw      = row[h.key];
-                        const displayText = (h.key === pdfMapping.tagihan && raw && !active)
+                        const hasValue = raw !== null && raw !== undefined && String(raw) !== "";
+                        const isTagihan = h.key === pdfMapping.tagihan || h.label.toLowerCase().includes("tagihan");
+                        const isDateCol = h.key === pdfMapping.tanggalInvoice || h.key === pdfMapping.tempo;
+                        const displayText = (isTagihan && hasValue && !active)
                           ? formatCurrency(raw)
+                          : (isDateCol && hasValue && !active)
+                          ? formatDateDisplay(raw)
                           : String(raw ?? "");
                         return (
                           <td key={h.key} onClick={() => handleCellClick(i, h.key)}
-                            style={{ padding: "7px 12px", minWidth: 90, cursor: "text", background: active ? T.brandLight : undefined, borderLeft: isMapped ? `2.5px solid ${T.brandBorder}` : undefined }}>
+                            style={{ minWidth: 90, cursor: "text", background: active ? T.brandLight : undefined, borderLeft: isMapped ? `2.5px solid ${T.brandBorder}` : undefined }}>
                             {active ? (
                               <Box component="input" autoFocus value={String(row[h.key] ?? "")}
                                 onChange={(e) => handleCellChange(i, h.key, e.target.value)}
@@ -553,20 +518,18 @@ export default function InputPage() {
                                 fontFamily:  h.key === pdfMapping.noInvoice ? FONT_MONO : FONT_SANS,
                                 fontSize:    12,
                                 fontWeight:  h.key === pdfMapping.customer ? 600 : h.key === pdfMapping.noInvoice ? 700 : 400,
-                                color:       h.key === pdfMapping.tagihan ? T.green : h.key === pdfMapping.noInvoice ? T.brand : h.key === pdfMapping.customer ? T.ink : T.text,
-                                lineHeight:  1.4,
+                                color:       isTagihan ? T.green : h.key === pdfMapping.noInvoice ? T.brand : h.key === pdfMapping.customer ? T.ink : T.text,
                               }}>
-                                {displayText || <span style={{ color: T.subtle, fontStyle: "italic", fontWeight: 400, fontFamily: FONT_SANS }}>—</span>}
+                                {displayText || <span style={{ color: T.subtle, fontStyle: "italic", fontWeight: 400 }}>—</span>}
                               </span>
                             )}
                           </td>
                         );
                       })}
-                      <td style={{ padding: "4px 8px", textAlign: "center", width: 44 }}>
+                      <td style={{ textAlign: "center", width: 44 }}>
                         <button onClick={() => deleteRow(i)}
-                          style={{ width: 28, height: 28, borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: T.subtle, transition: "all 0.15s" }}
-                          onMouseEnter={e => { e.currentTarget.style.background = T.redBg; e.currentTarget.style.color = T.red; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.transform = "scale(1.05)"; }}
-                          onMouseLeave={e => { e.currentTarget.style.background = T.surface; e.currentTarget.style.color = T.subtle; e.currentTarget.style.borderColor = T.line; e.currentTarget.style.transform = "none"; }}>
+                          className="users-table__accordion-button users-table__accordion-button--danger"
+                          style={{ width: 32, height: 32, minHeight: "unset", padding: 0 }}>
                           <DeleteOutlineRoundedIcon style={{ fontSize: 16 }} />
                         </button>
                       </td>
@@ -578,14 +541,50 @@ export default function InputPage() {
           </div>
         )}
 
-        {/* ── Footer legend ── */}
-        {sheetHeaders.length > 0 && Object.keys(pdfMapping).length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 20px", borderTop: `1px solid ${T.line}`, background: T.surface, flexShrink: 0 }}>
-            <InfoOutlinedRoundedIcon style={{ fontSize: 14, color: T.brandBorder, flexShrink: 0 }} />
-            <span style={{ fontFamily: FONT_SANS, fontSize: 11, color: T.muted }}>
-              Kolom dengan garis biru digunakan untuk{" "}
-              <span style={{ color: T.brand, fontWeight: 600 }}>Generate PDF</span>
-            </span>
+        {/* ── Pagination ── */}
+        {filteredRows.length > 0 && (
+          <div className="users-table-pagination" style={{ padding: "0 24px", borderTop: `1px solid ${T.line}`, marginTop: 0 }}>
+            <div className="users-table-pagination__meta">
+              <p className="users-table-pagination__summary">
+                {page * rowsPerPage + 1}–{Math.min((page + 1) * rowsPerPage, filteredRows.length)} dari{" "}
+                <strong>{filteredRows.length}</strong> baris
+                {searchQuery && <span style={{ marginLeft: 6, color: T.brand, fontWeight: 600 }}>· filter aktif</span>}
+              </p>
+              <label className="users-table-pagination__page-size">
+                <span>Tampilkan</span>
+                <select className="users-table-pagination__select" value={rowsPerPage}
+                  onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span>baris</span>
+              </label>
+            </div>
+            <div className="users-table-pagination__controls">
+              <CreateButton variant="pagination" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
+                <ChevronLeftRoundedIcon style={{ fontSize: 16 }} /> Sebelumnya
+              </CreateButton>
+              {Array.from({ length: totalPages }, (_, i) => i)
+                .filter(i => i === 0 || i === totalPages - 1 || Math.abs(i - page) <= 1)
+                .reduce((acc, i, idx, arr) => {
+                  if (idx > 0 && i - arr[idx - 1] > 1) acc.push("...");
+                  acc.push(i);
+                  return acc;
+                }, [])
+                .map((item, idx) =>
+                  item === "..." ? (
+                    <span key={`dot-${idx}`} className="users-table-pagination__ellipsis">...</span>
+                  ) : (
+                    <CreateButton key={item} variant="pagination" active={item === page} onClick={() => setPage(item)}>
+                      {item + 1}
+                    </CreateButton>
+                  )
+                )}
+              <CreateButton variant="pagination" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
+                Berikutnya <ChevronRightRoundedIcon style={{ fontSize: 16 }} />
+              </CreateButton>
+            </div>
           </div>
         )}
       </section>

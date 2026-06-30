@@ -30,7 +30,7 @@ const waPrimaryItems = [
 ];
 
 const pageBreadcrumbs = {
-  "/": [{ label: "Dashboard", active: true }],
+  "/": [],
   "/chats": [{ label: "Chat Inbox", active: true }],
   "/input": [{ label: "Input Data" }, { label: "Input", active: true }],
   "/input/periode": [{ label: "Input Data" }, { label: "Periode", active: true }],
@@ -100,8 +100,7 @@ export default function AppLayout() {
               height: "100%",
               display: "flex",
               flexDirection: "column",
-              overflowY: "auto",
-              overflowX: "hidden",
+              overflow: "hidden",
             }}
           >
             <Outlet />

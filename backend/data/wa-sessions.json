@@ -1,11 +1,11 @@
 {
-  "activeSessionId": "akun-wa",
+  "activeSessionId": "akun-wa-3",
   "sessions": [
     {
       "id": "akun-wa-2",
       "label": "PT Pilar Niaga Makmur (6281113908752)",
       "createdAt": "2026-04-16T07:08:55.711Z",
-      "lastUsedAt": "2026-05-13T11:20:32.050Z",
+      "lastUsedAt": "2026-06-29T04:39:14.830Z",
       "lastKnownNumber": "6281113908752",
       "lastKnownName": "PT Pilar Niaga Makmur",
       "lastKnownPlatform": "smba"
@@ -14,7 +14,7 @@
       "id": "akun-wa",
       "label": "PT Pilar Niaga Makmur LK (6281113908753)",
       "createdAt": "2026-04-16T07:13:15.997Z",
-      "lastUsedAt": "2026-06-08T08:16:13.848Z",
+      "lastUsedAt": "2026-06-29T04:44:09.613Z",
       "lastKnownNumber": "6281113908753",
       "lastKnownName": "PT Pilar Niaga Makmur LK",
       "lastKnownPlatform": "smba"
@@ -23,7 +23,7 @@
       "id": "akun-wa-3",
       "label": "IT Piagam (6281190057232)",
       "createdAt": "2026-06-02T06:07:42.702Z",
-      "lastUsedAt": "2026-06-02T06:24:02.519Z",
+      "lastUsedAt": "2026-06-30T06:10:35.125Z",
       "lastKnownNumber": "6281190057232",
       "lastKnownName": "IT Piagam",
       "lastKnownPlatform": "smba"

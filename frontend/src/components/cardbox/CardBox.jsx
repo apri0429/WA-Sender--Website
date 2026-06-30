@@ -4,6 +4,7 @@ function CardBox({
   as: Component = 'article',
   eyebrow,
   title,
+  icon,
   value,
   detail,
   state,
@@ -12,6 +13,7 @@ function CardBox({
   onAction,
   actionProps,
   disabled = false,
+  accentColor,
   children,
   className,
   ...props
@@ -55,14 +57,21 @@ function CardBox({
             {title ? <h2 className="dashboard-card__title">{title}</h2> : null}
           </div>
 
-          {state ? <span className={stateClassName}>{state}</span> : null}
+          <div className="dashboard-card__meta-right">
+            {state ? <span className={stateClassName}>{state}</span> : null}
+          </div>
         </div>
       ) : null}
 
       {hasValue ? <strong className="dashboard-card__value">{value}</strong> : null}
       {detail ? <p className="dashboard-card__detail">{detail}</p> : null}
 
+      {icon ? <div className="dashboard-card__icon">{icon}</div> : null}
       {children}
+
+      {accentColor && (
+        <div className="dashboard-card__accent" style={{ background: accentColor }} />
+      )}
 
       {actionLabel ? (
         <button

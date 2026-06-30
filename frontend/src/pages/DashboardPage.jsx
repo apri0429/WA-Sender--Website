@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Dialog, DialogContent, DialogTitle,
-  FormControl, Grid, IconButton, InputAdornment, InputLabel,
-  LinearProgress, MenuItem, Select, TextField, Typography,
+  Grid, IconButton, InputAdornment,
+  LinearProgress, TextField, Typography, useMediaQuery,
 } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 
 import CardBox      from "../components/cardbox/CardBox";
 import CardBigBox   from "../components/cardbox/CardBigBox";
 import CreateButton from "../components/button/CreateButton";
-import AlertModal   from "../components/AlertModal";
 import LogsPanel    from "../components/LogsPanel";
 import api    from "../services/api";
 import socket from "../services/socket";
@@ -18,22 +19,22 @@ import socket from "../services/socket";
 import WhatsAppIcon                from "@mui/icons-material/WhatsApp";
 import SendRoundedIcon             from "@mui/icons-material/SendRounded";
 import DescriptionRoundedIcon      from "@mui/icons-material/DescriptionRounded";
+import DescriptionOutlinedIcon     from "@mui/icons-material/DescriptionOutlined";
 import AccessTimeRoundedIcon       from "@mui/icons-material/AccessTimeRounded";
-import SyncRoundedIcon             from "@mui/icons-material/SyncRounded";
-import TableChartRoundedIcon       from "@mui/icons-material/TableChartRounded";
-import PeopleAltRoundedIcon        from "@mui/icons-material/PeopleAltRounded";
-import WifiRoundedIcon             from "@mui/icons-material/WifiRounded";
-import SettingsRoundedIcon         from "@mui/icons-material/SettingsRounded";
+import GroupsRoundedIcon           from "@mui/icons-material/GroupsRounded";
 import QrCode2RoundedIcon          from "@mui/icons-material/QrCode2Rounded";
-import DeleteOutlineRoundedIcon    from "@mui/icons-material/DeleteOutlineRounded";
+import DevicesRoundedIcon          from "@mui/icons-material/DevicesRounded";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import DeleteSweepRoundedIcon      from "@mui/icons-material/DeleteSweepRounded";
 import AddRoundedIcon              from "@mui/icons-material/AddRounded";
-import SignalCellularAltRoundedIcon from "@mui/icons-material/SignalCellularAltRounded";
+import CheckCircleRoundedIcon      from "@mui/icons-material/CheckCircleRounded";
+import ChecklistRoundedIcon        from "@mui/icons-material/ChecklistRounded";
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Design tokens Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 const F = {
-  sans: "'Plus Jakarta Sans', 'Inter', sans-serif",
-  mono: "'JetBrains Mono', 'Fira Code', monospace",
+  sans: "'Manrope', 'Segoe UI', sans-serif",
+  mono: "'IBM Plex Mono', monospace",
 };
 
 const C = {
@@ -45,17 +46,17 @@ const C = {
   muted:        "#6b7280",
   subtle:       "#9ca3af",
   line:         "#e5e7eb",
-  surface:      "#f9fafb",
+  surface:      "#ffffff",
   white:        "#ffffff",
   amber:        "#92400e",
   amberBg:      "#fffbeb",
   amberBorder:  "#fde68a",
 };
 
-// ─── Shared style objects (keeps JSX clean) ───────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Shared style objects (keeps JSX clean) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 const S = {
-  page:         { fontFamily: F.sans, padding: 16, paddingBottom: 32 },
+  page:         { fontFamily: F.sans, height: "100%", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box", padding: 16, paddingBottom: 16, display: "flex", flexDirection: "column" },
   col:          { display: "flex", flexDirection: "column", gap: 16, height: "100%" },
   col12:        { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 },
   row:          { display: "flex", alignItems: "center", gap: 8 },
@@ -64,16 +65,31 @@ const S = {
 
   // cards / panels
   infoBox:      { borderRadius: 8, border: `1px solid ${C.line}`, background: C.surface, padding: "0 12px" },
-  warnBox:      { padding: "10px 14px", borderRadius: 8, background: C.amberBg, border: `1px solid ${C.amberBorder}` },
-  counterBox:   (active) => ({ padding: "10px 14px", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "space-between", background: active ? C.brandBg : C.surface, border: `1px solid ${active ? C.brandBorder : C.line}` }),
-  progressBox:  { padding: 14, borderRadius: 8, background: C.brandBg, border: `1px solid ${C.brandBorder}` },
-  summaryBox:   { padding: "10px 12px", borderRadius: 8, background: C.surface, border: `1px solid ${C.line}` },
-  delayRow:     { display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 8, background: C.surface, border: `1px solid ${C.line}` },
-  listScroll:   { flex: 1, minHeight: 0, overflow: "auto", borderRadius: 10, border: `1px solid ${C.line}` },
+  warnBox:      { padding: "7px 12px", borderRadius: 8, background: C.white, border: `1px solid ${C.brandBorder}` },
+  counterBox:   (active) => ({ padding: "8px 12px", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "space-between", background: active ? C.brandBg : C.surface, border: `1px solid ${active ? C.brandBorder : C.line}` }),
+  progressBox:  { padding: "10px 12px", borderRadius: 8, background: C.brandBg, border: `1px solid ${C.brandBorder}` },
+  summaryBox:   { padding: "8px 12px", borderRadius: 8, background: C.surface, border: `1px solid ${C.line}` },
+  delayRow:     { display: "flex", alignItems: "center", gap: 10, padding: "7px 12px", borderRadius: 8, background: C.surface, border: `1px solid ${C.line}` },
+  listScroll:   { flex: 1, minHeight: 0, overflow: "auto", borderRadius: 16, border: "1px solid #d8dee8", background: C.white, boxShadow: "0 1px 4px rgba(22,58,107,0.06)" },
+  emptyListScroll:{ background: C.white, borderColor: "#d8dee8", boxShadow: "none" },
   logScroll:    { overflow: "auto", paddingRight: 2 },
 
   // customer list row
-  custRow:      (even) => ({ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderBottom: `1px solid ${C.line}`, background: even ? C.white : C.surface }),
+  customerPanelBody: { display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 8 },
+  customerTable:     { display: "flex", flexDirection: "column", minWidth: 0 },
+  customerHead:      { position: "sticky", top: 0, zIndex: 2, display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(100px, 140px)", alignItems: "center", gap: 10, padding: "10px 14px", background: "#eef1f6", borderBottom: "1px solid #d4ddf0" },
+  customerHeadText:  { fontFamily: F.sans, fontSize: 10, fontWeight: 700, color: "var(--primary-blue)", textTransform: "uppercase", letterSpacing: "0.09em" },
+  customerRow:       (even, last = false) => ({ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(100px, 140px)", alignItems: "center", gap: 10, padding: "7px 14px", borderBottom: last ? "none" : `1px solid ${C.line}`, background: even ? "#f8fafc" : C.white, transition: "background 0.12s" }),
+  customerAvatar:    { width: 30, height: 30, fontFamily: F.sans, fontSize: 9.5, letterSpacing: "0.04em" },
+  customerName:      { fontFamily: F.sans, fontSize: 12.5, fontWeight: 600, color: C.ink, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  customerPhone:     { fontFamily: F.mono, fontSize: 11.5, color: "var(--neutral-gray)", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  customerEmpty:     { minHeight: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "24px 18px", gap: 10 },
+  customerEmptyIcon: { width: 56, height: 56, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 18, background: "linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal-dark) 100%)", color: C.white, border: "1px solid rgba(35, 57, 113, 0.22)" },
+  customerEmptyTitle:{ fontFamily: F.sans, fontSize: 13, fontWeight: 700, color: C.ink, margin: 0 },
+  customerEmptyText: { fontFamily: F.sans, fontSize: 12, color: C.subtle, lineHeight: 1.7, margin: 0, maxWidth: 240 },
+  customerFooter:    { paddingTop: 4, marginTop: 0, flexShrink: 0 },
+  customerFooterText:{ display: "flex", alignItems: "center", gap: 6, fontFamily: F.sans, fontSize: 12, color: "#8a97ad", margin: 0, lineHeight: 1.5, fontWeight: 500 },
+  customerFooterValue:{ fontFamily: F.mono, fontSize: 12, fontWeight: 700, color: "#8a97ad" },
 
   // text styles
   label:        (sz = 12.5) => ({ fontFamily: F.sans, fontSize: sz, color: C.muted }),
@@ -89,21 +105,19 @@ const S = {
   qrBody:       { display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 16px", gap: 10 },
   qrFrame:      { padding: 8, borderRadius: 10, background: C.white, border: `1px solid ${C.line}` },
 
+  // compact native select
+  sessionSelectWrap: { display: "flex", flexDirection: "column", gap: 4 },
+  sessionSelectLabel:{ fontFamily: F.sans, fontSize: 12, fontWeight: 700, color: C.muted, letterSpacing: "0.02em" },
+  sessionSelectBox:  { position: "relative" },
+  sessionSelect:     { width: "100%", height: 36, appearance: "none", WebkitAppearance: "none", borderRadius: 10, border: `1px solid ${C.line}`, background: C.white, color: C.text, fontFamily: F.sans, fontSize: 13, fontWeight: 500, padding: "0 34px 0 11px", outline: "none", boxShadow: "0 3px 8px rgba(22, 58, 107, 0.04)", cursor: "pointer" },
+  sessionSelectIcon: { position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: C.subtle, pointerEvents: "none", fontSize: 20 },
+
   // MUI overrides
-  fieldSx: {
-    "& .MuiOutlinedInput-root": {
-      borderRadius: "8px", background: C.white, fontFamily: F.sans, fontSize: 13.5,
-      "& fieldset": { borderColor: C.line },
-      "&:hover fieldset": { borderColor: C.subtle },
-      "&.Mui-focused fieldset": { borderColor: C.brand, borderWidth: "1.5px" },
-    },
-    "& .MuiInputLabel-root": { fontFamily: F.sans, fontSize: 13.5 },
-    "& .MuiInputLabel-root.Mui-focused": { color: C.brand },
-  },
   delaySx: {
-    width: 120,
+    width: 108,
     "& .MuiOutlinedInput-root": {
-      borderRadius: "7px", fontFamily: F.mono, fontSize: 13,
+      borderRadius: "7px", fontFamily: F.mono, fontSize: 12,
+      "& .MuiOutlinedInput-input": { padding: "6px 10px" },
       "& fieldset": { borderColor: C.line },
       "&.Mui-focused fieldset": { borderColor: C.brand },
     },
@@ -112,13 +126,14 @@ const S = {
   // primary action button
   primaryBtn: (full = false, disabled = false) => ({
     ...(full ? { width: "100%" } : {}),
-    justifyContent: "center", gap: 8, fontSize: 13.5,
+    justifyContent: "center", gap: 6, fontSize: 13,
+    padding: "0 14px", minHeight: 36,
     opacity: disabled ? 0.5 : 1,
     cursor:  disabled ? "not-allowed" : "pointer",
   }),
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 function normalizeProgress(p) {
   const current = Number(p?.current) || 0;
@@ -131,7 +146,7 @@ function normalizeSessions(sessions) {
   if (!Array.isArray(sessions)) return [];
   return sessions.map((s) => ({
     id:                  s?.id || "",
-    label:               s?.label || s?.id || "Akun WhatsApp",
+    label:               s?.label || s?.id || "WhatsApp Account",
     isActive:            !!s?.isActive,
     runtimeReady:        !!s?.runtimeReady,
     runtimeInitializing: !!s?.runtimeInitializing,
@@ -142,70 +157,494 @@ function normalizeSessions(sessions) {
   }));
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Sub-components Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
-function QRDialog({ waQr, waQrAt, whatsappReady, formatSyncTime, onClose }) {
-  const open = !whatsappReady && !!waQr;
+function SessionDropdown({ sessions, value, onChange, disabled }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const selected = sessions.find((s) => s.id === value) || null;
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth
-      PaperProps={{ sx: { borderRadius: "16px", fontFamily: F.sans, overflow: "hidden" } }}>
-      <DialogTitle sx={{ fontFamily: F.sans, fontWeight: 700, fontSize: 15, color: C.ink, pb: 0.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <QrCode2RoundedIcon style={{ fontSize: 18, color: C.brand }} />
-          Scan QR Code
+    <div ref={ref} style={{ position: "relative", width: "100%" }}>
+      <button
+        type="button"
+        onClick={() => { if (!disabled) setOpen((v) => !v); }}
+        style={{
+          width: "100%", height: 44, display: "flex", alignItems: "center", justifyContent: "space-between",
+          borderRadius: 999, border: `1.5px solid ${open ? C.brand : "#d4ddf0"}`,
+          background: "linear-gradient(180deg, #f8fafc 0%, #eef1f6 100%)",
+          padding: "0 14px 0 18px", cursor: disabled ? "not-allowed" : "pointer",
+          opacity: disabled ? 0.65 : 1, outline: "none",
+          boxShadow: open ? `0 0 0 3px ${C.brandBg}` : "0 2px 8px rgba(22,58,107,0.07)",
+          transition: "border-color 0.18s, box-shadow 0.18s",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: selected?.runtimeReady ? "#16a34a" : selected ? "#f59e0b" : C.subtle }} />
+          <span style={{ fontFamily: F.sans, fontSize: 13, fontWeight: 600, color: selected ? C.ink : C.subtle, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {sessions.length === 0 ? "No saved account yet" : selected?.label || "Select account"}
+          </span>
         </div>
-        <IconButton size="small" onClick={onClose} sx={{ color: C.subtle }}>
-          <CloseRoundedIcon sx={{ fontSize: 18 }} />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent sx={{ pt: 1, pb: 3, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-        <p style={{ fontFamily: F.sans, fontSize: 12, color: C.brand, margin: 0, textAlign: "center" }}>
-          WhatsApp → Perangkat Tertaut → Tautkan Perangkat
-        </p>
-        <div style={{ padding: 10, borderRadius: 12, background: C.white, border: `1.5px solid ${C.brandBorder}`, boxShadow: `0 4px 16px rgba(35,57,113,0.10)` }}>
-          <QRCodeSVG value={waQr} size={200} bgColor="#ffffff" fgColor="#0c111b" level="M" />
+        <KeyboardArrowDownRoundedIcon style={{ fontSize: 20, color: C.brand, flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
+      </button>
+
+      {open && sessions.length > 0 && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 999,
+          background: C.white, border: `1.5px solid ${C.brandBorder}`, borderRadius: 14,
+          boxShadow: "0 8px 32px rgba(22,58,107,0.13), 0 2px 8px rgba(22,58,107,0.07)",
+          overflow: "hidden",
+        }}>
+          <div style={{ padding: "6px 10px 4px", borderBottom: `1px solid ${C.line}` }}>
+            <span style={{ fontFamily: F.sans, fontSize: 10, fontWeight: 700, color: C.subtle, textTransform: "uppercase", letterSpacing: "0.07em" }}>WA Accounts</span>
+          </div>
+          {sessions.map((s) => {
+            const isActive = s.id === value;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => { onChange(s.id); setOpen(false); }}
+                style={{
+                  width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 14px",
+                  background: isActive ? C.brandBg : "transparent", border: "none", cursor: "pointer",
+                  borderBottom: `1px solid ${C.line}`, transition: "background 0.12s", textAlign: "left",
+                }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#f4f6fa"; }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+              >
+                <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: s.runtimeReady ? "#16a34a" : "#f59e0b" }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: F.sans, fontSize: 12.5, fontWeight: isActive ? 700 : 500, color: isActive ? C.brand : C.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {s.label || s.id}
+                  </div>
+                  {s.lastKnownNumber && (
+                    <div style={{ fontFamily: F.mono, fontSize: 10.5, color: C.muted, marginTop: 1 }}>{s.lastKnownNumber}</div>
+                  )}
+                </div>
+                {isActive && (
+                  <CheckCircleRoundedIcon style={{ fontSize: 15, color: C.brand, flexShrink: 0 }} />
+                )}
+              </button>
+            );
+          })}
         </div>
-        {waQrAt && <p style={{ ...S.mono(11), margin: 0 }}>{formatSyncTime(waQrAt)}</p>}
+      )}
+    </div>
+  );
+}
+
+function QRDialog({ open, waQr, waQrAt, formatSyncTime, onClose }) {
+  return (
+    <Dialog
+      open={!!open && !!waQr}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      slotProps={{ backdrop: { sx: { background: "rgba(10, 18, 40, 0.68)" } } }}
+      PaperProps={{
+        sx: {
+          borderRadius: "24px",
+          fontFamily: F.sans,
+          overflow: "hidden",
+          boxShadow: "0 28px 80px rgba(10, 18, 40, 0.32)",
+          border: "1px solid rgba(26, 42, 87, 0.12)",
+          background: "#ffffff",
+        },
+      }}
+    >
+      {/* Header — dark blue gradient sesuai piagam */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, padding: "20px 20px 16px", background: "linear-gradient(180deg, rgba(24, 43, 88, 1) 0%, rgba(27, 55, 112, 0.96) 100%)", borderBottom: "1px solid rgba(26, 42, 87, 0.10)" }}>
+        <div>
+          <p style={{ fontFamily: F.mono, fontSize: 11, fontWeight: 600, color: "rgba(233, 196, 106, 0.92)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
+            WhatsApp
+          </p>
+          <h2 style={{ fontFamily: F.sans, fontSize: 19, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>
+            Scan QR Code
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{ width: 36, height: 36, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: 10, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.75)", cursor: "pointer", transition: "background 0.2s, border-color 0.2s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; e.currentTarget.style.borderColor = "rgba(233,196,106,0.4)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; }}
+        >
+          <CloseRoundedIcon sx={{ fontSize: 17 }} />
+        </button>
+      </div>
+
+      {/* Body */}
+      <DialogContent sx={{ pt: "20px", pb: "24px", px: "20px", display: "flex", flexDirection: "column", alignItems: "center", gap: "14px", background: "#ffffff" }}>
+
+        {/* Step hint */}
+        <div style={{ width: "100%", padding: "9px 13px", borderRadius: 10, background: "rgba(235, 239, 247, 0.85)", border: "1px solid rgba(26, 42, 87, 0.10)", display: "flex", alignItems: "center", gap: 8 }}>
+          <WhatsAppIcon style={{ fontSize: 15, color: "#16a34a", flexShrink: 0 }} />
+          <p style={{ fontFamily: F.sans, fontSize: 12, color: C.ink, margin: 0, lineHeight: 1.5 }}>
+            WhatsApp → <strong>Perangkat Tertaut</strong> → Tautkan Perangkat
+          </p>
+        </div>
+
+        {/* QR frame */}
+        <div style={{ padding: 12, borderRadius: 16, background: "#fff", border: "1.5px solid rgba(26, 42, 87, 0.12)", boxShadow: "0 6px 24px rgba(10, 18, 40, 0.10)" }}>
+          {waQr ? (
+            <QRCodeSVG value={waQr} size={210} bgColor="#ffffff" fgColor="#0c111b" level="M" />
+          ) : (
+            <div style={{ width: 210, height: 210, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <p style={{ fontFamily: F.sans, fontSize: 12, color: C.muted, textAlign: "center" }}>Memuat QR...</p>
+            </div>
+          )}
+        </div>
+
+        {/* Timestamp */}
+        {waQrAt && (
+          <p style={{ fontFamily: F.mono, fontSize: 10.5, color: C.subtle, margin: 0 }}>
+            Diperbarui: {formatSyncTime(waQrAt)}
+          </p>
+        )}
+
+        {/* Info note */}
         <p style={{ fontFamily: F.sans, fontSize: 12, color: C.muted, textAlign: "center", maxWidth: 240, lineHeight: 1.7, margin: 0 }}>
-          QR berlaku beberapa menit. Klik <strong style={{ color: C.brand }}>Hubungkan</strong> lagi jika expired.
+          QR berlaku beberapa menit. Klik <strong style={{ color: C.brand }}>Hubungkan</strong> lagi jika sudah expired.
         </p>
       </DialogContent>
     </Dialog>
   );
 }
 
-function DataRow({ label, value, mono = false, last = false }) {
+function DataRow({ label, value, mono = false, last = false, even = false }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: last ? "none" : `1px solid ${C.line}`, gap: 8 }}>
-      <span style={{ fontFamily: F.sans, fontSize: 12.5, color: C.subtle, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontFamily: mono ? F.mono : F.sans, fontSize: mono ? 11.5 : 12.5, fontWeight: 500, color: "#1c2433", textAlign: "right", wordBreak: "break-all" }}>
-        {value || "—"}
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 2fr) minmax(0, 3fr)", alignItems: "center", padding: "8px 14px", borderBottom: last ? "none" : `1px solid ${C.line}`, gap: 6, background: even ? "#f8fafc" : "#ffffff" }}>
+      <span style={{ fontFamily: F.sans, fontSize: 11.5, color: C.subtle, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+      <span style={{ fontFamily: mono ? F.mono : F.sans, fontSize: mono ? 11.5 : 12.5, fontWeight: 600, color: "#1c2433", textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {value || "-"}
       </span>
     </div>
   );
 }
 
-function WaStatusBadge({ whatsappReady, waInitializing, label }) {
-  const bg    = whatsappReady ? "rgba(22,163,74,0.12)"  : waInitializing ? "rgba(217,119,6,0.12)"  : "rgba(220,38,38,0.12)";
-  const color = whatsappReady ? "#16a34a"               : waInitializing ? "#d97706"               : "#dc2626";
-  return <span className="dashboard-card__state" style={{ background: bg, color, fontSize: 11 }}>{label}</span>;
+function AnimatedCheck() {
+  return (
+    <svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <style>{`
+        @keyframes _circ { from { stroke-dashoffset: 166; } to { stroke-dashoffset: 0; } }
+        @keyframes _tick  { from { stroke-dashoffset: 48;  } to { stroke-dashoffset: 0; } }
+      `}</style>
+      <circle cx="27" cy="27" r="24" stroke="rgba(74,222,128,0.18)" strokeWidth="2.5" fill="none" />
+      <circle
+        cx="27" cy="27" r="24"
+        stroke="#4ade80" strokeWidth="2.5" fill="none"
+        strokeLinecap="round"
+        strokeDasharray="166" strokeDashoffset="166"
+        style={{ animation: "_circ 0.55s cubic-bezier(.6,0,.4,1) 0.1s forwards", animationFillMode: "both" }}
+        transform="rotate(-90 27 27)"
+      />
+      <polyline
+        points="16,27 23,34 38,19"
+        stroke="#4ade80" strokeWidth="3" fill="none"
+        strokeLinecap="round" strokeLinejoin="round"
+        strokeDasharray="48" strokeDashoffset="48"
+        style={{ animation: "_tick 0.35s cubic-bezier(.4,0,.2,1) 0.52s forwards", animationFillMode: "both" }}
+      />
+    </svg>
+  );
 }
 
-function SendSummaryBadges({ summary }) {
-  if (!summary) return null;
+function AnimatedSpinner() {
   return (
-    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-      <span className="users-table__status users-table__status--app    users-table__status--inline">Total {summary.total   || 0}</span>
-      <span className="users-table__status users-table__status--active users-table__status--inline">Berhasil {summary.success || 0}</span>
-      <span className="users-table__status users-table__status--inactive users-table__status--inline">Gagal {summary.failed  || 0}</span>
+    <svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <style>{`
+        @keyframes _spin-arc  { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes _gold-dot  { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+      `}</style>
+      <circle cx="27" cy="27" r="24" stroke="rgba(233,196,106,0.15)" strokeWidth="2.5" fill="none" />
+      <circle
+        cx="27" cy="27" r="24"
+        stroke="rgba(233,196,106,0.92)" strokeWidth="2.5" fill="none"
+        strokeLinecap="round" strokeDasharray="110 56"
+        style={{ transformOrigin: "27px 27px", animation: "_spin-arc 0.9s linear infinite" }}
+      />
+      <circle cx="27" cy="27" r="5" fill="rgba(233,196,106,0.2)" style={{ animation: "_gold-dot 1.2s ease infinite" }} />
+      <circle cx="27" cy="27" r="2.8" fill="rgba(233,196,106,0.9)" />
+    </svg>
+  );
+}
+
+function WaConnectedPopup({ open, name, number, onClose }) {
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    if (!open) { setFading(false); return; }
+    const t1 = window.setTimeout(() => setFading(true),  3600);
+    const t2 = window.setTimeout(() => { onClose(); setFading(false); }, 4050);
+    return () => { window.clearTimeout(t1); window.clearTimeout(t2); };
+  }, [open]);
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{`
+        @keyframes _wap-in  { 0% { opacity:0; transform:scale(0.86); } 65% { transform:scale(1.03); } 100% { opacity:1; transform:scale(1); } }
+        @keyframes _wap-out { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.86); } }
+      `}</style>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 1400, width: 290 }}>
+        <div style={{
+          borderRadius: 18, overflow: "hidden",
+          border: "1px solid rgba(26,42,87,0.14)",
+          boxShadow: "0 20px 56px rgba(10,18,40,0.30), 0 4px 14px rgba(10,18,40,0.12)",
+          animation: fading ? "_wap-out 0.38s cubic-bezier(.4,0,1,1) forwards" : "_wap-in 0.46s cubic-bezier(.22,.68,0,1.1) both",
+        }}>
+          {/* Header */}
+          <div style={{ padding: "16px 14px 14px", background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)", borderBottom: "1px solid rgba(26,42,87,0.10)", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ flexShrink: 0 }}><AnimatedCheck /></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: F.mono, fontSize: 10, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 3px" }}>WhatsApp</p>
+              <h3 style={{ fontFamily: F.sans, fontSize: 15, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>Berhasil Terhubung!</h3>
+            </div>
+          </div>
+          {/* Body */}
+          {(name || number) && (
+            <div style={{ padding: "10px 14px 12px", background: "#fff", display: "flex", flexDirection: "column", gap: 5 }}>
+              {name && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontFamily: F.sans, fontSize: 10.5, color: C.subtle, flexShrink: 0, minWidth: 44 }}>Nama</span>
+                  <span style={{ fontFamily: F.sans, fontSize: 12.5, fontWeight: 700, color: C.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+                </div>
+              )}
+              {number && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontFamily: F.sans, fontSize: 10.5, color: C.subtle, flexShrink: 0, minWidth: 44 }}>Nomor</span>
+                  <span style={{ fontFamily: F.mono, fontSize: 12, fontWeight: 600, color: C.ink }}>{number}</span>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Progress bar auto-close */}
+          <div style={{ height: 3, background: "rgba(26,42,87,0.08)" }}>
+            <div
+              style={{ height: "100%", background: "linear-gradient(90deg, #4ade80, #22c55e)", width: fading ? "100%" : "0%", transition: fading ? "none" : "width 3.6s linear" }}
+              ref={(el) => { if (el && !fading) window.requestAnimationFrame(() => { el.style.width = "100%"; }); }}
+            />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function WaPreparingPopup({ open }) {
+  if (!open) return null;
+  return (
+    <>
+      <style>{`
+        @keyframes _prep-in  { 0% { opacity:0; transform:scale(0.86); } 65% { transform:scale(1.03); } 100% { opacity:1; transform:scale(1); } }
+        @keyframes _prep-out { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.86); } }
+        @keyframes _scan-bar { 0% { left:-40%; } 100% { left:140%; } }
+      `}</style>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 1400, width: 290 }}>
+        <div style={{
+          borderRadius: 18, overflow: "hidden",
+          border: "1px solid rgba(26,42,87,0.14)",
+          boxShadow: "0 20px 56px rgba(10,18,40,0.30), 0 4px 14px rgba(10,18,40,0.12)",
+          animation: "_prep-in 0.46s cubic-bezier(.22,.68,0,1.1) both",
+        }}>
+          <div style={{ padding: "16px 14px 18px", background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ flexShrink: 0 }}><AnimatedSpinner /></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: F.mono, fontSize: 10, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 3px" }}>WhatsApp</p>
+              <h3 style={{ fontFamily: F.sans, fontSize: 15, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>Menyiapkan Koneksi...</h3>
+              <p style={{ fontFamily: F.sans, fontSize: 11.5, color: "rgba(255,255,255,0.52)", margin: "4px 0 0", lineHeight: 1.4 }}>Sedang memuat QR Code</p>
+            </div>
+          </div>
+          <div style={{ height: 3, background: "rgba(26,42,87,0.08)", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, height: "100%", width: "38%", background: "linear-gradient(90deg, transparent, rgba(233,196,106,0.85), transparent)", animation: "_scan-bar 1.4s ease-in-out infinite" }} />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function AnimatedX() {
+  return (
+    <svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <style>{`
+        @keyframes _err-circ { from { stroke-dashoffset: 166; } to { stroke-dashoffset: 0; } }
+        @keyframes _err-x1   { from { stroke-dashoffset: 32; } to { stroke-dashoffset: 0; } }
+        @keyframes _err-x2   { from { stroke-dashoffset: 32; } to { stroke-dashoffset: 0; } }
+      `}</style>
+      <circle cx="27" cy="27" r="24" stroke="rgba(239,68,68,0.15)" strokeWidth="2.5" fill="none" />
+      <circle
+        cx="27" cy="27" r="24"
+        stroke="#ef4444" strokeWidth="2.5" fill="none"
+        strokeLinecap="round"
+        strokeDasharray="166" strokeDashoffset="166"
+        style={{ animation: "_err-circ 0.55s cubic-bezier(.6,0,.4,1) 0.1s forwards", animationFillMode: "both" }}
+        transform="rotate(-90 27 27)"
+      />
+      <line x1="18" y1="18" x2="36" y2="36" stroke="#ef4444" strokeWidth="3" strokeLinecap="round"
+        strokeDasharray="32" strokeDashoffset="32"
+        style={{ animation: "_err-x1 0.22s cubic-bezier(.4,0,.2,1) 0.52s forwards", animationFillMode: "both" }}
+      />
+      <line x1="36" y1="18" x2="18" y2="36" stroke="#ef4444" strokeWidth="3" strokeLinecap="round"
+        strokeDasharray="32" strokeDashoffset="32"
+        style={{ animation: "_err-x2 0.22s cubic-bezier(.4,0,.2,1) 0.66s forwards", animationFillMode: "both" }}
+      />
+    </svg>
+  );
+}
+
+function WaErrorPopup({ open, message, onClose }) {
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    if (!open) { setFading(false); return; }
+    const t1 = window.setTimeout(() => setFading(true), 4000);
+    const t2 = window.setTimeout(() => { onClose(); setFading(false); }, 4450);
+    return () => { window.clearTimeout(t1); window.clearTimeout(t2); };
+  }, [open]);
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{`
+        @keyframes _err-in  { 0% { opacity:0; transform:scale(0.86); } 65% { transform:scale(1.03); } 100% { opacity:1; transform:scale(1); } }
+        @keyframes _err-out { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.86); } }
+      `}</style>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 1400, width: 290 }}>
+        <div style={{
+          borderRadius: 18, overflow: "hidden",
+          border: "1px solid rgba(239,68,68,0.18)",
+          boxShadow: "0 20px 56px rgba(10,18,40,0.30), 0 4px 14px rgba(10,18,40,0.12)",
+          animation: fading ? "_err-out 0.38s cubic-bezier(.4,0,1,1) forwards" : "_err-in 0.46s cubic-bezier(.22,.68,0,1.1) both",
+        }}>
+          <div style={{ padding: "16px 14px 14px", background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)", borderBottom: "1px solid rgba(26,42,87,0.10)", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ flexShrink: 0 }}><AnimatedX /></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: F.mono, fontSize: 10, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 3px" }}>WhatsApp</p>
+              <h3 style={{ fontFamily: F.sans, fontSize: 15, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>Koneksi Gagal</h3>
+            </div>
+          </div>
+          {message && (
+            <div style={{ padding: "10px 14px 12px", background: "#fff" }}>
+              <p style={{ fontFamily: F.sans, fontSize: 12.5, color: "#b42318", margin: 0, lineHeight: 1.5 }}>{message}</p>
+            </div>
+          )}
+          <div style={{ height: 3, background: "rgba(26,42,87,0.08)" }}>
+            <div
+              style={{ height: "100%", background: "linear-gradient(90deg, #ef4444, #dc2626)", width: fading ? "100%" : "0%", transition: fading ? "none" : "width 4s linear" }}
+              ref={(el) => { if (el && !fading) window.requestAnimationFrame(() => { el.style.width = "100%"; }); }}
+            />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function SendResultCard({ summary, label = "Hasil Terakhir" }) {
+  if (!summary) return null;
+  const total   = summary.total   || 0;
+  const success = summary.success || 0;
+  const failed  = summary.failed  || 0;
+  return (
+    <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid rgba(26, 42, 87, 0.12)", boxShadow: "0 4px 16px rgba(10, 18, 40, 0.08)" }}>
+      {/* Header piagam */}
+      <div style={{ padding: "11px 14px 10px", background: "linear-gradient(180deg, rgba(24, 43, 88, 1) 0%, rgba(27, 55, 112, 0.96) 100%)", borderBottom: "1px solid rgba(26, 42, 87, 0.10)" }}>
+        <p style={{ fontFamily: F.mono, fontSize: 10, fontWeight: 600, color: "rgba(233, 196, 106, 0.92)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>
+          {label}
+        </p>
+        <h3 style={{ fontFamily: F.sans, fontSize: 14, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>
+          Pengiriman Selesai
+        </h3>
+      </div>
+      {/* Body */}
+      <div style={{ padding: "10px 14px", background: "#fff", display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: F.sans, fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 7, background: "rgba(26, 42, 87, 0.07)", color: C.ink }}>
+          Total <span style={{ fontFamily: F.mono }}>{total}</span>
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: F.sans, fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 7, background: "rgba(42, 157, 143, 0.12)", color: "#18786e" }}>
+          Berhasil <span style={{ fontFamily: F.mono }}>{success}</span>
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: F.sans, fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 7, background: "rgba(239, 68, 68, 0.10)", color: "#b42318" }}>
+          Gagal <span style={{ fontFamily: F.mono }}>{failed}</span>
+        </span>
+      </div>
     </div>
   );
 }
 
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Main component Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+
+function DeleteConfirmPopup({ open, label, onConfirm, onCancel }) {
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => { if (!open) setFading(false); }, [open]);
+
+  const handleCancel  = () => { setFading(true); setTimeout(() => { setFading(false); onCancel(); }, 320); };
+  const handleConfirm = () => { onConfirm(); };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{`
+        @keyframes _del-in  { 0% { opacity:0; transform:scale(0.88); } 65% { transform:scale(1.02); } 100% { opacity:1; transform:scale(1); } }
+        @keyframes _del-out { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.88); } }
+      `}</style>
+      <div style={{ position: "fixed", inset: 0, zIndex: 1300, background: "rgba(10,18,40,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}
+        onClick={handleCancel}>
+        <div onClick={(e) => e.stopPropagation()} style={{ width: 300, borderRadius: 18, overflow: "hidden", border: "1px solid rgba(239,68,68,0.18)", boxShadow: "0 20px 56px rgba(10,18,40,0.30), 0 4px 14px rgba(10,18,40,0.12)", animation: fading ? "_del-out 0.32s cubic-bezier(.4,0,1,1) forwards" : "_del-in 0.42s cubic-bezier(.22,.68,0,1.1) both" }}>
+          {/* Header */}
+          <div style={{ padding: "16px 16px 14px", background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)", borderBottom: "1px solid rgba(26,42,87,0.10)", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <DeleteSweepRoundedIcon style={{ fontSize: 20, color: "#f87171" }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: F.mono, fontSize: 10, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 3px" }}>WhatsApp</p>
+              <h3 style={{ fontFamily: F.sans, fontSize: 15, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>Hapus Session</h3>
+            </div>
+          </div>
+          {/* Body */}
+          <div style={{ padding: "14px 16px", background: "#fff" }}>
+            <p style={{ fontFamily: F.sans, fontSize: 12.5, color: C.text, margin: "0 0 4px", lineHeight: 1.6 }}>
+              Hapus akun WhatsApp <strong style={{ color: C.ink }}>{label}</strong>?
+            </p>
+            <p style={{ fontFamily: F.sans, fontSize: 11.5, color: C.muted, margin: 0, lineHeight: 1.5 }}>
+              Session akan dihapus permanen dan tidak bisa dikembalikan.
+            </p>
+          </div>
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 8, padding: "0 16px 16px", background: "#fff" }}>
+            <button type="button" onClick={handleCancel}
+              style={{ flex: 1, height: 36, borderRadius: 10, border: `1px solid ${C.line}`, background: "#f8fafc", color: C.text, fontFamily: F.sans, fontSize: 12.5, fontWeight: 600, cursor: "pointer", transition: "background 0.15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#eef1f6"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#f8fafc"; }}>
+              Batal
+            </button>
+            <button type="button" onClick={handleConfirm}
+              style={{ flex: 1, height: 36, borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", background: "linear-gradient(180deg, #ef4444 0%, #dc2626 100%)", color: "#fff", fontFamily: F.sans, fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "opacity 0.15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}>
+              <DeleteSweepRoundedIcon style={{ fontSize: 14 }} />
+              Hapus
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
+  const isMobile = useMediaQuery("(max-width:899px)");
   const [customers,            setCustomers]            = useState([]);
   const [logs,                 setLogs]                 = useState([]);
   const [delay,                setDelay]                = useState(4000);
@@ -235,23 +674,23 @@ export default function DashboardPage() {
   const [activeWaSessionId,    setActiveWaSessionId]    = useState("");
   const [pendingWaSessionId,   setPendingWaSessionId]   = useState("");
   const [waAccount,            setWaAccount]            = useState({ name: "", number: "", wid: "", platform: "" });
-  const [alert,                setAlert]                = useState({ open: false, message: "", severity: "info" });
   const [qrOpen,               setQrOpen]               = useState(false);
+  const [waPopup,              setWaPopup]              = useState(false);
+  const [waError,              setWaError]              = useState({ open: false, message: "" });
+  const [deleteConfirm,        setDeleteConfirm]        = useState({ open: false, label: "" });
+  const [headerSlot,           setHeaderSlot]           = useState(null);
   const lastWhatsappLogRef = useRef("");
+  const logSeqRef          = useRef(0);
 
-  // Load font
   useEffect(() => {
-    if (typeof document === "undefined" || document.getElementById("pjs-font")) return;
-    const link = Object.assign(document.createElement("link"), {
-      id: "pjs-font", rel: "stylesheet",
-      href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap",
-    });
-    document.head.appendChild(link);
+    setTimeout(() => setHeaderSlot(document.getElementById("header-wa-slot")), 100);
   }, []);
 
   // Utilities
-  const showToast = (msg, sev = "success") => setAlert({ open: true, message: msg, severity: sev });
-  const addLog    = (type, message) => setLogs((prev) => [{ type, message, time: new Date().toISOString() }, ...prev]);
+  const addLog = (type, message) => {
+    const seq = logSeqRef.current++;
+    setLogs((prev) => [{ type, message, time: new Date().toISOString(), _seq: seq }, ...prev]);
+  };
 
   const addWhatsappLogOnce = (key, type, message) => {
     if (lastWhatsappLogRef.current === key) return;
@@ -262,7 +701,7 @@ export default function DashboardPage() {
   const formatSyncTime = (v) => {
     if (!v) return "-";
     const d = new Date(v);
-    return Number.isNaN(d.getTime()) ? v : d.toLocaleString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    return Number.isNaN(d.getTime()) ? v : d.toLocaleString("en-US", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
   };
 
   // WA state helpers
@@ -281,7 +720,6 @@ export default function DashboardPage() {
     setWaAccount({ name: data?.account?.name || "", number: data?.account?.number || "", wid: data?.account?.wid || "", platform: data?.account?.platform || "" });
   };
 
-  // WA session sync
   const syncWhatsappSession = async ({ showToastMessage = false, sessionId = activeWaSessionId, createNew = false } = {}) => {
     try {
       setWaInitializing(true);
@@ -289,7 +727,7 @@ export default function DashboardPage() {
 
       applyWhatsappState(data, { preserveActiveSelection: createNew });
       if (createNew && data?.activeSessionId) setPendingWaSessionId(data.activeSessionId);
-      if (data.whatsappReady) { if (showToastMessage) showToast(data.message || "WhatsApp terhubung", "success"); return true; }
+      if (data.whatsappReady) { return true; }
 
       if (!data.qr) {
         const targetId = data?.activeSessionId || sessionId || "";
@@ -297,17 +735,16 @@ export default function DashboardPage() {
           await new Promise((r) => window.setTimeout(r, 1000));
           const { data: sd } = await api.post("/check-whatsapp", { sessionId: targetId });
           applyWhatsappState(sd, { preserveActiveSelection: createNew });
-          if (sd.whatsappReady) { if (showToastMessage) showToast(sd.message || "WhatsApp terhubung", "success"); setPendingWaSessionId(""); return true; }
+          if (sd.whatsappReady) { setPendingWaSessionId(""); return true; }
           if (sd.qr) break;
         }
       }
-      if (showToastMessage) showToast(data.message || "Silakan scan QR code.", "warning");
       return false;
     } catch (err) {
-      const m = err?.response?.data?.message || "Gagal konek WhatsApp";
+      const m = err?.response?.data?.message || "Failed to connect WhatsApp";
       setWhatsappReady(false); setWaInitializing(false); setWaQr("");
       if (createNew) setPendingWaSessionId("");
-      if (showToastMessage) showToast(m, "error");
+      setWaError({ open: true, message: m });
       addLog("error", m);
       return false;
     }
@@ -319,15 +756,14 @@ export default function DashboardPage() {
       const { data } = await api.post("/check-whatsapp", { sessionId });
       applyWhatsappState(data);
       setSending(!!data?.isSending);
-      if (data?.whatsappReady)  { addWhatsappLogOnce("wa-ready",     "success", "WhatsApp siap digunakan");  if (showMsg) showToast("WhatsApp sudah login", "success"); }
-      else if (data?.needScan)  { addWhatsappLogOnce("wa-need-scan", "info",    "Silakan scan QR WhatsApp"); if (showMsg) showToast("Silakan scan QR WhatsApp", "warning"); }
-      else if (showMsg)           showToast("WhatsApp belum siap", "warning");
+      if (data?.whatsappReady)  { addWhatsappLogOnce("wa-ready", "success", "WhatsApp is ready to use"); }
+      else if (data?.needScan)  { addWhatsappLogOnce("wa-need-scan", "info", "Please scan the WhatsApp QR"); }
       return !!data?.whatsappReady;
     } catch (err) {
-      const m = err?.response?.data?.message || "Gagal cek status WhatsApp";
+      const m = err?.response?.data?.message || "Failed to check WhatsApp status";
       setWhatsappReady(false);
       addWhatsappLogOnce(`wa-error-${m}`, "error", m);
-      if (showMsg) showToast(m, "error");
+      if (showMsg) setWaError({ open: true, message: m });
       return false;
     } finally { setCheckingWhatsapp(false); }
   };
@@ -341,11 +777,10 @@ export default function DashboardPage() {
       setSheetNames(sheets);
       setSelectedSheet(data.selectedSheet || sheets[0] || "");
       setAutoSync(!!data.autoSync);
-      if (showMsg) showToast(sheets.length ? `${sheets.length} sheet dimuat` : "Tidak ada sheet", sheets.length ? "success" : "warning");
+      if (showMsg) addLog("success", sheets.length ? `${sheets.length} sheets loaded` : "No sheets found");
       return sheets;
     } catch (err) {
-      const m = err?.response?.data?.message || "Gagal mengambil daftar sheet";
-      if (showMsg) showToast(m, "error");
+      const m = err?.response?.data?.message || "Failed to fetch sheet list";
       addLog("error", m);
       return [];
     } finally { setLoadingSheets(false); }
@@ -362,14 +797,12 @@ export default function DashboardPage() {
       setAutoSync(!!data.autoSync);
       setLastSyncAt(data.lastSyncAt || null);
       setSourceMode("gsheet");
-      setFileInfo({ fileName: `Google Sheet — ${data.selectedSheet || "-"}`, message: data.message || `${synced.length} pelanggan dimuat` });
-      if (!silentLog) addLog("success", data.message || `Sync ${synced.length} pelanggan`);
-      if (showMsg) showToast(data.message || `Sync ${synced.length} pelanggan berhasil`, "success");
+      setFileInfo({ fileName: `Google Sheet - ${data.selectedSheet || "-"}`, message: data.message || `${synced.length} customers loaded` });
+      if (!silentLog) addLog("success", data.message || `Synced ${synced.length} customers`);
       return synced;
     } catch (err) {
-      const m = err?.response?.data?.message || "Gagal sync Google Sheet";
+      const m = err?.response?.data?.message || "Failed to sync Google Sheet";
       addLog("error", m);
-      if (showMsg) showToast(m, "error");
       return [];
     } finally { setSyncingSheet(false); }
   };
@@ -379,12 +812,11 @@ export default function DashboardPage() {
       setSavingGsheet(true);
       const { data } = await api.post("/gsheet", { url, selectedSheet: selected || "", autoSync: !!auto });
       setGsheetUrl(url); setSelectedSheet(selected || ""); setAutoSync(!!auto);
-      if (showSuccess) showToast(data?.message || "Konfigurasi tersimpan", "success");
-      addLog("success", "Konfigurasi Google Sheet tersimpan");
+      addLog("success", "Google Sheet configuration saved");
       return true;
     } catch (err) {
-      const m = err?.response?.data?.message || "Gagal simpan konfigurasi";
-      addLog("error", m); showToast(m, "error");
+      const m = err?.response?.data?.message || "Failed to save configuration";
+      addLog("error", m);
       return false;
     } finally { setSavingGsheet(false); }
   };
@@ -394,17 +826,16 @@ export default function DashboardPage() {
       setSelectedSheet(val);
       const { data } = await api.post("/gsheet/select-sheet", { selectedSheet: val });
       setSheetNames(Array.isArray(data.sheets) ? data.sheets : []);
-      showToast(data.message || "Sheet dipilih", "success");
       addLog("success", `Sheet: ${val}`);
     } catch (err) {
-      const m = err?.response?.data?.message || "Gagal memilih sheet";
-      addLog("error", m); showToast(m, "error");
+      const m = err?.response?.data?.message || "Failed to select sheet";
+      addLog("error", m);
     }
   };
 
   const handleSyncGSheet = async () => {
-    if (!gsheetUrl)                                  { showToast("URL Google Sheet belum diisi", "warning"); return; }
-    if (!selectedSheet && sheetNames.length > 0)     { showToast("Pilih sheet terlebih dahulu", "warning"); return; }
+    if (!gsheetUrl)                              { addLog("warning", "Google Sheet URL has not been filled in yet"); return; }
+    if (!selectedSheet && sheetNames.length > 0) { addLog("warning", "Please select a sheet first"); return; }
     await loadCustomersFromGSheet(selectedSheet, true, false);
   };
 
@@ -422,12 +853,10 @@ export default function DashboardPage() {
       setPdfLogRows(rows);
       setCustomers(valid);
       setSourceMode("pdf");
-      setFileInfo({ fileName: `Hasil PDF — ${valid.length} pelanggan`, message: `${valid.length} dari ${rows.length} siap kirim` });
-      if (showMsg) showToast(`${valid.length} pelanggan dari Hasil PDF dimuat`, "success");
-      addLog("success", `${valid.length} pelanggan dari Hasil PDF`);
+      setFileInfo({ fileName: `PDF Results - ${valid.length} customers`, message: `${valid.length} of ${rows.length} are ready to send` });
+      addLog("success", `${valid.length} customers loaded from PDF results`);
       return valid;
     } catch {
-      if (showMsg) showToast("Gagal muat data dari Hasil PDF", "error");
       return [];
     }
   };
@@ -441,84 +870,86 @@ export default function DashboardPage() {
       setCustomers(data?.data || []);
       setSourceMode("manual");
       setFileInfo({ fileName: data?.fileName, message: data?.message });
-      addLog("success", data?.message || "Upload berhasil");
-      showToast(data?.message || "Upload berhasil", "success");
+      addLog("success", data?.message || "Upload successful");
     } catch (err) {
-      const m = err?.response?.data?.message || "Upload gagal";
-      addLog("error", m); showToast(m, "error");
+      const m = err?.response?.data?.message || "Upload failed";
+      addLog("error", m);
     }
   };
 
   // WA handlers
   const handleInitWhatsapp = async () => {
-    addLog("info", "Menghubungkan WhatsApp...");
+    addLog("info", "Connecting WhatsApp...");
     const ready = await syncWhatsappSession({ showToastMessage: true, sessionId: activeWaSessionId, createNew: !activeWaSessionId });
-    addLog("info", ready ? "Session aktif" : "Menunggu scan QR");
+    addLog("info", ready ? "Session is active" : "Waiting for QR scan");
   };
 
   const handleAddWhatsappAccount = async () => {
-    addLog("info", "Menyiapkan akun WhatsApp baru...");
+    addLog("info", "Preparing a new WhatsApp account...");
     const ready = await syncWhatsappSession({ showToastMessage: true, createNew: true });
-    addLog("info", ready ? "Akun baru aktif" : "QR akun baru siap discan");
+    addLog("info", ready ? "New account is active" : "New account QR is ready to scan");
   };
 
   const handleSelectWhatsappSession = async (sessionId) => {
     setActiveWaSessionId(sessionId);
     const session = waSessions.find((item) => item.id === sessionId);
     setWaAccount({ name: session?.lastKnownName || "", number: session?.lastKnownNumber || "", wid: "", platform: session?.lastKnownPlatform || "" });
-    addLog("info", `Memilih akun ${session?.label || sessionId}`);
+    addLog("info", `Selecting account ${session?.label || sessionId}`);
     try {
       setWaInitializing(true);
       const { data } = await api.post("/select-whatsapp-session", { sessionId });
       applyWhatsappState(data);
-      addLog(data?.whatsappReady ? "success" : "info", data?.message || "Akun WhatsApp dipilih");
+      addLog(data?.whatsappReady ? "success" : "info", data?.message || "WhatsApp account selected");
     } catch (err) {
-      const m = err?.response?.data?.message || "Gagal memilih akun WhatsApp";
+      const m = err?.response?.data?.message || "Failed to select WhatsApp account";
       setWhatsappReady(false); setWaInitializing(false); setWaQr("");
-      addLog("error", m); showToast(m, "error");
+      addLog("error", m);
     }
   };
 
-  const handleDeleteWhatsappSession = async () => {
-    if (!activeWaSessionId) { showToast("Pilih akun WhatsApp dulu", "warning"); return; }
-    const session  = waSessions.find((s) => s.id === activeWaSessionId) || null;
-    const label    = session?.lastKnownName || session?.label || activeWaSessionId;
-    if (!window.confirm(`Hapus sesi WhatsApp ${label}?`)) return;
+  const handleDeleteWhatsappSession = () => {
+    if (!activeWaSessionId) { addLog("warning", "Please select a WhatsApp account first"); return; }
+    const session = waSessions.find((s) => s.id === activeWaSessionId) || null;
+    const label   = session?.lastKnownName || session?.label || activeWaSessionId;
+    setDeleteConfirm({ open: true, label });
+  };
+
+  const confirmDeleteSession = async () => {
+    setDeleteConfirm({ open: false, label: "" });
+    const session = waSessions.find((s) => s.id === activeWaSessionId) || null;
+    const label   = session?.lastKnownName || session?.label || activeWaSessionId;
     try {
       const { data } = await api.post("/delete-whatsapp-session", { sessionId: activeWaSessionId });
       applyWhatsappState(data);
-      showToast(data.message || "Sesi berhasil dihapus", "success");
-      addLog("success", data.message || `Sesi ${label} dihapus`);
+      addLog("success", data.message || `Session ${label} deleted`);
     } catch (err) {
-      const m = err?.response?.data?.message || "Gagal menghapus sesi WhatsApp";
-      addLog("error", m); showToast(m, "error");
+      const m = err?.response?.data?.message || "Failed to delete WhatsApp session";
+      addLog("error", m);
     }
   };
 
   const handleSend = async () => {
     if (sending)                return;
-    if (!activeWaSessionId)     { showToast("Pilih akun WhatsApp dulu", "warning"); return; }
-    if (!customers.length)      { showToast("Data pelanggan kosong", "error");       return; }
-    if (Number(delay) < 3000)   { showToast("Delay minimal 3000 ms", "warning");    return; }
+    if (!activeWaSessionId)     { addLog("warning", "Please select a WhatsApp account first"); return; }
+    if (!customers.length)      { addLog("error",   "Customer data is empty");               return; }
+    if (Number(delay) < 3000)   { addLog("warning", "Minimum delay is 3000 ms");             return; }
     try {
       setSending(true); setLastSendSummary(null); setLastSendResults([]);
       setProgress({ current: 0, total: customers.length });
       const ready = await checkWhatsappStatus(false);
-      if (!ready) { setSending(false); showToast("WhatsApp belum siap. Hubungkan dan scan QR dulu.", "warning"); return; }
-      addLog("info", `Mulai kirim ke ${customers.length} pelanggan...`);
+      if (!ready) { setSending(false); addLog("warning", "WhatsApp is not ready yet. Please connect first."); return; }
+      addLog("info", `Starting to send messages to ${customers.length} customers...`);
       const { data } = await api.post("/send-messages", { customers, delay: Number(delay), sessionId: activeWaSessionId });
       if (data.background) {
-        addLog("success", data.message || "Pengiriman berjalan di background");
-        showToast(data.message || "Pengiriman berjalan di background", "success");
+        addLog("success", data.message || "Sending is running in the background");
       } else {
         const s = data.summary || { success: 0, failed: 0 };
         setSending(false); setLastSendSummary(s);
-        const msg = `Selesai — Berhasil: ${s.success}, Gagal: ${s.failed}`;
-        addLog("success", msg); showToast(msg, "success");
+        addLog("success", `Finished - Success: ${s.success}, Failed: ${s.failed}`);
       }
     } catch (err) {
-      const m = err?.response?.data?.message || "Gagal kirim pesan";
-      setSending(false); addLog("error", m); showToast(m, "error");
+      const m = err?.response?.data?.message || "Failed to send message";
+      setSending(false); addLog("error", m);
     }
   };
 
@@ -530,7 +961,7 @@ export default function DashboardPage() {
       setLastSendResults(Array.isArray(data.results) ? data.results : []);
       setProgress(data.isSending ? normalizeProgress(data.progress) : { current: 0, total: 0 });
       if (!data.isSending && data.summary && showFinishToast) {
-        showToast(`Selesai — Berhasil: ${data.summary.success || 0}, Gagal: ${data.summary.failed || 0}`, "success");
+        addLog("success", `Finished - Success: ${data.summary.success || 0}, Failed: ${data.summary.failed || 0}`);
       }
       return data;
     } catch { return null; }
@@ -545,14 +976,14 @@ export default function DashboardPage() {
         ]);
 
         if (tplRes.status === "fulfilled") setTemplate(tplRes.value?.data?.template || "");
-        else addLog("error", tplRes.reason?.response?.data?.message || "Gagal load template");
+        else addLog("error", tplRes.reason?.response?.data?.message || "Failed to load template");
 
         let gs = {};
         if (gsRes.status === "fulfilled") {
           gs = gsRes.value?.data || {};
           setGsheetUrl(gs?.url || ""); setSelectedSheet(gs?.selectedSheet || "");
           setAutoSync(!!gs?.autoSync); setLastSyncAt(gs?.lastSyncAt || null);
-        } else addLog("error", gsRes.reason?.response?.data?.message || "Gagal load konfigurasi GSheet");
+        } else addLog("error", gsRes.reason?.response?.data?.message || "Failed to load Google Sheet configuration");
 
         if (stRes.status === "fulfilled") {
           const sd = stRes.value?.data || {};
@@ -561,10 +992,11 @@ export default function DashboardPage() {
           setLastSendSummary(sd.lastSendSummary || null);
           setLastSendResults(Array.isArray(sd.lastSendResults) ? sd.lastSendResults : []);
           setProgress(sd.isSending ? normalizeProgress(sd.progress) : { current: 0, total: 0 });
-          if (!sd.whatsappReady && sd.activeSessionId && !sd.qr && !sd.meta?.initializing) {
+          if (sd.whatsappReady) { setWaPopup(true); }
+          else if (sd.activeSessionId && !sd.qr && !sd.meta?.initializing) {
             await syncWhatsappSession({ sessionId: sd.activeSessionId || "", createNew: false });
           }
-        } else addLog("error", stRes.reason?.response?.data?.message || "Gagal load status WhatsApp");
+        } else addLog("error", stRes.reason?.response?.data?.message || "Failed to load WhatsApp status");
 
         await loadCustomersFromPdf(false);
 
@@ -574,12 +1006,12 @@ export default function DashboardPage() {
             setLoadingAutoCustomers(true);
             const target = gs?.selectedSheet || sheets[0] || "";
             await loadCustomersFromGSheet(target, false, true);
-            addLog("success", `Auto sync — ${target || "sheet aktif"}`);
+            addLog("success", `Auto sync - ${target || "active sheet"}`);
           }
         }
       } catch (err) {
-        const m = err?.response?.data?.message || err?.message || "Gagal load data awal";
-        addLog("error", m); showToast(m, "error");
+        const m = err?.response?.data?.message || err?.message || "Failed to load initial data";
+        addLog("error", m);
       } finally { setLoadingAutoCustomers(false); }
     };
 
@@ -587,34 +1019,33 @@ export default function DashboardPage() {
     fetchSendResults(false);
 
     const onProgress        = (d) => { setSending(true); setProgress({ current: d.current || 0, total: d.total || 0 }); };
-    const onLog             = (d) => setLogs((p) => [d, ...p]);
+    const onLog             = (d) => { const seq = logSeqRef.current++; setLogs((p) => [{ ...d, _seq: seq }, ...p]); };
     const onFinished        = (d) => {
       const summary = d?.summary || null;
       setSending(false); setLastSendSummary(summary); setLastSendResults(Array.isArray(d?.results) ? d.results : []);
       if (summary) {
         setProgress({ current: summary.total || 0, total: summary.total || 0 });
-        const msg = `Selesai — Berhasil: ${summary.success || 0}, Gagal: ${summary.failed || 0}`;
+        const msg = `Finished - Success: ${summary.success || 0}, Failed: ${summary.failed || 0}`;
         addLog(d?.success === false ? "error" : "success", msg);
-        showToast(msg, d?.success === false ? "error" : "success");
       } else { setProgress({ current: 0, total: 0 }); }
     };
     const onWaQr            = (d) => {
       if (d?.sessionId) setActiveWaSessionId(d.sessionId);
       setWaQr(d?.qr || ""); setWaQrAt(d?.time || null); setWhatsappReady(false); setWaInitializing(false);
       setQrOpen(true);
-      if (!d?.isRefresh) { lastWhatsappLogRef.current = "wa-qr"; addLog("info", "QR diterima — silakan scan"); }
+      if (!d?.isRefresh) { lastWhatsappLogRef.current = "wa-qr"; addLog("info", "QR received - please scan it"); }
     };
     const onWaAuthenticated = (d) => {
       setWaQr(""); setWaInitializing(true); lastWhatsappLogRef.current = "wa-authenticated";
-      addLog("info", "QR discan, menyinkronkan WhatsApp...");
+      addLog("info", "QR scanned, syncing WhatsApp...");
       window.setTimeout(() => { checkWhatsappStatus(false, d?.sessionId || ""); }, 1200);
     };
     const onWaReady = async (d) => {
       if (d?.sessionId) setActiveWaSessionId(d.sessionId);
       setPendingWaSessionId(""); setWhatsappReady(true); setWaQr(""); setWaInitializing(false);
+      setQrOpen(false); setWaPopup(true);
       lastWhatsappLogRef.current = "wa-ready";
-      addLog("success", "WhatsApp siap digunakan");
-      showToast("WhatsApp siap digunakan", "success");
+      addLog("success", "WhatsApp is ready to use");
       await checkWhatsappStatus(false, d?.sessionId || "");
     };
 
@@ -647,238 +1078,325 @@ export default function DashboardPage() {
   // Derived values
   const selectedWaSession = waSessions.find((s) => s.id === activeWaSessionId) || null;
   const percent           = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
-  const waLabel           = whatsappReady ? "Terhubung" : waInitializing ? "Menyiapkan..." : "Belum login";
+  const waLabel           = whatsappReady ? "Connected" : waInitializing ? "Preparing..." : "Not logged in";
   const sendDisabled      = !whatsappReady || !customers.length || sending;
+  const hasPdfResult      = sourceMode === "pdf" && pdfLogRows.length > 0;
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Render Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   return (
-    <div style={S.page}>
+    <div className="dashboard-scrollbar-none" style={S.page}>
 
-      {/* ── Stat Cards ─────────────────────────────────────────────────── */}
-      <Grid container spacing={1.5} alignItems="stretch" sx={{ mb: 2 }}>
+      {/* Header slot portal */}
+      {headerSlot && createPortal(
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* WA status pill */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, height: 32, paddingInline: 12, borderRadius: 999, border: "1.5px solid rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.18)", fontFamily: F.sans, fontSize: 12, fontWeight: 600, color: "#fff" }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: whatsappReady ? "#4ade80" : waInitializing ? "#fbbf24" : "rgba(255,255,255,0.4)", flexShrink: 0 }} />
+            <WhatsAppIcon style={{ fontSize: 14 }} />
+            {whatsappReady
+              ? (waAccount.number || selectedWaSession?.lastKnownNumber || "Connected")
+              : waInitializing ? "Preparing..." : "Not connected"}
+          </div>
+          {/* Customer count pill */}
+          {customers.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, height: 32, paddingInline: 12, borderRadius: 999, border: "1.5px solid rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.13)", fontFamily: F.sans, fontSize: 12, fontWeight: 600, color: "#fff" }}>
+              <GroupsRoundedIcon style={{ fontSize: 14 }} />
+              {customers.length.toLocaleString()} customers
+            </div>
+          )}
+          {/* Sending badge */}
+          {sending && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, height: 32, paddingInline: 12, borderRadius: 999, border: "1.5px solid rgba(233,196,106,0.5)", background: "rgba(233,196,106,0.18)", fontFamily: F.sans, fontSize: 12, fontWeight: 700, color: "rgba(233,196,106,0.95)" }}>
+              <SendRoundedIcon style={{ fontSize: 13 }} />
+              Sending {progress.current}/{progress.total}
+            </div>
+          )}
+        </div>,
+        headerSlot
+      )}
 
-        <Grid item xs={6} sm={3} sx={{ display: "flex" }}>
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Stat Cards Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+      <Grid container spacing={1.5} alignItems="stretch" sx={{ mb: 2, flexShrink: 0 }}>
+
+        <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
           <CardBox
             style={{ height: "100%", width: "100%" }}
-            eyebrow="Pelanggan Dimuat"
+            eyebrow="Customers Loaded"
+            icon={<GroupsRoundedIcon style={{ fontSize: 30, color: "#0f766e" }} />}
             value={customers.length.toLocaleString()}
             detail={
-              sourceMode === "pdf"    ? `Hasil PDF — ${pdfLogRows.length} total` :
-              sourceMode === "gsheet" ? `Google Sheet — ${selectedSheet || "-"}` :
-              fileInfo?.fileName || "Belum ada data"
+              sourceMode === "pdf"    ? `PDF Results - ${pdfLogRows.length} total` :
+              sourceMode === "gsheet" ? `Google Sheet - ${selectedSheet || "-"}` :
+              fileInfo?.fileName || "No data yet"
             }
           />
         </Grid>
 
-        <Grid item xs={6} sm={3} sx={{ display: "flex" }}>
+        <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
           <CardBox
             style={{ height: "100%", width: "100%" }}
-            eyebrow="Status WhatsApp"
+            eyebrow="WhatsApp Status"
+            icon={<WhatsAppIcon style={{ fontSize: 30, color: "#16a34a" }} />}
             value={waLabel}
-            detail={waAccount.number || selectedWaSession?.lastKnownNumber || activeWaSessionId || "Belum terhubung"}
-            state={waLabel}
-            stateVariant={whatsappReady ? undefined : "disabled"}
+            detail={waAccount.number || selectedWaSession?.lastKnownNumber || activeWaSessionId || "Not connected"}
           />
         </Grid>
 
-        <Grid item xs={6} sm={3} sx={{ display: "flex" }}>
+        <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
           <CardBox
             style={{ height: "100%", width: "100%" }}
-            eyebrow="Template Pesan"
-            value={template?.trim() ? "Siap Kirim" : "Belum Diatur"}
-            detail={template?.trim() ? `${template.trim().split("\n").length} baris pesan` : "Buka menu Pengaturan"}
+            eyebrow="Message Template"
+            icon={<DescriptionRoundedIcon style={{ fontSize: 30, color: "#d97706" }} />}
+            value={template?.trim() ? "Ready to Send" : "Not Set"}
+            detail={template?.trim() ? `${template.trim().split("\n").length} message lines` : "Open Settings"}
           />
         </Grid>
 
-        <Grid item xs={6} sm={3} sx={{ display: "flex" }}>
+        <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
           <CardBox
             style={{ height: "100%", width: "100%" }}
-            eyebrow="Sesi WA Tersimpan"
-            value={`${waSessions.length} Akun`}
-            detail={activeWaSessionId ? (selectedWaSession?.lastKnownName || selectedWaSession?.label || activeWaSessionId) : "Belum ada sesi aktif"}
+            eyebrow="Saved WA Sessions"
+            icon={<DevicesRoundedIcon style={{ fontSize: 30, color: "#1d4ed8" }} />}
+            value={`${waSessions.length} Accounts`}
+            detail={activeWaSessionId ? (selectedWaSession?.lastKnownName || selectedWaSession?.label || activeWaSessionId) : "No active session yet"}
           />
         </Grid>
 
       </Grid>
 
-      {/* ── Main Grid ──────────────────────────────────────────────────── */}
-      <Grid container spacing={2} alignItems="stretch">
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Main Grid Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+      <Grid
+        container
+        spacing={{ xs: 1.5, md: 2 }}
+        alignItems="stretch"
+        sx={{
+          flex: { xs: "0 0 auto", md: 1 },
+          minHeight: { xs: "auto", md: 0 },
+          overflow: { xs: "visible", md: "hidden" },
+          pb: { xs: 2, md: 0 },
+        }}
+      >
 
-        {/* Col 1 — Pelanggan PDF */}
-        <Grid item xs={12} md={4} sx={{ display: "flex" }}>
+        {/* Col 1 Ã¢â‚¬â€ Pelanggan PDF */}
+        <Grid item xs={12} md={4} sx={{ display: "flex", height: { xs: "auto", md: "100%" }, minHeight: 0 }}>
           <CardBigBox
             style={{ height: "100%", width: "100%" }}
-            title="Pelanggan dari PDF"
+            title="Customer Data"
+            description="List of message recipients"
             headerAction={
-              <CreateButton variant="detail" onClick={() => loadCustomersFromPdf(true)}>
-                <SyncRoundedIcon style={{ fontSize: 13, marginRight: 4 }} />Refresh
-              </CreateButton>
+              hasPdfResult ? (
+                <button
+                  className="users-table-card__action"
+                  onClick={() => navigate("/pdf/hasil")}
+                  style={{
+                    minHeight: 38,
+                    padding: "0.58rem 1rem",
+                    fontFamily: F.sans,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    boxShadow: "0 8px 18px rgba(42, 157, 143, 0.22)",
+                    borderRadius: 999,
+                    width: "auto",
+                  }}
+                >
+                  <DescriptionOutlinedIcon style={{ fontSize: 14 }} />
+                  PDF Details
+                </button>
+              ) : null
             }
           >
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 10 }}>
-              <div style={S.rowBetween}>
-                <span style={S.label(12)}>{customers.length} siap kirim</span>
-                <span className="master-project-badge master-project-badge--active" style={{ fontFamily: F.mono, fontSize: 11 }}>
-                  {pdfLogRows.length} total PDF
-                </span>
+            <div style={S.customerPanelBody}>
+              <div
+                className="dashboard-scrollbar-none"
+                style={{
+                  ...S.listScroll,
+                  flex: isMobile ? "0 0 auto" : "1 1 auto",
+                  height: isMobile ? 420 : "auto",
+                  minHeight: isMobile ? 420 : 0,
+                  marginBottom: 0,
+                }}
+              >
+                {customers.length === 0 ? (
+                  <div style={S.customerEmpty}>
+                    <div style={S.customerEmptyIcon}>
+                      <GroupsRoundedIcon style={{ fontSize: 28 }} />
+                    </div>
+                    <p style={S.customerEmptyTitle}>No Customer Data Yet</p>
+                    <p style={S.customerEmptyText}>
+                      Customer data will appear here once the PDF results are available.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={S.customerTable}>
+                    <div style={S.customerHead}>
+                      <span style={S.customerHeadText}>Customer</span>
+                      <span style={{ ...S.customerHeadText, textAlign: "right" }}>No. WhatsApp</span>
+                    </div>
+                    {customers.map((c, i) => {
+                      const name = c.nama || "?";
+                      const initials = name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || "").join("") || "?";
+                      return (
+                        <div key={`${c.nomor || "cust"}-${i}`} style={S.customerRow(i % 2 === 0, i === customers.length - 1)}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
+                            <span className="users-table__avatar" style={S.customerAvatar}>{initials}</span>
+                            <span style={S.customerName}>{c.nama || "-"}</span>
+                          </div>
+                          <span style={S.customerPhone}>{c.nomor || "-"}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            <div style={S.listScroll}>
-              {customers.length === 0 ? (
-                <div style={{ padding: "20px 16px", textAlign: "center" }}>
-                  <p style={{ fontFamily: F.sans, fontSize: 12, color: C.subtle, lineHeight: 1.7, margin: 0 }}>
-                    Belum ada data.<br />Klik <strong>Refresh</strong> untuk muat dari Hasil PDF.
-                  </p>
-                </div>
-              ) : customers.map((c, i) => (
-                <div key={i} style={S.custRow(i % 2 === 0)}>
-                  <span style={{ fontFamily: F.sans, fontSize: 11.5, fontWeight: 600, color: C.ink, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.nama}</span>
-                  <span style={S.mono(10)}>{c.nomor}</span>
-                </div>
-              ))}
-            </div>
+              <div style={S.customerFooter}>
+                <p style={S.customerFooterText}>
+                  <GroupsRoundedIcon style={{ fontSize: 15, color: "#8a97ad", flexShrink: 0 }} />
+                  Total customer data ready to process: <span style={S.customerFooterValue}>{customers.length}</span>
+                </p>
+              </div>
             </div>
           </CardBigBox>
         </Grid>
 
-        {/* Col 2 — WhatsApp Control */}
-        <Grid item xs={12} md={4} sx={{ display: "flex" }}>
+        {/* Col 2 Ã¢â‚¬â€ WhatsApp Control */}
+        <Grid item xs={12} md={4} sx={{ display: "flex", height: { xs: "auto", md: "100%" }, minHeight: 0 }}>
           <CardBigBox
             style={{ height: "100%", width: "100%" }}
-            eyebrow="Kontrol"
-            title="Pengiriman WhatsApp"
-            headerAction={<WaStatusBadge whatsappReady={whatsappReady} waInitializing={waInitializing} label={waLabel} />}
-          >
-            <div style={S.stack}>
-
-              <FormControl fullWidth size="small" sx={S.fieldSx}>
-                <InputLabel>Akun WhatsApp</InputLabel>
-                <Select value={activeWaSessionId} label="Akun WhatsApp" onChange={(e) => handleSelectWhatsappSession(e.target.value)}>
-                  {waSessions.length === 0
-                    ? <MenuItem value="" disabled>Belum ada akun tersimpan</MenuItem>
-                    : waSessions.map((s) => <MenuItem key={s.id} value={s.id} sx={{ fontFamily: F.sans, fontSize: 13.5 }}>{s.label}</MenuItem>)
-                  }
-                </Select>
-              </FormControl>
-
-              <div style={S.infoBox}>
-                <DataRow label="Nama akun"  value={waAccount.name || selectedWaSession?.lastKnownName || selectedWaSession?.label} />
-                <DataRow label="Nomor WA"   value={waAccount.number || selectedWaSession?.lastKnownNumber} mono />
-                <DataRow label="Session ID" value={activeWaSessionId || "Belum dipilih"} mono last />
-              </div>
-
-              {!whatsappReady && !waQr && (
-                <div style={S.warnBox}>
-                  <p style={{ fontFamily: F.sans, fontSize: 12.5, color: C.amber, lineHeight: 1.7, margin: 0 }}>
-                    {waInitializing ? "Menyiapkan koneksi WhatsApp..." : "Pilih akun lalu klik Hubungkan, atau tambah akun baru."}
-                  </p>
-                </div>
-              )}
-
-              {waQr && !whatsappReady && (
-                <div style={{ padding: "8px 12px", borderRadius: 8, background: C.brandBg, border: `1.5px solid ${C.brandBorder}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <QrCode2RoundedIcon style={{ fontSize: 15, color: C.brand }} />
-                    <span style={{ fontFamily: F.sans, fontSize: 12.5, fontWeight: 600, color: C.ink }}>QR Code siap discan</span>
-                  </div>
-                  <CreateButton variant="detail" onClick={() => setQrOpen(true)} style={{ paddingInline: 12, fontSize: 12, gap: 6 }}>
-                    <QrCode2RoundedIcon style={{ fontSize: 13 }} /> Buka QR
-                  </CreateButton>
-                </div>
-              )}
-
-              <div style={S.delayRow}>
-                <AccessTimeRoundedIcon style={{ fontSize: 16, color: C.muted, flexShrink: 0 }} />
-                <span style={{ fontFamily: F.sans, fontSize: 13, color: C.text, flex: 1, fontWeight: 500 }}>Jeda antar pesan</span>
-                <TextField
-                  type="number" value={delay} size="small"
-                  onChange={(e) => setDelay(e.target.value)}
-                  InputProps={{ endAdornment: <InputAdornment position="end"><Typography sx={{ fontFamily: F.mono, fontSize: 12, color: C.subtle }}>ms</Typography></InputAdornment> }}
-                  sx={S.delaySx}
-                />
-              </div>
-
-              <div style={S.stack}>
-                <button className="users-table-card__action" style={S.primaryBtn(true)} onClick={handleInitWhatsapp}>
-                  <WhatsAppIcon style={{ fontSize: 16 }} />
-                  {whatsappReady ? "WhatsApp Terhubung ✓" : waInitializing ? "Menyiapkan..." : "Hubungkan WhatsApp"}
-                </button>
-                <div style={S.col12}>
-                  <CreateButton variant="accordion" onClick={handleAddWhatsappAccount} disabled={sending} style={{ justifyContent: "center", gap: 6 }}>
-                    <AddRoundedIcon style={{ fontSize: 15 }} /> Tambah Akun
-                  </CreateButton>
-                  <CreateButton variant="accordion" tone="danger" onClick={handleDeleteWhatsappSession} disabled={!activeWaSessionId || sending || waInitializing} style={{ justifyContent: "center", gap: 6 }}>
-                    <DeleteOutlineRoundedIcon style={{ fontSize: 15 }} /> Hapus Sesi
-                  </CreateButton>
-                </div>
-                <div style={S.col12}>
-                  <button className="users-table-card__action" onClick={handleSend} disabled={sendDisabled} style={S.primaryBtn(false, sendDisabled)}>
-                    <SendRoundedIcon style={{ fontSize: 15 }} />{sending ? "Mengirim..." : "Kirim Pesan"}
-                  </button>
-                  <CreateButton variant="accordion" onClick={() => checkWhatsappStatus(true)} disabled={checkingWhatsapp || sending} style={{ justifyContent: "center", gap: 6 }}>
-                    <WifiRoundedIcon style={{ fontSize: 15 }} />{checkingWhatsapp ? "Mengecek..." : "Cek Status"}
-                  </CreateButton>
-                </div>
-              </div>
-
-              <div style={S.counterBox(customers.length > 0)}>
-                <span style={S.label(12.5)}>Data siap kirim</span>
-                <span style={S.counterVal(customers.length > 0)}>{customers.length.toLocaleString()} pelanggan</span>
-              </div>
-
-              {(progress.total > 0 || loadingAutoCustomers || sending) && (
-                <div style={S.progressBox}>
-                  <div style={{ ...S.rowBetween, marginBottom: 10 }}>
-                    <span style={{ fontFamily: F.sans, fontSize: 12.5, fontWeight: 500, color: C.brand }}>
-                      {loadingAutoCustomers ? "Memuat auto sync..." : sending ? "Mengirim pesan..." : "Progress pengiriman"}
-                    </span>
-                    {!loadingAutoCustomers && (
-                      <div style={S.row}>
-                        <span style={S.mono(11.5)}>{progress.current}/{progress.total}</span>
-                        <span style={{ fontFamily: F.mono, fontSize: 11.5, fontWeight: 600, padding: "2px 6px", borderRadius: 5, background: C.white, color: C.brand, border: `1px solid ${C.brandBorder}` }}>
-                          {percent}%
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <LinearProgress
-                    variant={loadingAutoCustomers ? "indeterminate" : "determinate"}
-                    value={loadingAutoCustomers ? undefined : percent}
-                    sx={{ height: 4, borderRadius: 999, bgcolor: C.white, "& .MuiLinearProgress-bar": { borderRadius: 999, bgcolor: C.brand } }}
-                  />
-                </div>
-              )}
-
-              {lastSendSummary && (
-                <div style={S.summaryBox}>
-                  <p style={S.eyebrow}>Hasil terakhir</p>
-                  <SendSummaryBadges summary={lastSendSummary} />
-                </div>
-              )}
-
-            </div>
-          </CardBigBox>
-        </Grid>
-
-        {/* Col 3 — Activity Log */}
-        <Grid item xs={12} md={4} sx={{ display: "flex" }}>
-          <CardBigBox
-            style={{ width: "100%" }}
-            title="Activity Log"
+            title="WhatsApp"
+            description="Manage sessions & send messages"
             headerAction={
-              <span className="users-table__status users-table__status--active users-table__status--inline" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                <SignalCellularAltRoundedIcon style={{ fontSize: 11 }} /> Live
-              </span>
+              waQr && !whatsappReady ? (
+                <button
+                  className="users-table-card__action"
+                  onClick={() => setQrOpen(true)}
+                  style={{
+                    minHeight: 38,
+                    padding: "0.58rem 1rem",
+                    fontFamily: F.sans,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    boxShadow: "0 8px 18px rgba(35, 57, 113, 0.22)",
+                    borderRadius: 999,
+                    width: "auto",
+                  }}
+                >
+                  <QrCode2RoundedIcon style={{ fontSize: 14 }} />
+                  Open QR
+                </button>
+              ) : null
             }
           >
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {lastSendSummary && (
-                <div style={S.summaryBox}>
-                  <p style={S.eyebrow}>Hasil Terakhir</p>
-                  <SendSummaryBadges summary={lastSendSummary} />
+
+                <SessionDropdown
+                  sessions={waSessions}
+                  value={activeWaSessionId}
+                  onChange={handleSelectWhatsappSession}
+                  disabled={waSessions.length === 0}
+                />
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                  <CreateButton
+                    variant="detail"
+                    onClick={handleAddWhatsappAccount}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, fontSize: 12.5, minHeight: 34, padding: "0 10px" }}
+                  >
+                    <AddRoundedIcon style={{ fontSize: 14 }} />
+                    Add Session
+                  </CreateButton>
+                  <CreateButton
+                    variant="detail"
+                    onClick={handleDeleteWhatsappSession}
+                    disabled={!activeWaSessionId}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, fontSize: 12.5, minHeight: 34, padding: "0 10px", opacity: !activeWaSessionId ? 0.5 : 1, borderColor: "rgba(239, 68, 68, 0.22)", background: "rgba(239, 68, 68, 0.10)", color: "#dc2626" }}
+                  >
+                    <DeleteSweepRoundedIcon style={{ fontSize: 13 }} />
+                    Delete Session
+                  </CreateButton>
                 </div>
+
+                <div style={{ borderRadius: 12, border: `1px solid ${C.line}`, overflow: "hidden" }}>
+                  <DataRow label="Account Name" value={waAccount.name || selectedWaSession?.lastKnownName || "-"} even />
+                  <DataRow label="WA Number"    value={waAccount.number || selectedWaSession?.lastKnownNumber || "-"} mono />
+                  <DataRow label="Status"       value={whatsappReady ? "Connected" : waInitializing ? "Preparing..." : "Not connected"} even />
+                  <DataRow label="Session ID"   value={activeWaSessionId || "Not selected"} mono last />
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <button className="users-table-card__action" style={S.primaryBtn(true)} onClick={handleInitWhatsapp}>
+                    <WhatsAppIcon style={{ fontSize: 14 }} />
+                    {whatsappReady ? "WhatsApp Connected" : waInitializing ? "Preparing..." : "Connect WhatsApp"}
+                  </button>
+                  <button className="users-table-card__action" onClick={handleSend} disabled={sendDisabled} style={S.primaryBtn(true, sendDisabled)}>
+                    <SendRoundedIcon style={{ fontSize: 14 }} />{sending ? "Sending..." : "Send Message"}
+                  </button>
+                </div>
+
+                {(progress.total > 0 || loadingAutoCustomers || sending) && (
+                  <div style={S.progressBox}>
+                    <div style={{ ...S.rowBetween, marginBottom: 10 }}>
+                      <span style={{ fontFamily: F.sans, fontSize: 12.5, fontWeight: 500, color: C.brand }}>
+                        {loadingAutoCustomers ? "Loading auto sync..." : sending ? "Sending messages..." : "Sending progress"}
+                      </span>
+                      {!loadingAutoCustomers && (
+                        <div style={S.row}>
+                          <span style={S.mono(11.5)}>{progress.current}/{progress.total}</span>
+                          <span style={{ fontFamily: F.mono, fontSize: 11.5, fontWeight: 600, padding: "2px 6px", borderRadius: 5, background: C.white, color: C.brand, border: `1px solid ${C.brandBorder}` }}>
+                            {percent}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <LinearProgress
+                      variant={loadingAutoCustomers ? "indeterminate" : "determinate"}
+                      value={loadingAutoCustomers ? undefined : percent}
+                      sx={{ height: 4, borderRadius: 999, bgcolor: C.white, "& .MuiLinearProgress-bar": { borderRadius: 999, bgcolor: C.brand } }}
+                    />
+                  </div>
+                )}
+
+                {lastSendSummary && (
+                  <SendResultCard summary={lastSendSummary} />
+                )}
+
+            </div>
+          </CardBigBox>
+        </Grid>
+
+        {/* Col 3 Ã¢â‚¬â€ Activity Log */}
+        <Grid item xs={12} md={4} sx={{ display: "flex", height: { xs: "auto", md: "100%" }, minHeight: 0 }}>
+          <CardBigBox
+            style={{ height: "100%", width: "100%" }}
+            title="Activity Log"
+            description="Sending activity history"
+          >
+            <div style={S.customerPanelBody}>
+              {lastSendSummary && (
+                <SendResultCard summary={lastSendSummary} />
               )}
-              <div style={{ height: 380, overflowY: "auto", overflowX: "hidden", paddingRight: 2 }}>
+              <div
+                className="dashboard-scrollbar-none"
+                style={{
+                  ...S.listScroll,
+                  flex: isMobile ? "0 0 auto" : "1 1 auto",
+                  height: isMobile ? 420 : "auto",
+                  minHeight: isMobile ? 420 : 0,
+                  marginBottom: 0,
+                }}
+              >
+                <div style={{ position: "sticky", top: 0, zIndex: 2, display: "grid", gridTemplateColumns: "minmax(0, 1fr) 80px", alignItems: "center", gap: 10, padding: "10px 14px", background: "#eef1f6", borderBottom: "1px solid #d4ddf0" }}>
+                  <span style={S.customerHeadText}>Activity</span>
+                  <span style={{ ...S.customerHeadText, textAlign: "right" }}>Time</span>
+                </div>
                 <LogsPanel logs={logs} />
+              </div>
+              <div style={S.customerFooter}>
+                <p style={S.customerFooterText}>
+                  <ChecklistRoundedIcon style={{ fontSize: 15, color: "#8a97ad", flexShrink: 0 }} />
+                  Total log aktivitas: <span style={S.customerFooterValue}>{logs.length}</span>
+                </p>
               </div>
             </div>
           </CardBigBox>
@@ -886,17 +1404,34 @@ export default function DashboardPage() {
 
       </Grid>
 
+      <WaConnectedPopup
+        open={waPopup}
+        name={waAccount.name || selectedWaSession?.lastKnownName}
+        number={waAccount.number || selectedWaSession?.lastKnownNumber}
+        onClose={() => setWaPopup(false)}
+      />
+
+      <WaPreparingPopup open={waInitializing && !whatsappReady && !waPopup} />
+
+      <WaErrorPopup
+        open={waError.open}
+        message={waError.message}
+        onClose={() => setWaError({ open: false, message: "" })}
+      />
+
       <QRDialog
-        waQr={waQr} waQrAt={waQrAt} whatsappReady={whatsappReady}
+        open={qrOpen}
+        waQr={waQr} waQrAt={waQrAt}
         formatSyncTime={formatSyncTime} onClose={() => setQrOpen(false)}
       />
 
-      <AlertModal
-        open={alert.open}
-        severity={alert.severity}
-        message={alert.message}
-        onClose={() => setAlert((p) => ({ ...p, open: false }))}
+      <DeleteConfirmPopup
+        open={deleteConfirm.open}
+        label={deleteConfirm.label}
+        onConfirm={confirmDeleteSession}
+        onCancel={() => setDeleteConfirm({ open: false, label: "" })}
       />
+
     </div>
   );
 }

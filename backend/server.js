@@ -938,7 +938,7 @@ function buildGoogleSheetExportUrl(sheetUrl) {
 async function loadWorkbookFromGoogleSheet(sheetUrl) {
   const exportUrl = buildGoogleSheetExportUrl(sheetUrl);
   const buffer = await downloadFileBuffer(exportUrl);
-  return XLSX.read(buffer, { type: "buffer" });
+  return XLSX.read(buffer, { type: "buffer", cellDates: true });
 }
 
 async function getGoogleSheetNames(sheetUrl) {
@@ -1246,13 +1246,13 @@ function buildTemporaryRowsFromWorkbook(workbook) {
   }
 
   const rows = matrix.slice(1).map((row, index) => ({
-    noInvoice: getCellValue(row, 0),
-    tanggalInvoice: getCellValue(row, 1),
-    termin: getCellValue(row, 2),
-    tempo: getCellValue(row, 13),
-    customer: getCellValue(row, 4),
-    tagihan: getCellValue(row, 6),
-    penagih: getCellValue(row, 15),
+    noInvoice:      getCellValue(row, 2),   // column C
+    tanggalInvoice: getCellValue(row, 3),   // column D
+    termin:         getCellValue(row, 4),   // column E
+    customer:       getCellValue(row, 6),   // column G
+    tagihan:        getCellValue(row, 7),   // column H
+    tempo:          getCellValue(row, 15),  // column P (jatuh tempo)
+    penagih:        getCellValue(row, 17),  // column R
     sourceRow: index + 2,
   }));
 
@@ -2509,28 +2509,44 @@ app.get("/api/gsheet/input", async (req, res) => {
     });
 
     // Data rows — skip fully-empty rows
+    // Auto-format: Date objects (cellDates) OR Excel serial integers in year range 2009-2064
+    const isExcelDateSerial = (v) => typeof v === "number" && Number.isInteger(v) && v >= 40000 && v <= 60000;
     const rows = matrix.slice(1)
       .filter(row => headers.some(h => String(row[h.colIndex] ?? "").trim()))
       .map(row => {
         const obj = {};
-        headers.forEach(h => { obj[h.key] = row[h.colIndex] ?? ""; });
+        headers.forEach(h => {
+          const val = row[h.colIndex] ?? "";
+          if (val instanceof Date && !isNaN(val.getTime())) {
+            obj[h.key] = formatDateId(val);
+          } else if (isExcelDateSerial(val)) {
+            obj[h.key] = formatDateId(val);
+          } else {
+            obj[h.key] = val;
+          }
+        });
         return obj;
       });
 
-    // Column mapping used for PDF generation (col index → pdf field)
-    const pdfMapping = { noInvoice: "c0", tanggalInvoice: "c1", termin: "c2", customer: "c4", tagihan: "c6", tempo: "c13", penagih: "c15" };
+    // Base mapping — column indices from actual sheet (starts at column C = index 2)
+    const basePdfMapping = { noInvoice: "c2", tanggalInvoice: "c3", termin: "c4", customer: "c6", tagihan: "c7", tempo: "c15", penagih: "c17" };
 
-    // Format date columns so they display as "dd/mm/yyyy" instead of Excel serial numbers
-    const dateColKeys = new Set([pdfMapping.tanggalInvoice, pdfMapping.tempo]);
-    const formattedRows = rows.map(row => {
-      const r = { ...row };
-      dateColKeys.forEach(k => {
-        if (r[k] !== undefined && r[k] !== "") r[k] = formatDateId(r[k]);
-      });
-      return r;
+    // Override with auto-detected column keys by matching header labels (first match wins per field)
+    const detected = {};
+    headers.forEach(h => {
+      const lbl = h.label.toLowerCase().trim();
+      if (!detected.tagihan && (lbl.includes("tagihan") || lbl === "billing" || lbl === "jumlah")) detected.tagihan = h.key;
+      if (!detected.customer && (lbl.includes("customer") || lbl.includes("pelanggan"))) detected.customer = h.key;
+      if (!detected.noInvoice && ((lbl.includes("no") && (lbl.includes("inv") || lbl.includes("faktur"))) || lbl === "no invoice" || lbl === "noinvoice")) detected.noInvoice = h.key;
+      if (!detected.termin && lbl.includes("termin")) detected.termin = h.key;
+      // tanggal/date columns — skip tempo/due-date labels, first match = invoice date
+      if (!detected.tanggalInvoice && (lbl.includes("tanggal") || lbl.includes("tgl") || lbl.includes("date")) && !lbl.includes("tempo") && !lbl.includes("jatuh") && !lbl.includes("due")) detected.tanggalInvoice = h.key;
+      if (!detected.tempo && (lbl.includes("tempo") || lbl.includes("jatuh tempo") || lbl.includes("due"))) detected.tempo = h.key;
+      if (!detected.penagih && (lbl.includes("penagih") || lbl.includes("collector"))) detected.penagih = h.key;
     });
+    const pdfMapping = { ...basePdfMapping, ...detected };
 
-    return res.json({ success: true, headers, rows: formattedRows, pdfMapping });
+    return res.json({ success: true, headers, rows, pdfMapping });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }

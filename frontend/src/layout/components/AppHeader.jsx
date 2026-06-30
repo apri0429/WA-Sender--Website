@@ -36,6 +36,9 @@ function Header({
 }) {
   const hasSearch = Boolean(searchProps)
   const hasNotification = Boolean(notificationProps)
+  const hasBreadcrumb = Array.isArray(breadcrumb) && breadcrumb.length > 0
+  const shouldShowBreadcrumbRow =
+    hasBreadcrumb || Boolean(departmentFilterProps) || hasSearch || hasNotification || Boolean(onRefresh)
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
   const [isDepartmentDropdownOpen, setIsDepartmentDropdownOpen] = useState(false)
   const [departmentDropdownStyle, setDepartmentDropdownStyle] = useState(null)
@@ -279,65 +282,69 @@ function Header({
         </div>
       </div>
 
-      <div className="header-breadcrumb">
-        <div className="header-breadcrumb-content">
-          <nav
-            className="breadcrumb-nav"
-            aria-label={departmentFilterProps ? 'Filter divisi' : 'Breadcrumb'}
-            ref={breadcrumbFilterRef}
-          >
-            {renderBreadcrumb()}
-          </nav>
+      {shouldShowBreadcrumbRow ? (
+        <div className="header-breadcrumb">
+          <div className="header-breadcrumb-content">
+            {hasBreadcrumb || departmentFilterProps ? (
+              <nav
+                className="breadcrumb-nav"
+                aria-label={departmentFilterProps ? 'Filter divisi' : 'Breadcrumb'}
+                ref={breadcrumbFilterRef}
+              >
+                {renderBreadcrumb()}
+              </nav>
+            ) : null}
 
-          <div id="header-wa-slot" style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }} />
+            <div id="header-wa-slot" style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }} />
 
-          {hasSearch || hasNotification || onRefresh ? (
-            <div className="header-toolbar">
-              {hasSearch ? (
-                <label
-                  className="header-search header-search--compact"
-                  aria-label={searchProps.ariaLabel ?? 'Search'}
-                >
-                  <SearchMd size={16} className="header-search__icon header-search__icon--compact" />
-                  <input
-                    type="search"
-                    className="header-search__input header-search__input--compact"
-                    value={searchProps.value ?? ''}
-                    placeholder={searchProps.placeholder ?? 'Search...'}
-                    onChange={searchProps.onChange}
+            {hasSearch || hasNotification || onRefresh ? (
+              <div className="header-toolbar">
+                {hasSearch ? (
+                  <label
+                    className="header-search header-search--compact"
                     aria-label={searchProps.ariaLabel ?? 'Search'}
-                    autoComplete="off"
-                  />
-                </label>
-              ) : null}
+                  >
+                    <SearchMd size={16} className="header-search__icon header-search__icon--compact" />
+                    <input
+                      type="search"
+                      className="header-search__input header-search__input--compact"
+                      value={searchProps.value ?? ''}
+                      placeholder={searchProps.placeholder ?? 'Search...'}
+                      onChange={searchProps.onChange}
+                      aria-label={searchProps.ariaLabel ?? 'Search'}
+                      autoComplete="off"
+                    />
+                  </label>
+                ) : null}
 
-              {hasNotification ? (
-                <button
-                  type="button"
-                  className="header-icon-button header-icon-button--compact"
-                  aria-label={notificationProps.ariaLabel ?? 'Open notifications'}
-                  title={notificationProps.ariaLabel ?? 'Open notifications'}
-                  onClick={() => setIsNotificationModalOpen(true)}
-                >
-                  <Bell04 size={16} />
-                </button>
-              ) : null}
+                {hasNotification ? (
+                  <button
+                    type="button"
+                    className="header-icon-button header-icon-button--compact"
+                    aria-label={notificationProps.ariaLabel ?? 'Open notifications'}
+                    title={notificationProps.ariaLabel ?? 'Open notifications'}
+                    onClick={() => setIsNotificationModalOpen(true)}
+                  >
+                    <Bell04 size={16} />
+                  </button>
+                ) : null}
 
-              {onRefresh ? (
-                <button
-                  type="button"
-                  className="header-icon-button header-icon-button--compact"
-                  aria-label="Refresh halaman"
-                  title="Refresh halaman"
-                  onClick={onRefresh}
-                >
-                  <RefreshCw05 size={16} />
-                </button>
-              ) : null}
-            </div>
-          ) : null}
+                {onRefresh ? (
+                  <button
+                    type="button"
+                    className="header-icon-button header-icon-button--compact"
+                    aria-label="Refresh halaman"
+                    title="Refresh halaman"
+                    onClick={onRefresh}
+                  >
+                    <RefreshCw05 size={16} />
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {hasNotification && isNotificationModalOpen ? (
         <div
