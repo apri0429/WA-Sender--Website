@@ -1519,46 +1519,38 @@ function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:#18181b;background:#fff;font-size:13px;line-height:1.65;padding:28px 32px}
 
-    .hdr{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:14px;border-bottom:2.5px solid #27272a;margin-bottom:22px}
-    .hdr-logo{display:flex;flex-direction:row;align-items:center;gap:11px}
-    .hdr-logo img{max-width:54px;max-height:54px;object-fit:contain;object-position:center;display:block;flex-shrink:0}
+    .hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:2px solid #18181b;margin-bottom:16px}
+    .hdr-logo{display:flex;flex-direction:row;align-items:center;gap:13px}
+    .hdr-logo img{max-width:76px;max-height:76px;object-fit:contain;object-position:center;display:block;flex-shrink:0}
     .hdr-logo-texts{display:flex;flex-direction:column;gap:3px}
-    .hdr-logo-name{font-size:15px;font-weight:800;color:#18181b;letter-spacing:-.02em;line-height:1.2}
+    .hdr-logo-name{font-size:16.5px;font-weight:800;color:#18181b;letter-spacing:.01em;line-height:1.25;text-transform:uppercase;font-family:'Segoe UI',Arial,sans-serif}
     .hdr-logo-sub{font-size:10.5px;color:#71717a}
     .hdr-right{text-align:right}
-    .hdr-right .doc-type{font-size:9px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px}
-    .hdr-right .doc-title{font-size:26px;font-weight:800;color:#18181b;letter-spacing:-.03em;line-height:1}
-    .hdr-right .doc-date{font-size:10.5px;color:#71717a;margin-top:6px}
+    .hdr-right .doc-type{font-size:9px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px}
+    .hdr-right .doc-title{font-size:22px;font-weight:800;color:#18181b;letter-spacing:-.02em;line-height:1}
+    .hdr-right .doc-date{font-size:10.5px;color:#71717a;margin-top:6px;font-family:monospace}
 
-    .info-row{display:flex;justify-content:space-between;margin-bottom:20px}
-    .info-block .ib-label{font-size:9px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px}
-    .info-block .ib-value{font-size:15px;font-weight:700;color:#18181b}
-    .info-block .ib-sub{font-size:10.5px;color:#71717a;margin-top:3px}
-    .info-block.right{text-align:right}
+    .info-grid{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:11.5px}
+    .info-grid td{border:1px solid #d4d4d8;padding:9px 12px;vertical-align:top}
+    .info-grid .ig-label{background:#f4f4f5;color:#71717a;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;width:130px}
+    .info-grid .ig-value{color:#18181b;font-weight:700}
+    .info-grid .ig-value.amt{font-family:monospace;font-size:13px}
 
-    .total-bar{background:#1e293b;border-radius:6px;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
-    .tb-label{font-size:9px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
-    .tb-amount{font-size:25px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1}
-    .tb-sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:5px}
-    .tb-count{text-align:center;padding:9px 18px;background:rgba(255,255,255,.09);border-radius:5px;color:rgba(255,255,255,.65);font-size:10px;font-weight:600}
-    .tb-count span{display:block;font-size:24px;font-weight:800;color:#fff;line-height:1;margin-bottom:3px}
+    .sec-label{font-size:9px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px}
 
-    .sec-label{font-size:9px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:9px}
-
-    table{width:100%;border-collapse:collapse;margin-bottom:22px;font-size:12px}
-    thead th{font-size:9px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:.08em;padding:0 10px 9px;text-align:left;border-bottom:1.5px solid #e4e4e7}
-    tbody td{padding:9px 10px;border-bottom:1px solid #f4f4f5;color:#3f3f46;vertical-align:middle}
-    tbody tr:last-child td{border-bottom:1.5px solid #e4e4e7}
-    td.no{color:#d4d4d8;font-size:10px;width:22px;padding-left:2px}
-    td.inv{font-weight:700;color:#27272a;font-family:monospace;font-size:12px;white-space:nowrap}
-    td.date{color:#52525b;font-size:11.5px;white-space:nowrap;width:84px}
+    table.detail{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:11.5px}
+    table.detail th{font-size:9px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:.06em;padding:7px 10px;text-align:left;background:#f4f4f5;border:1px solid #d4d4d8}
+    table.detail td{padding:7px 10px;border:1px solid #e4e4e7;color:#3f3f46;vertical-align:middle}
+    td.no{color:#a1a1aa;font-size:10px;width:22px;padding-left:8px;text-align:center}
+    td.inv{font-weight:700;color:#27272a;font-family:monospace;font-size:11.5px;white-space:nowrap}
+    td.date{color:#52525b;font-size:11px;white-space:nowrap;width:84px;font-family:monospace}
     td.center{text-align:center;width:74px;color:#52525b;white-space:nowrap}
-    td.amt{text-align:right;font-weight:700;color:#18181b;width:132px;white-space:nowrap}
-    td.amt-g{text-align:right;font-weight:700;color:#18181b;white-space:nowrap}
-    .trow td{background:#f4f4f5;font-weight:700;color:#18181b;border-top:1.5px solid #e4e4e7;border-bottom:none;font-size:12.5px}
-    .trow .amt{font-size:13px}
+    td.amt{text-align:right;font-weight:700;color:#18181b;width:132px;white-space:nowrap;font-family:monospace}
+    td.amt-g{text-align:right;font-weight:700;color:#18181b;white-space:nowrap;font-family:monospace}
+    .trow td{background:#f4f4f5;font-weight:700;color:#18181b;border-top:2px solid #18181b;font-size:12px}
+    .trow .amt{font-size:12.5px}
 
-    .footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:13px;border-top:1.5px solid #e4e4e7;margin-top:6px}
+    .footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:11px;border-top:1px solid #d4d4d8;margin-top:4px}
     .footer-left{display:flex;flex-direction:column;gap:2px}
     .footer-auto{font-size:10px;font-weight:600;color:#52525b}
     .footer-brand{font-size:9.5px;color:#a1a1aa}
@@ -1581,32 +1573,26 @@ function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
     </div>
   </div>
 
-  <div class="info-row">
-    <div class="info-block">
-      <div class="ib-label">Kepada Yth.</div>
-      <div class="ib-value">${escapeHtml(customer)}</div>
-    </div>
-    <div class="info-block right">
-      <div class="ib-label">Jatuh Tempo Terdekat</div>
-      <div class="ib-value">${escapeHtml(closestTempoStr)}</div>
-      <div class="ib-sub">${invoices.length} invoice</div>
-    </div>
-  </div>
-
-  <div class="total-bar">
-    <div>
-      <div class="tb-label">Total Yang Harus Dibayar</div>
-      <div class="tb-amount">${escapeHtml(formatCurrency(total))}</div>
-      ${closestTempo ? `<div class="tb-sub">Jatuh tempo: ${escapeHtml(closestTempoStr)}</div>` : ""}
-    </div>
-    <div class="tb-count"><span>${invoices.length}</span>Invoice</div>
-  </div>
+  <table class="info-grid">
+    <tr>
+      <td class="ig-label">Kepada Yth.</td>
+      <td class="ig-value">${escapeHtml(customer)}</td>
+      <td class="ig-label">Jumlah Invoice</td>
+      <td class="ig-value">${invoices.length}</td>
+    </tr>
+    <tr>
+      <td class="ig-label">Jatuh Tempo Terdekat</td>
+      <td class="ig-value">${escapeHtml(closestTempoStr)}</td>
+      <td class="ig-label">Total Yang Harus Dibayar</td>
+      <td class="ig-value amt">${escapeHtml(formatCurrency(total))}</td>
+    </tr>
+  </table>
 
   <div class="sec-label">Detail Invoice</div>
-  <table>
+  <table class="detail">
     <thead>
       <tr>
-        <th style="width:22px"></th>
+        <th style="width:22px;text-align:center">No</th>
         <th>Nomor Invoice</th>
         <th style="width:80px">Tgl Invoice</th>
         <th style="width:74px;text-align:center;white-space:nowrap">Termin</th>
@@ -1617,7 +1603,7 @@ function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
     <tbody>
       ${invoiceRowsHtml}
       <tr class="trow">
-        <td colspan="5" style="text-align:right;color:#a1a1aa;font-size:8.5px">Total Tagihan</td>
+        <td colspan="5" style="text-align:right;color:#71717a;font-size:8.5px">Total Tagihan</td>
         <td class="amt">${escapeHtml(formatCurrency(total))}</td>
       </tr>
     </tbody>
@@ -1625,7 +1611,7 @@ function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
 
   ${periodeRows.length ? `
   <div class="sec-label">Riwayat per Periode</div>
-  <table>
+  <table class="detail">
     <thead><tr><th>Periode</th><th style="text-align:right">Jumlah</th></tr></thead>
     <tbody>${periodeRowsHtml}</tbody>
   </table>` : ""}

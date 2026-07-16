@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Alert,
@@ -6,18 +6,15 @@ import {
   CircularProgress,
   LinearProgress,
   Snackbar,
-  Skeleton,
-  Typography,
 } from "@mui/material";
-import TableChartRoundedIcon from "@mui/icons-material/TableChartRounded";
 import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
-import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
+import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import api from "../services/api";
 import CreateButton from "../components/button/CreateButton";
 
@@ -38,6 +35,176 @@ const T = {
   white:       "#ffffff",
 };
 
+function GoogleSheetsLogo({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true" focusable="false" style={{ display: "block" }}>
+      <path d="M13 5.5h17.2L39 14.3V41c0 1.1-.9 2-2 2H13c-1.1 0-2-.9-2-2V7.5c0-1.1.9-2 2-2z" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinejoin="round" />
+      <path d="M30 6v8.5h8.5" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinejoin="round" />
+      <rect x="16.5" y="21.5" width="17" height="15" rx="1.4" fill="none" stroke="currentColor" strokeWidth="2.4" />
+      <path d="M16.5 26.5h17M16.5 31.5h17M22.2 21.5v15M27.8 21.5v15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function getInitials(name) {
+  if (!name) return "?";
+  return String(name).trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || "").join("") || "?";
+}
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+
+function formatCellValue(value) {
+  const str = String(value ?? "");
+  if (!str) return str;
+  if (ISO_DATE_RE.test(str)) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+  }
+  return str;
+}
+
+function isNameColumn(header) {
+  const key = String(header?.key || "").toLowerCase();
+  const label = String(header?.label || "").toLowerCase();
+  return key.includes("nama") || key.includes("name") || label.includes("nama") || label.includes("name");
+}
+
+function isTerminColumn(header) {
+  const key = String(header?.key || "").toLowerCase();
+  const label = String(header?.label || "").toLowerCase();
+  return key.includes("termin") || label.includes("termin") || key.includes("term") || label.includes("term");
+}
+
+function RowsPerPageDropdown({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const options = [25, 50, 100];
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: "relative", width: 76 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          width: "100%", height: 30, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
+          borderRadius: 999, border: `1.5px solid ${open ? "rgba(233,196,106,0.75)" : "#d4ddf0"}`,
+          background: "linear-gradient(180deg, #f8fafc 0%, #eef1f6 100%)",
+          padding: "0 8px 0 11px", cursor: "pointer", outline: "none",
+          boxShadow: open ? "0 0 0 3px rgba(233,196,106,0.13)" : "0 2px 8px rgba(22,58,107,0.06)",
+          transition: "border-color 0.18s, box-shadow 0.18s",
+        }}
+      >
+        <span style={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: 700, color: T.ink, lineHeight: 1 }}>{value}</span>
+        <KeyboardArrowDownRoundedIcon style={{ fontSize: 16, color: T.brand, flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
+      </button>
+      {open && (
+        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, right: 0, zIndex: 1000, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 12, boxShadow: "0 10px 30px rgba(22,58,107,0.14), 0 2px 8px rgba(22,58,107,0.07)", overflow: "hidden" }}>
+          {options.map((opt) => {
+            const active = opt === value;
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => { onChange(opt); setOpen(false); }}
+                style={{ width: "100%", minHeight: 30, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "7px 9px 7px 11px", background: active ? T.brandLight : "transparent", border: "none", borderBottom: opt === options[options.length - 1] ? "none" : `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", transition: "background 0.12s" }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f4f6fa"; }}
+                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
+              >
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: active ? 800 : 600, color: active ? T.brand : T.text }}>{opt}</span>
+                {active && <CheckCircleOutlineRoundedIcon style={{ fontSize: 14, color: T.brand, flexShrink: 0 }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CellDropdown({ rect, value, label, onClose, onChange, onKeyDown }) {
+  if (!rect) return null;
+
+  const viewportH = window.innerHeight;
+  const spaceBelow = viewportH - rect.bottom;
+  const spaceAbove = rect.top;
+  const dropH = 118;
+
+  let top, transformOrigin;
+  if (spaceBelow >= dropH || spaceBelow >= spaceAbove) {
+    top = rect.bottom + 6;
+    transformOrigin = "top left";
+  } else {
+    top = rect.top - dropH - 6;
+    transformOrigin = "bottom left";
+  }
+
+  const left = Math.max(8, Math.min(rect.left, window.innerWidth - Math.max(rect.width, 280) - 8));
+  const width = Math.max(rect.width, 280);
+
+  return createPortal(
+    <>
+      <div style={{ position: "fixed", inset: 0, zIndex: 8998 }} onMouseDown={(e) => { e.preventDefault(); onClose(); }} />
+      <div
+        style={{
+          position: "fixed", top, left, width, zIndex: 8999,
+          borderRadius: 16,
+          overflow: "hidden",
+          boxShadow: "0 28px 80px rgba(10,18,40,0.28), 0 4px 16px rgba(10,18,40,0.14)",
+          animation: "cellDrop 0.15s cubic-bezier(.22,.68,0,1.1) both",
+          transformOrigin,
+          border: "1px solid rgba(26,42,87,0.12)",
+          background: T.white,
+        }}
+      >
+        <style>{`@keyframes cellDrop { from{opacity:0;transform:scale(0.96) translateY(-4px)} to{opacity:1;transform:scale(1) translateY(0)} }`}</style>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "14px 16px 12px", background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)", borderBottom: "1px solid rgba(26,42,87,0.10)" }}>
+          <div>
+            <p style={{ fontFamily: FONT_MONO, fontSize: 10, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>
+              Edit Data
+            </p>
+            <h3 style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>
+              {label || "Edit"}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: 8, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.75)", cursor: "pointer", transition: "background 0.15s, border-color 0.15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; e.currentTarget.style.borderColor = "rgba(233,196,106,0.4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; }}
+          >
+            <CloseRoundedIcon style={{ fontSize: 14 }} />
+          </button>
+        </div>
+        <div style={{ padding: "12px 16px 14px", background: T.white }}>
+          <input
+            autoFocus
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={onKeyDown}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{ width: "100%", boxSizing: "border-box", height: 38, padding: "0 12px", border: "1.5px solid rgba(26,42,87,0.18)", borderRadius: 10, fontFamily: FONT_SANS, fontSize: 13, fontWeight: 500, color: T.ink, outline: "none", background: T.brandLight, transition: "border-color 0.15s, box-shadow 0.15s" }}
+            onFocus={(e) => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = "0 0 0 3px rgba(35,57,113,0.10)"; }}
+            onBlur={(e) => { e.target.style.borderColor = "rgba(26,42,87,0.18)"; e.target.style.boxShadow = "none"; }}
+          />
+          <p style={{ margin: "7px 1px 0", fontFamily: FONT_SANS, fontSize: 10.5, color: T.subtle }}>
+            <span style={{ color: T.brand, fontWeight: 700 }}>Enter</span> simpan &nbsp;·&nbsp; <span style={{ fontWeight: 600 }}>Esc</span> batal
+          </p>
+        </div>
+      </div>
+    </>,
+    document.body
+  );
+}
+
 const PERIODE_SKELETON_ROWS = [
   [30, 62, 50, 44, 58],
   [26, 78, 42, 60, 36],
@@ -48,59 +215,39 @@ const PERIODE_SKELETON_ROWS = [
   [34, 58, 62, 44, 66],
 ];
 
-function LoadingTableState({ syncing }) {
+function SkeletonBar({ w, delay = 0 }) {
   return (
-    <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-      {/* Loading banner */}
-      <Box sx={{ px: 2.5, py: 1.75, borderBottom: `1px solid ${T.line}`, bgcolor: T.brandLight }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-            <CircularProgress size={16} thickness={4} sx={{ color: T.brand, flexShrink: 0 }} />
-            <Box>
-              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 700, color: T.ink, lineHeight: 1.2 }}>
-                {syncing ? "Menyinkronkan data dari Google Sheet" : "Memuat data sheet PERIODE"}
-              </Typography>
-              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11, color: T.muted, mt: 0.25 }}>
-                {syncing ? "Mengambil data dari sheet PERIODE..." : "Memeriksa konfigurasi dan memuat data terakhir..."}
-              </Typography>
-            </Box>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 1.25, py: 0.5, borderRadius: "999px", bgcolor: T.white, border: `1.5px solid ${T.brandBorder}`, boxShadow: `0 2px 8px rgba(35,57,113,0.06)`, flexShrink: 0 }}>
-            <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: T.brand, animation: "pulse 1.4s ease-in-out infinite", "@keyframes pulse": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.3 } } }} />
-            <Typography sx={{ fontFamily: FONT_MONO, fontSize: 10.5, fontWeight: 700, color: T.brand, letterSpacing: "0.07em" }}>
-              {syncing ? "SYNCING" : "LOADING"}
-            </Typography>
-          </Box>
-        </Box>
-        <LinearProgress sx={{ mt: 1.5, height: 3, borderRadius: 999, bgcolor: `${T.brand}18`, "& .MuiLinearProgress-bar": { borderRadius: 999, bgcolor: T.brand } }} />
-      </Box>
+    <div style={{
+      height: 10, borderRadius: 6, width: w,
+      background: "rgba(26,42,87,0.08)",
+      animation: `shimmer 1.4s ease-in-out ${delay}s infinite`,
+    }} />
+  );
+}
 
-      {/* Skeleton table */}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: "hidden", bgcolor: T.white }}>
-        {/* Skeleton thead */}
-        <Box sx={{ display: "grid", gridTemplateColumns: "52px repeat(5, 1fr)", borderBottom: `1.5px solid ${T.brandBorder}`, bgcolor: T.brandLight }}>
-          {[28, 52, 44, 48, 36, 42].map((w, ci) => (
-            <Box key={ci} sx={{ px: 2, py: 1.4 }}>
-              <Skeleton variant="rounded" width={`${w}%`} height={10} sx={{ bgcolor: `${T.brand}18`, borderRadius: 2 }} />
-            </Box>
-          ))}
-        </Box>
-        {/* Skeleton rows */}
-        {PERIODE_SKELETON_ROWS.map((cols, rowIdx) => (
-          <Box key={rowIdx} sx={{ display: "grid", gridTemplateColumns: "52px repeat(5, 1fr)", borderBottom: rowIdx === PERIODE_SKELETON_ROWS.length - 1 ? "none" : `1px solid ${T.line}`, bgcolor: rowIdx % 2 === 0 ? T.white : T.surface, alignItems: "center" }}>
-            <Box sx={{ px: 2, py: 1.25, display: "flex", justifyContent: "center" }}>
-              <Skeleton variant="rounded" width={20} height={10} sx={{ bgcolor: "rgba(148,163,184,0.2)", borderRadius: 2 }} />
-            </Box>
-            {cols.map((w, ci) => (
-              <Box key={ci} sx={{ px: 2, py: 1.25 }}>
-                <Skeleton variant="rounded" width={`${w}%`} height={11}
-                  sx={{ bgcolor: "rgba(148,163,184,0.18)", borderRadius: 2, animationDelay: `${(rowIdx * 5 + ci) * 0.05}s` }} />
-              </Box>
-            ))}
-          </Box>
+function LoadingTableState() {
+  const skelCols = [110, 90, 160, 80, 70, 90];
+  return (
+    <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", margin: "0 16px", overflow: "hidden" }}>
+      <div style={{ display: "flex", borderBottom: `1.5px solid rgba(26,42,87,0.1)`, background: T.surface, flexShrink: 0 }}>
+        {skelCols.map((w, ci) => (
+          <div key={ci} style={{ padding: "12px 16px", flex: ci === 2 ? 2 : 1, minWidth: w }}>
+            <SkeletonBar w={`${[55,48,52,44,38,50][ci]}%`} delay={ci * 0.05} />
+          </div>
         ))}
-      </Box>
-    </Box>
+      </div>
+      <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+        {PERIODE_SKELETON_ROWS.map((cols, ri) => (
+          <div key={ri} style={{ display: "flex", borderBottom: `1px solid rgba(26,42,87,0.05)`, background: ri % 2 === 0 ? T.white : T.surface, alignItems: "center" }}>
+            {skelCols.map((w, ci) => (
+              <div key={ci} style={{ padding: "11px 16px", flex: ci === 2 ? 2 : 1, minWidth: w }}>
+                <SkeletonBar w={`${cols[ci % cols.length]}%`} delay={(ri * 0.04 + ci * 0.02)} />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -113,16 +260,30 @@ export default function PeriodePage() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [page, setPage]               = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedRow, setExpandedRow] = useState(null);
+  const [editingCell, setEditingCell] = useState(null);
+  const [cellRect, setCellRect]       = useState(null);
   const [toast, setToast]             = useState({ open: false, message: "", severity: "success" });
   const [headerSlot, setHeaderSlot]   = useState(null);
 
   const gsheetUrlRef = useRef("");
+  const activeCellRef = useRef(null);
 
   const showToast = (msg, sev = "success") => setToast({ open: true, message: msg, severity: sev });
 
   useEffect(() => {
     setTimeout(() => setHeaderSlot(document.getElementById("header-wa-slot")), 100);
   }, []);
+
+  useEffect(() => {
+    if (!editingCell) { setCellRect(null); return; }
+    requestAnimationFrame(() => {
+      if (activeCellRef.current) {
+        const r = activeCellRef.current.getBoundingClientRect();
+        setCellRect({ top: r.top, bottom: r.bottom, left: r.left, width: r.width });
+      }
+    });
+  }, [editingCell]);
 
   useEffect(() => {
     api.get("/gsheet").then((res) => {
@@ -159,54 +320,99 @@ export default function PeriodePage() {
     } finally { setSyncing(false); }
   };
 
-  const filteredRows = rows.filter((row) => {
+  const handleCellEdit = (rowIdx, colKey) => {
+    setEditingCell({ row: rowIdx, colKey, orig: rows[rowIdx]?.[colKey] });
+  };
+
+  const handleDropdownChange = (value) => {
+    if (!editingCell) return;
+    setRows((prev) => prev.map((r, i) => i === editingCell.row ? { ...r, [editingCell.colKey]: value } : r));
+  };
+
+  const closeDropdown = () => { setEditingCell(null); setCellRect(null); };
+
+  const handleDropdownKey = (e) => {
+    if (e.key === "Enter") { e.preventDefault(); closeDropdown(); }
+    else if (e.key === "Escape") {
+      if (editingCell) setRows((prev) => prev.map((r, i) => i === editingCell.row ? { ...r, [editingCell.colKey]: editingCell.orig } : r));
+      closeDropdown();
+    }
+  };
+
+  const mappedRows = rows.map((row, index) => ({ row, index }));
+  const filteredRows = mappedRows.filter(({ row }) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return headers.some(h => String(row[h.key] ?? "").toLowerCase().includes(q));
   });
   const totalPages         = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
   const showFullLoadingState = loading || (syncing && rows.length === 0);
+  const tableCols = headers.slice(0, 5);
+  const accordionCols = headers.slice(5);
+  const colSpan = tableCols.length + 1;
+  const editingValue = editingCell ? String(rows[editingCell.row]?.[editingCell.colKey] ?? "") : "";
+  const editingHeaderLabel = editingCell ? headers.find(h => h.key === editingCell.colKey)?.label || editingCell.colKey : "";
 
   return (
     <Box sx={{ fontFamily: FONT_SANS, p: 2, display: "flex", flexDirection: "column", gap: 1.5, height: "calc(100vh - 64px)", boxSizing: "border-box", overflow: "hidden" }}>
 
       {/* ── Header portal ── */}
       {headerSlot && createPortal(
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <style>{`.hdr-search::placeholder { color: rgba(255,255,255,0.42); font-weight: 400; }`}</style>
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}
+            onMouseEnter={e => { const inp = e.currentTarget.querySelector("input"); if (inp !== document.activeElement) { inp.style.borderColor = "rgba(233,196,106,0.55)"; inp.style.background = "rgba(233,196,106,0.1)"; } }}
+            onMouseLeave={e => { const inp = e.currentTarget.querySelector("input"); if (inp !== document.activeElement) { inp.style.borderColor = searchQuery ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)"; inp.style.background = "rgba(255,255,255,0.12)"; } }}
+          >
+            <SearchRoundedIcon style={{ position: "absolute", left: 11, fontSize: 14, color: "rgba(255,255,255,0.55)", pointerEvents: "none" }} />
+            <input type="text" className="hdr-search" placeholder="Search..." value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
+              style={{ height: 34, paddingLeft: 32, paddingRight: searchQuery ? 30 : 14, width: 200, fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 500, color: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", borderRadius: 10, background: "rgba(255,255,255,0.12)", outline: "none", transition: "border-color 0.18s, background 0.18s", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.12)" }}
+              onFocus={e => { e.target.style.borderColor = "rgba(233,196,106,0.8)"; e.target.style.background = "rgba(233,196,106,0.12)"; }}
+              onBlur={e  => { e.target.style.borderColor = searchQuery ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)"; e.target.style.background = "rgba(255,255,255,0.12)"; }}
+            />
+            {searchQuery && (
+              <button onClick={() => { setSearchQuery(""); setPage(0); }} style={{ position: "absolute", right: 8, width: 16, height: 16, borderRadius: "50%", background: "rgba(255,255,255,0.28)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+                <CloseRoundedIcon style={{ fontSize: 9, color: "#fff" }} />
+              </button>
+            )}
+          </div>
           {gsheetUrlRef.current ? (
-            <Box component="a" href={gsheetUrlRef.current} target="_blank" rel="noopener noreferrer"
-              sx={{ display: "flex", alignItems: "center", gap: 0.6, height: 32, px: 1.5, borderRadius: "999px", fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, color: "#fff", textDecoration: "none", border: "1.5px solid rgba(255,255,255,0.45)", bgcolor: "rgba(255,255,255,0.18)", transition: "transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease", "&:hover": { bgcolor: "rgba(255,255,255,0.28)", borderColor: "rgba(255,255,255,0.7)", transform: "translateY(-1px)", boxShadow: "0 10px 20px rgba(26,42,87,0.18)" } }}>
-              <TableChartRoundedIcon sx={{ fontSize: 14 }} />
-              Buka Google Sheet
-              <OpenInNewRoundedIcon sx={{ fontSize: 11, opacity: 0.75 }} />
-            </Box>
+            <a href={gsheetUrlRef.current} target="_blank" rel="noopener noreferrer" className="header-icon-button header-icon-button--compact" title="Open Google Sheet" style={{ textDecoration: "none" }}>
+              <GoogleSheetsLogo size={18} />
+            </a>
           ) : (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, height: 32, px: 1.5, borderRadius: "999px", fontFamily: FONT_SANS, fontSize: 12, color: "rgba(255,255,255,0.5)", fontStyle: "italic", border: "1px solid rgba(255,255,255,0.15)", bgcolor: "rgba(255,255,255,0.07)" }}>
-              <TableChartRoundedIcon sx={{ fontSize: 14 }} />
-              Belum dikonfigurasi
-            </Box>
+            <span className="header-icon-button header-icon-button--compact" style={{ opacity: 0.35, cursor: "default" }}>
+              <GoogleSheetsLogo size={18} />
+            </span>
           )}
-          <CreateButton variant="detail" onClick={handleSync} disabled={syncing || !gsheetUrlRef.current}
-            style={{ height: 32, paddingInline: 14, fontSize: 12, gap: 6, color: "#fff", background: "rgba(255,255,255,0.18)", border: "1.5px solid rgba(255,255,255,0.45)" }}>
-            {syncing ? <CircularProgress size={12} sx={{ color: "#fff" }} /> : <SyncRoundedIcon style={{ fontSize: 14 }} />}
-            {syncing ? "Menyinkron..." : "Sync"}
-          </CreateButton>
-        </Box>,
+          <button className="header-icon-button header-icon-button--compact" onClick={handleSync} disabled={syncing || !gsheetUrlRef.current} style={{ opacity: !gsheetUrlRef.current ? 0.4 : 1 }}>
+            {syncing ? <CircularProgress size={15} sx={{ color: "#fff" }} /> : <SyncRoundedIcon style={{ fontSize: 17 }} />}
+          </button>
+        </div>,
         headerSlot
       )}
 
       {/* ── Main Table Card ── */}
-      <section className="dashboard-panel" style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <section className="dashboard-panel" style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", borderRadius: 28 }}>
+
+        <div className="dashboard-panel__header" style={{ padding: "18px 24px 12px", borderBottom: "none", background: T.white, flexShrink: 0, margin: 0 }}>
+          <div>
+            <p className="dashboard-panel__eyebrow" style={{ fontFamily: FONT_SANS, marginBottom: 2 }}>Google Sheet</p>
+            <h2 className="dashboard-panel__title" style={{ margin: 0 }}>Sheet PERIODE</h2>
+            {rows.length > 0 && (
+              <p className="dashboard-panel__description" style={{ margin: "3px 0 0", fontFamily: FONT_MONO }}>
+                {rows.length} rows · {headers.length} columns
+              </p>
+            )}
+          </div>
+        </div>
 
         {/* ── Card Header ── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 20px", borderBottom: `1px solid ${T.line}`, gap: 12, flexWrap: "wrap", flexShrink: 0, background: T.white }}>
+        <div className="dashboard-panel__header" style={{ display: "none" }}>
 
           {/* Left: title group */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {/* Icon box */}
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: T.brandLight, border: `1.5px solid ${T.brandBorder}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <CalendarMonthRoundedIcon style={{ fontSize: 16, color: T.brand }} />
-            </div>
+          <div>
             {/* Title + badge */}
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -223,41 +429,11 @@ export default function PeriodePage() {
             </div>
           </div>
 
-          {/* Right: search */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <SearchRoundedIcon style={{ position: "absolute", left: 11, fontSize: 15, color: T.subtle, pointerEvents: "none" }} />
-              <input
-                type="text"
-                placeholder="Cari data..."
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
-                style={{
-                  height: 34, paddingLeft: 33, paddingRight: searchQuery ? 30 : 14, width: 176,
-                  fontFamily: FONT_SANS, fontSize: 12.5, color: T.ink,
-                  border: `1.5px solid ${searchQuery ? T.brand : T.line}`,
-                  borderRadius: 999, background: T.white, outline: "none",
-                  transition: "border-color 0.2s, box-shadow 0.2s, width 0.25s",
-                  boxShadow: searchQuery ? `0 0 0 3px ${T.brandLight}` : "none",
-                }}
-                onFocus={e => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = `0 0 0 3px ${T.brandLight}`; e.target.style.width = "210px"; }}
-                onBlur={e => { e.target.style.borderColor = searchQuery ? T.brand : T.line; e.target.style.boxShadow = searchQuery ? `0 0 0 3px ${T.brandLight}` : "none"; e.target.style.width = "176px"; }}
-              />
-              {searchQuery && (
-                <button onClick={() => { setSearchQuery(""); setPage(0); }}
-                  style={{ position: "absolute", right: 9, width: 17, height: 17, borderRadius: "50%", background: T.subtle, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "background 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.background = T.muted}
-                  onMouseLeave={e => e.currentTarget.style.background = T.subtle}>
-                  <CloseRoundedIcon style={{ fontSize: 11, color: "#fff" }} />
-                </button>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* ── Pagination bar ── */}
         {filteredRows.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "7px 20px", borderBottom: `1px solid ${T.line}`, background: T.surface, flexWrap: "wrap", gap: 8, flexShrink: 0 }}>
+          <div style={{ display: "none" }}>
             {/* Info + rows-per-page */}
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.muted }}>
@@ -268,19 +444,12 @@ export default function PeriodePage() {
                 {searchQuery && <span style={{ marginLeft: 6, color: T.brand, fontWeight: 600 }}>· filter aktif</span>}
               </span>
               <span style={{ color: T.line }}>|</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.subtle }}>Tampilkan</span>
-                <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-                  <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
-                    style={{ height: 26, paddingLeft: 10, paddingRight: 26, fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: 700, color: T.brand, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 999, cursor: "pointer", outline: "none", appearance: "none", transition: "border-color 0.15s, box-shadow 0.15s" }}
-                    onFocus={e => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = `0 0 0 2px ${T.brandLight}`; }}
-                    onBlur={e => { e.target.style.borderColor = T.brandBorder; e.target.style.boxShadow = "none"; }}>
-                    {[25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                  <span style={{ position: "absolute", right: 8, pointerEvents: "none", display: "flex", alignItems: "center", color: T.brand }}>
-                    <svg width="9" height="5" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#233971" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </span>
-                </div>
+                <RowsPerPageDropdown
+                  value={rowsPerPage}
+                  onChange={(nextRows) => { setRowsPerPage(nextRows); setPage(0); }}
+                />
                 <span style={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.subtle }}>baris</span>
               </div>
             </div>
@@ -317,46 +486,181 @@ export default function PeriodePage() {
           </div>
         )}
 
+        {!showFullLoadingState && rows.length === 0 && (
+          <div style={{ padding: "0 20px 10px", flexShrink: 0 }}>
+            <Alert severity="info" sx={{ fontFamily: FONT_SANS, fontSize: 12, py: 0.25, borderRadius: "10px" }}>
+              Belum ada data — klik Sync di header untuk memuat data dari sheet PERIODE terlebih dahulu
+            </Alert>
+          </div>
+        )}
+
         {/* ── Body ── */}
         {showFullLoadingState ? (
           <LoadingTableState syncing={syncing} />
-        ) : rows.length === 0 ? (
-
-          /* Empty state */
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 48 }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, padding: "40px 56px", border: `1.5px dashed ${T.brandBorder}`, borderRadius: 20, background: `${T.brandLight}60`, maxWidth: 380, textAlign: "center" }}>
-              <div style={{ width: 52, height: 52, borderRadius: 16, background: T.white, border: `1.5px solid ${T.brandBorder}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 14px rgba(35,57,113,0.08)` }}>
-                <CalendarMonthRoundedIcon style={{ fontSize: 24, color: T.brand }} />
-              </div>
-              <div>
-                <p style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: T.ink, margin: "0 0 8px" }}>
-                  Belum ada data periode
-                </p>
-                <p style={{ fontFamily: FONT_SANS, fontSize: 12, color: T.muted, margin: 0, lineHeight: 1.65 }}>
-                  Klik <strong style={{ color: T.brand }}>Sync</strong> di header untuk memuat data dari sheet PERIODE
-                </p>
-              </div>
-              {gsheetUrlRef.current && (
-                <CreateButton variant="detail" onClick={handleSync} disabled={syncing} style={{ gap: 6, paddingInline: 22 }}>
-                  {syncing ? <CircularProgress size={13} sx={{ color: T.brand }} /> : <SyncRoundedIcon style={{ fontSize: 15 }} />}
-                  {syncing ? "Memuat..." : "Sync Sekarang"}
-                </CreateButton>
-              )}
-            </div>
-          </div>
-
         ) : (
 
           /* Data table */
-          <div style={{ overflow: "auto", flex: 1, minHeight: 0 }}>
-            <table className="users-table" style={{ fontFamily: FONT_SANS, fontSize: 12 }}>
+          <>
+          <div className="users-table-wrapper" style={{ flex: 1, minHeight: 0, margin: "0 16px", overflowX: "hidden", overflowY: "auto" }}>
+            <table className="users-table" style={{ fontFamily: FONT_SANS, width: "100%", minWidth: 0, tableLayout: "fixed" }}>
               <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
-                <tr style={{ background: T.brandLight, borderBottom: `1.5px solid ${T.brandBorder}` }}>
-                  <th style={{ color: T.brandDark, fontSize: 10.5, fontWeight: 700, padding: "10px 16px", width: 40, userSelect: "none", textAlign: "center", background: T.brandLight, textTransform: "none", letterSpacing: 0 }}>
+                <tr>
+                  {tableCols.map((h) => (
+                    <th key={h.key} style={{ color: T.brandDark, fontSize: 10.5, fontWeight: 700, padding: "10px 16px", whiteSpace: "nowrap", textAlign: "left", background: T.surface, textTransform: "none", letterSpacing: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {h.label}
+                    </th>
+                  ))}
+                  <th className="users-table__detail-header" style={{ background: T.surface, width: 96, minWidth: 96, paddingInline: 8, textAlign: "center" }}>
+                    {accordionCols.length > 0 ? "Detail" : ""}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={colSpan} style={{ padding: "48px 20px", textAlign: "center" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                        <CalendarMonthRoundedIcon style={{ fontSize: 32, color: T.subtle }} />
+                        <span style={{ fontFamily: FONT_SANS, fontSize: 13, color: T.muted, fontWeight: 600 }}>Belum ada data periode</span>
+                        <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: T.subtle }}>Klik Sync di header untuk memuat data dari sheet PERIODE</span>
+                        {gsheetUrlRef.current && (
+                          <CreateButton variant="detail" onClick={handleSync} disabled={syncing} style={{ gap: 6, paddingInline: 22, marginTop: 8 }}>
+                            {syncing ? <CircularProgress size={13} sx={{ color: T.brand }} /> : <SyncRoundedIcon style={{ fontSize: 15 }} />}
+                            {syncing ? "Memuat..." : "Sync Sekarang"}
+                          </CreateButton>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredRows.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map(({ row, index: i }) => {
+                  const isExpanded = expandedRow === i;
+                  return (
+                    <Fragment key={i}>
+                      <tr
+                        className={`users-table__row users-table__row--interactive${isExpanded ? " users-table__row--expanded" : ""}`}
+                        style={{ background: i % 2 !== 0 ? T.surface : T.white }}
+                        onClick={() => { closeDropdown(); setExpandedRow(isExpanded ? null : i); }}
+                      >
+                        {tableCols.map((h) => {
+                          const displayText = formatCellValue(row[h.key]);
+                          const isActive = editingCell?.row === i && editingCell?.colKey === h.key;
+                          const hasAvatar = isNameColumn(h);
+                          const isTermin = isTerminColumn(h);
+                          return (
+                            <td key={h.key} style={{ overflow: "hidden", padding: "4px 8px" }}>
+                              <button
+                                ref={isActive ? activeCellRef : null}
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleCellEdit(i, h.key); }}
+                                style={{
+                                  display: "inline-flex", alignItems: "center", gap: 5, width: "100%",
+                                  border: `1px solid ${isActive ? "rgba(233,196,106,0.9)" : "transparent"}`,
+                                  borderRadius: 5, padding: "3px 6px",
+                                  background: isActive ? "rgba(233,196,106,0.14)" : "transparent",
+                                  cursor: "text", textAlign: "left",
+                                  boxShadow: isActive ? "0 0 0 3px rgba(233,196,106,0.12)" : "none",
+                                  transition: "border-color 0.12s, background 0.12s, box-shadow 0.12s",
+                                }}
+                                onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "rgba(233,196,106,0.65)"; e.currentTarget.style.background = "rgba(233,196,106,0.08)"; } }}
+                                onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.background = "transparent"; } }}
+                              >
+                                {hasAvatar ? (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 7, overflow: "hidden", width: "100%" }}>
+                                    <span className="users-table__avatar" style={{ width: 30, height: 30, fontFamily: FONT_SANS, fontSize: 9.5, letterSpacing: "0.04em", flexShrink: 0 }}>{getInitials(displayText)}</span>
+                                    <span style={{ fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, color: isActive ? T.brandDark : T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {displayText || <span style={{ color: T.subtle, fontStyle: "italic", fontWeight: 400 }}>—</span>}
+                                    </span>
+                                  </div>
+                                ) : isTermin && displayText ? (
+                                  <span className={`users-table__status users-table__status--inline ${/3\s*bulan/i.test(displayText) ? "users-table__status--app" : "users-table__status--pending"}`}>{displayText}</span>
+                                ) : (
+                                  <span style={{ display: "block", width: "100%", fontFamily: FONT_SANS, fontSize: 12, fontWeight: 400, color: isActive ? T.brandDark : T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {displayText || <span style={{ color: T.subtle, fontStyle: "italic", fontWeight: 400 }}>—</span>}
+                                  </span>
+                                )}
+                              </button>
+                            </td>
+                          );
+                        })}
+                        <td className="users-table__detail-cell" style={{ width: 96, minWidth: 96, padding: "4px 8px", textAlign: "center", overflow: "visible" }}>
+                          <CreateButton
+                            variant="detail"
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); closeDropdown(); setExpandedRow(isExpanded ? null : i); }}
+                            aria-expanded={isExpanded}
+                            style={{ width: "100%", minHeight: 32, padding: "6px 10px", gap: 4, fontSize: 11.5, lineHeight: 1, borderRadius: 999, whiteSpace: "nowrap" }}
+                          >
+                            <span style={{ fontFamily: FONT_SANS, fontSize: 11.5, lineHeight: 1 }}>Detail</span>
+                            <KeyboardArrowDownRoundedIcon
+                              style={{ fontSize: 15, flexShrink: 0, transition: "transform 0.2s", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}
+                              className={`users-table__detail-icon${isExpanded ? " users-table__detail-icon--open" : ""}`}
+                            />
+                          </CreateButton>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr className="users-table__accordion-row">
+                          <td colSpan={colSpan}>
+                            <div className="users-table__accordion">
+                              {accordionCols.length > 0 && (
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: "16px 20px 16px" }}>
+                                  {accordionCols.map((h) => {
+                                    const displayText = formatCellValue(row[h.key]);
+                                    const isActive = editingCell?.row === i && editingCell?.colKey === h.key;
+                                    const isTermin = isTerminColumn(h);
+                                    return (
+                                      <div key={h.key} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                        <span style={{ fontFamily: FONT_SANS, fontSize: 10, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                          {h.label}
+                                        </span>
+                                        <button
+                                          ref={isActive ? activeCellRef : null}
+                                          type="button"
+                                          onClick={(e) => { e.stopPropagation(); handleCellEdit(i, h.key); }}
+                                          style={{
+                                            display: "flex", alignItems: "center", width: "100%",
+                                            border: `1.5px solid ${isActive ? "rgba(233,196,106,0.9)" : T.line}`,
+                                            borderRadius: 8, padding: "7px 11px",
+                                            background: isActive ? "rgba(233,196,106,0.14)" : T.white,
+                                            cursor: "text", textAlign: "left",
+                                            boxShadow: isActive ? "0 0 0 3px rgba(233,196,106,0.12)" : "none",
+                                            transition: "border-color 0.12s, background 0.12s, box-shadow 0.12s",
+                                          }}
+                                          onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "rgba(233,196,106,0.65)"; e.currentTarget.style.background = "rgba(233,196,106,0.08)"; } }}
+                                          onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.borderColor = T.line; e.currentTarget.style.background = T.white; } }}
+                                        >
+                                          {isTermin && displayText ? (
+                                            <span className={`users-table__status users-table__status--inline ${/3\s*bulan/i.test(displayText) ? "users-table__status--app" : "users-table__status--pending"}`}>{displayText}</span>
+                                          ) : (
+                                            <span style={{ fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 500, color: isActive ? T.brandDark : displayText ? T.ink : T.subtle, fontStyle: displayText ? "normal" : "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                              {displayText || "—"}
+                                            </span>
+                                          )}
+                                        </button>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="users-table-wrapper" style={{ display: "none" }}>
+            <table className="users-table" style={{ fontFamily: FONT_SANS, width: "100%", minWidth: 0, tableLayout: "fixed" }}>
+              <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
+                <tr style={{ background: T.surface, borderBottom: `1.5px solid ${T.line}` }}>
+                  <th style={{ color: T.brandDark, fontSize: 10.5, fontWeight: 700, padding: "10px 16px", width: 40, userSelect: "none", textAlign: "center", background: T.surface, textTransform: "none", letterSpacing: 0 }}>
                     No
                   </th>
                   {headers.map((h) => (
-                    <th key={h.key} style={{ color: T.brandDark, fontSize: 10.5, fontWeight: 700, padding: "10px 16px", whiteSpace: "nowrap", textAlign: "left", background: T.brandLight, textTransform: "none", letterSpacing: 0 }}>
+                    <th key={h.key} style={{ color: T.brandDark, fontSize: 10.5, fontWeight: 700, padding: "10px 16px", whiteSpace: "nowrap", textAlign: "left", background: T.surface, textTransform: "none", letterSpacing: 0 }}>
                       {h.label}
                     </th>
                   ))}
@@ -380,10 +684,52 @@ export default function PeriodePage() {
               </tbody>
             </table>
           </div>
+          </>
+        )}
+
+        {/* Pagination */}
+        {filteredRows.length > 0 && (
+          <div className="users-table-pagination" style={{ padding: "9px 22px 8px", borderTop: `1px solid ${T.line}`, marginTop: 0 }}>
+            <div className="users-table-pagination__meta" style={{ gap: 10 }}>
+              <p className="users-table-pagination__summary" style={{ fontSize: 11.5, lineHeight: 1.35 }}>
+                {page * rowsPerPage + 1}–{Math.min((page + 1) * rowsPerPage, filteredRows.length)} of{" "}
+                <strong>{filteredRows.length}</strong> rows
+                {searchQuery && <span style={{ marginLeft: 6, color: T.brand, fontWeight: 600 }}>· filter aktif</span>}
+              </p>
+              <label className="users-table-pagination__page-size" style={{ gap: 6, fontSize: 11.5 }}>
+                <span>Show</span>
+                <RowsPerPageDropdown
+                  value={rowsPerPage}
+                  onChange={(nextRows) => { setRowsPerPage(nextRows); setPage(0); }}
+                />
+                <span>rows</span>
+              </label>
+            </div>
+            <div className="users-table-pagination__controls" style={{ gap: 5 }}>
+              <CreateButton variant="pagination" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ minHeight: 30, padding: "6px 10px", fontSize: 11.5, gap: 4 }}>
+                <ChevronLeftRoundedIcon style={{ fontSize: 14 }} /> Previous
+              </CreateButton>
+              {Array.from({ length: totalPages }, (_, i) => i)
+                .filter(i => i === 0 || i === totalPages - 1 || Math.abs(i - page) <= 1)
+                .reduce((acc, i, idx, arr) => { if (idx > 0 && i - arr[idx - 1] > 1) acc.push("..."); acc.push(i); return acc; }, [])
+                .map((item, idx) =>
+                  item === "..." ? (
+                    <span key={`dot-${idx}`} className="users-table-pagination__ellipsis" style={{ fontSize: 11.5, paddingInline: 2 }}>...</span>
+                  ) : (
+                    <CreateButton key={item} variant="pagination" active={item === page} onClick={() => setPage(item)} style={{ minWidth: 30, minHeight: 30, padding: "6px 9px" }}>
+                      <span style={{ fontSize: 11.5, lineHeight: 1 }}>{item + 1}</span>
+                    </CreateButton>
+                  )
+                )}
+              <CreateButton variant="pagination" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ minHeight: 30, padding: "6px 10px", fontSize: 11.5, gap: 4 }}>
+                Next <ChevronRightRoundedIcon style={{ fontSize: 14 }} />
+              </CreateButton>
+            </div>
+          </div>
         )}
 
         {/* ── Footer legend ── */}
-        {rows.length > 0 && (
+        {false && rows.length > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 20px", borderTop: `1px solid ${T.line}`, background: T.surface, flexShrink: 0 }}>
             <InfoOutlinedIcon style={{ fontSize: 14, color: T.brandBorder, flexShrink: 0 }} />
             <span style={{ fontFamily: FONT_SANS, fontSize: 11, color: T.muted }}>
@@ -392,6 +738,17 @@ export default function PeriodePage() {
           </div>
         )}
       </section>
+
+      {editingCell && (
+        <CellDropdown
+          rect={cellRect}
+          value={editingValue}
+          label={editingHeaderLabel}
+          onClose={closeDropdown}
+          onChange={handleDropdownChange}
+          onKeyDown={handleDropdownKey}
+        />
+      )}
 
       <Snackbar open={toast.open} autoHideDuration={3200} onClose={() => setToast((p) => ({ ...p, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
         <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: "12px", fontFamily: FONT_SANS, boxShadow: "0 8px 24px rgba(0,0,0,0.14)" }}>

@@ -4,9 +4,9 @@ import {
   Alert,
   Box,
   Button,
-  CardContent,
   CircularProgress,
-  Chip,
+  Dialog,
+  DialogContent,
   Grid,
   InputAdornment,
   Snackbar,
@@ -14,23 +14,23 @@ import {
   Typography,
   IconButton,
   Tooltip,
-  Switch,
 } from "@mui/material";
-import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
-import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
+import TimerRoundedIcon from "@mui/icons-material/TimerRounded";
+import EditNoteRoundedIcon from "@mui/icons-material/EditNoteRounded";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
-import TableChartRoundedIcon from "@mui/icons-material/TableChartRounded";
+import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import CloudDoneRoundedIcon from "@mui/icons-material/CloudDoneRounded";
+import AddToDriveRoundedIcon from "@mui/icons-material/AddToDriveRounded";
 import FolderOpenRoundedIcon from "@mui/icons-material/FolderOpenRounded";
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import InsertPhotoRoundedIcon from "@mui/icons-material/InsertPhotoRounded";
+import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 
 // ─────────────────────────────────────────────
@@ -43,7 +43,7 @@ const T = {
   brand: "#233971",
   brandLight: "#eaeff7",
   brandBorder: "#b3c1d8",
-  brandDark: "#1c2f5c",
+  brandDark: "#163a6b",
 
   blue: "#2e5bba",
   blueBg: "#eef2f9",
@@ -123,79 +123,73 @@ function maskSecret(value, visible = 6) {
 // ─────────────────────────────────────────────
 // Reusable UI Atoms
 // ─────────────────────────────────────────────
-function Panel({ children, sx = {}, ...props }) {
+function SettingsPanel({ icon, eyebrow = "Pengaturan", title, action, sx = {}, children }) {
   return (
     <Box
+      className="dashboard-panel"
       sx={{
-        background: T.white,
-        borderRadius: "16px",
-        border: `1px solid ${T.line}`,
+        height: "100%",
+        padding: 0,
         overflow: "hidden",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.02)",
-        transition: "box-shadow 0.25s ease, transform 0.25s ease",
-        "&:hover": {
-          boxShadow: "0 8px 30px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03)",
-        },
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: "28px",
+        background: T.white,
+        border: `1px solid ${T.line}`,
         ...sx,
       }}
-      {...props}
     >
-      {children}
-    </Box>
-  );
-}
-
-function SectionTitle({ icon, children, action, accentColor }) {
-  const accent = accentColor || T.brand;
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        px: 2.5,
-        py: 2,
-        borderBottom: `1px solid ${T.line}`,
-        background: `linear-gradient(135deg, ${accent}08 0%, ${accent}03 100%)`,
-      }}
-    >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-        <Box
-          sx={{
-            width: 5,
-            height: 18,
-            borderRadius: "3px",
-            background: `linear-gradient(180deg, ${accent} 0%, ${accent}99 100%)`,
-            flexShrink: 0,
-          }}
-        />
-        <Box
-          sx={{
-            width: 28,
-            height: 28,
-            borderRadius: "8px",
-            background: `linear-gradient(135deg, ${accent}18 0%, ${accent}08 100%)`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            "& svg": { fontSize: 15, color: accent },
-          }}
-        >
-          {icon}
+      <Box
+        className="dashboard-panel__header"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          flexWrap: "nowrap",
+          minHeight: 44,
+          padding: "12px 16px 8px",
+          borderBottom: "none",
+          background: T.white,
+          flexShrink: 0,
+          margin: 0,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, flex: 1 }}>
+          <Box
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: "8px",
+              background: "linear-gradient(180deg, #f3f4f6 0%, #e9ebef 100%)",
+              border: `1.5px solid ${T.ghost}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              "& svg": { fontSize: 15, color: T.ink2 },
+            }}
+          >
+            {icon}
+          </Box>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography className="dashboard-panel__eyebrow" sx={{ fontFamily: FONT_SANS, mb: 0 }}>
+              {eyebrow}
+            </Typography>
+            <Typography
+              className="dashboard-panel__title"
+              noWrap
+              sx={{ margin: 0, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis" }}
+            >
+              {title}
+            </Typography>
+          </Box>
         </Box>
-        <Typography
-          sx={{
-            fontFamily: FONT_SANS,
-            fontSize: 13.5,
-            fontWeight: 600,
-            color: T.ink,
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {children}
-        </Typography>
+        <Box sx={{ flexShrink: 0, whiteSpace: "nowrap" }}>{action}</Box>
       </Box>
-      {action}
+      <Box sx={{ padding: "0 16px 16px", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        {children}
+      </Box>
     </Box>
   );
 }
@@ -254,12 +248,20 @@ function ActionBtn({
   sx = {},
   ...props
 }) {
-  const h = size === "sm" ? 32 : size === "lg" ? 44 : 38;
-  const fs = size === "sm" ? 12.5 : size === "lg" ? 14 : 13;
+  const h = size === "sm" ? 28 : size === "lg" ? 42 : 35;
+  const fs = size === "sm" ? 12.5 : size === "lg" ? 14.5 : 13.5;
 
   const solidColors = {
-    brand: { bg: T.brand, hover: T.brandDark, text: "#fff" },
-    blue: { bg: T.blue, hover: "#233971", text: "#fff" },
+    brand: {
+      bg: "linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-dark) 100%)",
+      hover: "linear-gradient(135deg, var(--accent-teal-dark) 0%, var(--accent-teal-dark) 100%)",
+      text: "#fff",
+    },
+    blue: {
+      bg: "linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-dark) 100%)",
+      hover: "linear-gradient(135deg, var(--accent-teal-dark) 0%, var(--accent-teal-dark) 100%)",
+      text: "#fff",
+    },
     violet: { bg: T.violet, hover: "#6d28d9", text: "#fff" },
     red: { bg: T.red, hover: "#b91c1c", text: "#fff" },
     slate: { bg: T.ink2, hover: T.ink, text: "#fff" },
@@ -280,12 +282,14 @@ function ActionBtn({
         sx={{
           height: h,
           px: 2,
-          borderRadius: "8px",
+          borderRadius: "999px",
           fontFamily: FONT_SANS,
           fontSize: fs,
           fontWeight: 500,
           textTransform: "none",
           letterSpacing: "-0.01em",
+          whiteSpace: "nowrap",
+          flexShrink: 0,
           color: s.text,
           bgcolor: s.bg,
           border: `1px solid ${s.border}`,
@@ -308,17 +312,19 @@ function ActionBtn({
       sx={{
         height: h,
         px: 2,
-        borderRadius: "8px",
+        borderRadius: "999px",
         fontFamily: FONT_SANS,
         fontSize: fs,
         fontWeight: 500,
         textTransform: "none",
         letterSpacing: "-0.01em",
-        bgcolor: s.bg,
+        whiteSpace: "nowrap",
+        flexShrink: 0,
+        background: s.bg,
         color: s.text,
         boxShadow: "none",
-        "&:hover": { bgcolor: s.hover, boxShadow: "none" },
-        "&:disabled": { bgcolor: T.canvas, color: T.ghost, boxShadow: "none" },
+        "&:hover": { background: s.hover, boxShadow: "none" },
+        "&:disabled": { background: T.canvas, color: T.ghost, boxShadow: "none" },
         ...sx,
       }}
       {...props}
@@ -328,53 +334,44 @@ function ActionBtn({
   );
 }
 
-function DataRow({ label, value, mono = false }) {
+function ToggleSwitch({ checked, onChange, disabled }) {
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        py: 1.1,
-        borderBottom: `1px solid ${T.line}`,
-        "&:last-child": { borderBottom: "none" },
-        gap: 2,
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      style={{
+        position: "relative", width: 42, height: 24, padding: 0, flexShrink: 0,
+        border: "none", borderRadius: 999, cursor: disabled ? "not-allowed" : "pointer",
+        background: checked ? "linear-gradient(135deg, #22c55e 0%, #15803d 100%)" : "#d1d5db",
+        boxShadow: checked ? "0 3px 10px rgba(21,128,61,0.35), inset 0 1px 1px rgba(255,255,255,0.25)" : "inset 0 1px 3px rgba(0,0,0,0.15)",
+        transition: "background 0.28s ease, box-shadow 0.28s ease",
+        opacity: disabled ? 0.55 : 1,
       }}
     >
-      <Typography
-        sx={{
-          fontFamily: FONT_SANS,
-          fontSize: 12.5,
-          color: T.subtle,
-          flexShrink: 0,
-        }}
-      >
-        {label}
-      </Typography>
-      <Typography
-        sx={{
-          fontFamily: mono ? FONT_MONO : FONT_SANS,
-          fontSize: mono ? 11.5 : 12.5,
-          fontWeight: 500,
-          color: T.ink2,
-          textAlign: "right",
-          wordBreak: "break-all",
-        }}
-      >
-        {value || "—"}
-      </Typography>
-    </Box>
+      <span style={{
+        position: "absolute", top: 3, left: checked ? 21 : 3, width: 18, height: 18, borderRadius: "50%",
+        background: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+        boxShadow: "0 2px 5px rgba(0,0,0,0.28)",
+        transition: "left 0.28s cubic-bezier(0.34,1.4,0.64,1)",
+      }}>
+        <CheckRoundedIcon sx={{ fontSize: 12, color: checked ? "#16a34a" : "transparent", transition: "color 0.2s" }} />
+      </span>
+    </button>
   );
 }
 
 const fieldStyle = {
   "& .MuiOutlinedInput-root": {
     borderRadius: "8px",
-    bgcolor: T.white,
+    bgcolor: T.surface,
     fontFamily: FONT_SANS,
     fontSize: 13.5,
     "& fieldset": { borderColor: T.line },
     "&:hover fieldset": { borderColor: T.ghost },
+    "&.Mui-focused": { bgcolor: T.white },
     "&.Mui-focused fieldset": { borderColor: T.brand, borderWidth: "1.5px" },
   },
   "& .MuiInputLabel-root": { fontFamily: FONT_SANS, fontSize: 13.5 },
@@ -385,6 +382,8 @@ const fieldStyle = {
 // Main Component
 // ─────────────────────────────────────────────
 export default function SettingsCard({
+  open = true,
+  onClose,
   delay: controlledDelay,
   setDelay: setControlledDelay,
   template: controlledTemplate,
@@ -622,427 +621,447 @@ export default function SettingsCard({
   };
 
   return (
-    <Box
-      sx={{
-        fontFamily: FONT_SANS,
-        p: 2,
-        boxSizing: "border-box",
-        "&, & *": {
-          boxSizing: "border-box",
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="lg"
+      slotProps={{ backdrop: { sx: { background: "rgba(10, 18, 40, 0.68)" } } }}
+      PaperProps={{
+        sx: {
+          borderRadius: "20px",
+          maxHeight: "95vh",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          boxShadow: "0 28px 80px rgba(10, 18, 40, 0.32)",
+          border: "1px solid rgba(26, 42, 87, 0.12)",
         },
       }}
     >
-      <input ref={logoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogoUpload} />
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} lg={4}>
-            <Panel sx={{ height: "100%" }}>
-          <SectionTitle
-            icon={<AccessTimeRoundedIcon />}
-            accentColor={T.brand}
-            action={<StatusPill label="Min. 3000 ms" color="blue" />}
-          >
-            Jeda Antar Pesan
-          </SectionTitle>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 2,
+          px: 2.5,
+          pt: 2.5,
+          pb: 2,
+          background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)",
+          borderBottom: "1px solid rgba(26,42,87,0.10)",
+          flexShrink: 0,
+        }}
+      >
+        <Box>
+          <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.625 }}>
+            Aplikasi
+          </Typography>
+          <Typography sx={{ fontFamily: FONT_SANS, fontSize: 19, fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>
+            Pengaturan
+          </Typography>
+        </Box>
+        <IconButton
+          size="small"
+          onClick={onClose}
+          sx={{
+            width: 36,
+            height: 36,
+            borderRadius: "10px",
+            border: "1px solid rgba(255,255,255,0.18)",
+            background: "rgba(255,255,255,0.08)",
+            color: "rgba(255,255,255,0.75)",
+            transition: "background 0.15s, border-color 0.15s",
+            "&:hover": { background: "rgba(255,255,255,0.14)", borderColor: "rgba(233,196,106,0.4)" },
+          }}
+        >
+          <CloseRoundedIcon sx={{ fontSize: 17 }} />
+        </IconButton>
+      </Box>
 
-          <Box sx={{ p: 2.5 }}>
-            <Box
-              sx={{
-                p: 1.75,
-                borderRadius: "8px",
-                bgcolor: T.brandLight,
-                border: `1px solid ${T.brandBorder}`,
-                mb: 2,
-              }}
+      <DialogContent
+        sx={{
+          fontFamily: FONT_SANS,
+          p: 1.5,
+          boxSizing: "border-box",
+          overflow: "hidden",
+          flex: 1,
+          minHeight: 0,
+          "&, & *": {
+            boxSizing: "border-box",
+          },
+        }}
+      >
+      <input ref={logoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogoUpload} />
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+        <Grid container spacing={1.25}>
+          <Grid item xs={12} sm={6} lg={3}>
+            <SettingsPanel
+              icon={<TimerRoundedIcon />}
+              title="Jeda Antar Pesan"
+              action={<StatusPill label={`${currentDelay} ms`} color="blue" />}
             >
+              <Box
+                sx={{
+                  p: 1.1,
+                  borderRadius: "8px",
+                  bgcolor: T.brandLight,
+                  border: `1px solid ${T.brandBorder}`,
+                  mb: 1,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontFamily: FONT_SANS,
+                    fontSize: 12.5,
+                    color: T.brandDark,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Minimal <strong>3000 ms</strong> agar tidak diblokir.
+                </Typography>
+              </Box>
+
+              <TextField
+                label="Jeda Antar Pesan"
+                type="number"
+                value={currentDelay}
+                onChange={(e) => handleDelayChange(e.target.value)}
+                fullWidth
+                size="small"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Typography
+                        sx={{
+                          fontFamily: FONT_MONO,
+                          fontSize: 12,
+                          color: T.subtle,
+                        }}
+                      >
+                        ms
+                      </Typography>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ ...fieldStyle, mb: 1 }}
+              />
+
               <Typography
                 sx={{
                   fontFamily: FONT_SANS,
-                  fontSize: 12.5,
-                  color: T.brandDark,
-                  lineHeight: 1.7,
+                  fontSize: 11.5,
+                  color: T.subtle,
+                  fontStyle: "italic",
+                  mt: "auto",
                 }}
               >
-                Waktu tunggu sebelum pesan berikutnya dikirim. Minimal <strong>3000 ms</strong>{" "}
-                untuk membantu menghindari pemblokiran.
+                Tersimpan otomatis
               </Typography>
-            </Box>
+            </SettingsPanel>
+          </Grid>
 
-            <TextField
-              label="Jeda Antar Pesan"
-              type="number"
-              value={currentDelay}
-              onChange={(e) => handleDelayChange(e.target.value)}
-              fullWidth
-              size="small"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Typography
+          <Grid item xs={12} sm={6} lg={3}>
+            <SettingsPanel
+              icon={<EditNoteRoundedIcon />}
+              title="Template Pesan"
+              action={
+                <StatusPill
+                  label={localTemplate ? "Sudah diisi" : "Belum diisi"}
+                  color={localTemplate ? "green" : "gray"}
+                />
+              }
+            >
+              <Box
+                sx={{
+                  p: 1.1,
+                  borderRadius: "8px",
+                  bgcolor: T.brandLight,
+                  border: `1px solid ${T.brandBorder}`,
+                  mb: 1,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontFamily: FONT_SANS,
+                    fontSize: 12.5,
+                    color: T.brandDark,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Gunakan <strong>{"{nama}"}</strong> untuk personalisasi pesan.
+                </Typography>
+              </Box>
+
+              <TextField
+                multiline
+                minRows={3}
+                maxRows={3}
+                fullWidth
+                value={localTemplate}
+                onChange={(e) => setLocalTemplate(e.target.value)}
+                placeholder="Halo {nama}, berikut informasi untuk Anda..."
+                sx={{
+                  ...fieldStyle,
+                  "& .MuiOutlinedInput-root": {
+                    ...fieldStyle["& .MuiOutlinedInput-root"],
+                    alignItems: "flex-start",
+                    px: 1.5,
+                    py: 0.75,
+                    "&.Mui-focused fieldset": { borderColor: T.brand, borderWidth: "1.5px" },
+                  },
+                  "& .MuiOutlinedInput-input": { padding: 0 },
+                  "& .MuiInputLabel-root.Mui-focused": { color: T.brand },
+                  mb: 1,
+                }}
+              />
+
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: "auto" }}>
+                <ActionBtn
+                  color="brand"
+                  size="md"
+                  startIcon={<SaveRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                  onClick={handleSaveTemplate}
+                >
+                  Simpan Template
+                </ActionBtn>
+              </Box>
+            </SettingsPanel>
+          </Grid>
+
+          <Grid item xs={12} sm={6} lg={3}>
+            <SettingsPanel
+              icon={<GridViewRoundedIcon />}
+              title="Google Sheet"
+              action={
+                <StatusPill
+                  label={localGsheet ? "Terhubung" : "Belum diisi"}
+                  color={localGsheet ? "green" : "amber"}
+                />
+              }
+            >
+              <Box
+                sx={{
+                  p: 1.1,
+                  borderRadius: "8px",
+                  bgcolor: T.brandLight,
+                  border: `1px solid ${T.brandBorder}`,
+                  mb: 1,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontFamily: FONT_SANS,
+                    fontSize: 12.5,
+                    color: T.brandDark,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Tempel URL Google Sheet yang sudah dibagikan.
+                </Typography>
+              </Box>
+
+              {!editingUrl ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    px: 1.5,
+                    py: 0.75,
+                    borderRadius: "8px",
+                    bgcolor: T.surface,
+                    border: `1px solid ${T.line}`,
+                    mb: 1,
+                  }}
+                >
+                  <LockRoundedIcon sx={{ fontSize: 16, color: T.subtle, flexShrink: 0 }} />
+                  <Typography
+                    sx={{
+                      fontFamily: FONT_SANS,
+                      fontSize: 13,
+                      color: localGsheet ? T.text : T.subtle,
+                      flex: 1,
+                      fontStyle: localGsheet ? "normal" : "italic",
+                      letterSpacing: localGsheet ? "0.02em" : "normal",
+                      wordBreak: "break-all",
+                    }}
+                  >
+                    {localGsheet ? maskGsheetUrl(localGsheet) : "URL belum diisi"}
+                  </Typography>
+
+                  <Tooltip title="Ubah URL" placement="top">
+                    <IconButton
+                      size="small"
+                      onClick={handleStartEdit}
                       sx={{
-                        fontFamily: FONT_MONO,
-                        fontSize: 12,
-                        color: T.subtle,
+                        color: T.brand,
+                        bgcolor: T.brandLight,
+                        border: `1px solid ${T.brandBorder}`,
+                        borderRadius: "8px",
+                        width: 26,
+                        height: 26,
+                        flexShrink: 0,
+                        "&:hover": { bgcolor: "#d4ddef" },
                       }}
                     >
-                      ms
-                    </Typography>
-                  </InputAdornment>
-                ),
-              }}
-              sx={fieldStyle}
-            />
-          </Box>
-        </Panel>
+                      <EditRoundedIcon sx={{ fontSize: 15 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              ) : (
+                <Box sx={{ mb: 1 }}>
+                  <TextField
+                    fullWidth
+                    autoFocus
+                    size="small"
+                    value={urlDraft}
+                    onChange={(e) => setUrlDraft(e.target.value)}
+                    placeholder="https://docs.google.com/spreadsheets/..."
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LinkRoundedIcon sx={{ color: T.brand, fontSize: 18 }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Tooltip title="Batal" placement="top">
+                            <IconButton
+                              size="small"
+                              onClick={handleCancelEdit}
+                              sx={{ color: T.subtle, "&:hover": { color: T.red } }}
+                            >
+                              <CloseRoundedIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      ...fieldStyle,
+                      "& .MuiOutlinedInput-root": {
+                        ...fieldStyle["& .MuiOutlinedInput-root"],
+                        "&.Mui-focused fieldset": {
+                          borderColor: T.brand,
+                          borderWidth: "1.5px",
+                        },
+                      },
+                      "& .MuiInputLabel-root.Mui-focused": { color: T.brand },
+                    }}
+                  />
+                </Box>
+              )}
+
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: "auto" }}>
+                <ActionBtn
+                  color="brand"
+                  size="md"
+                  startIcon={
+                    editingUrl ? (
+                      <CheckRoundedIcon sx={{ fontSize: "16px !important" }} />
+                    ) : (
+                      <SaveRoundedIcon sx={{ fontSize: "16px !important" }} />
+                    )
+                  }
+                  onClick={handleSaveGsheet}
+                  disabled={editingUrl && !urlDraft.trim()}
+                >
+                  {editingUrl ? "Simpan URL Baru" : "Simpan URL"}
+                </ActionBtn>
+              </Box>
+            </SettingsPanel>
           </Grid>
 
-          <Grid item xs={12} lg={8}>
-            <Panel sx={{ height: "100%" }}>
-          <SectionTitle
-            icon={<DescriptionRoundedIcon />}
-            accentColor={T.brand}
-            action={
-              <StatusPill
-                label={localTemplate ? "Sudah diisi" : "Belum diisi"}
-                color={localTemplate ? "green" : "gray"}
-              />
-            }
-          >
-            Template Pesan
-          </SectionTitle>
-
-          <Box sx={{ p: 2.5 }}>
-            <Box
-              sx={{
-                p: 1.75,
-                borderRadius: "8px",
-                bgcolor: T.brandLight,
-                border: `1px solid ${T.brandBorder}`,
-                mb: 2,
-              }}
+          <Grid item xs={12} sm={6} lg={3}>
+            <SettingsPanel
+              icon={<InsertPhotoRoundedIcon />}
+              title="Logo PDF"
+              action={<StatusPill label={hasLogo ? "Terpasang" : "Belum ada"} color={hasLogo ? "green" : "gray"} />}
             >
-              <Typography
-                sx={{
-                  fontFamily: FONT_SANS,
-                  fontSize: 12.5,
-                  color: T.brandDark,
-                  lineHeight: 1.7,
-                }}
-              >
-                Gunakan <strong>{"{nama}"}</strong> atau variabel lain untuk personalisasi pesan
-                ke setiap pelanggan.
-              </Typography>
-            </Box>
-
-            <TextField
-              multiline
-              minRows={8}
-              fullWidth
-              value={localTemplate}
-              onChange={(e) => setLocalTemplate(e.target.value)}
-              placeholder="Halo {nama}, berikut informasi untuk Anda..."
-              sx={{
-                ...fieldStyle,
-                "& .MuiOutlinedInput-root": {
-                  ...fieldStyle["& .MuiOutlinedInput-root"],
-                  alignItems: "flex-start",
-                  "&.Mui-focused fieldset": { borderColor: T.brand, borderWidth: "1.5px" },
-                },
-                "& .MuiInputLabel-root.Mui-focused": { color: T.brand },
-                mb: 1.5,
-              }}
-            />
-
-            <ActionBtn
-              color="brand"
-              size="md"
-              startIcon={<SaveRoundedIcon sx={{ fontSize: "16px !important" }} />}
-              onClick={handleSaveTemplate}
-            >
-              Simpan Template
-            </ActionBtn>
-          </Box>
-        </Panel>
-          </Grid>
-
-          <Grid item xs={12} lg={7}>
-            <Panel sx={{ height: "100%" }}>
-          <SectionTitle
-            icon={<TableChartRoundedIcon />}
-            accentColor={T.brand}
-            action={
-              <StatusPill
-                label={localGsheet ? "Terhubung" : "Belum diisi"}
-                color={localGsheet ? "green" : "amber"}
-              />
-            }
-          >
-            Google Sheet
-          </SectionTitle>
-
-          <Box sx={{ p: 2.5 }}>
-            <Box
-              sx={{
-                p: 1.75,
-                borderRadius: "8px",
-                bgcolor: T.brandLight,
-                border: `1px solid ${T.brandBorder}`,
-                mb: 2,
-              }}
-            >
-              <Typography
-                sx={{
-                  fontFamily: FONT_SANS,
-                  fontSize: 12.5,
-                  color: T.brandDark,
-                  lineHeight: 1.7,
-                }}
-              >
-                Tempelkan URL Google Sheet yang sudah dibagikan secara publik atau memiliki akses
-                yang sesuai.
-              </Typography>
-            </Box>
-
-            {!editingUrl ? (
               <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   gap: 1,
                   px: 1.5,
-                  py: 1.25,
+                  py: 0.75,
                   borderRadius: "8px",
                   bgcolor: T.surface,
                   border: `1px solid ${T.line}`,
-                  mb: 1.5,
+                  mb: 1,
                 }}
               >
-                <LockRoundedIcon sx={{ fontSize: 16, color: T.subtle, flexShrink: 0 }} />
-                <Typography
+                <Box
                   sx={{
-                    fontFamily: FONT_SANS,
-                    fontSize: 13,
-                    color: localGsheet ? T.text : T.subtle,
-                    flex: 1,
-                    fontStyle: localGsheet ? "normal" : "italic",
-                    letterSpacing: localGsheet ? "0.02em" : "normal",
-                    wordBreak: "break-all",
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
+                    border: `1px solid ${T.line}`,
+                    bgcolor: T.white,
+                    display: "grid",
+                    placeItems: "center",
+                    flexShrink: 0,
                   }}
                 >
-                  {localGsheet ? maskGsheetUrl(localGsheet) : "URL belum diisi"}
-                </Typography>
-
-                <Tooltip title="Ubah URL" placement="top">
-                  <IconButton
-                    size="small"
-                    onClick={handleStartEdit}
-                    sx={{
-                      color: T.brand,
-                      bgcolor: T.brandLight,
-                      border: `1px solid ${T.brandBorder}`,
-                      borderRadius: "8px",
-                      width: 30,
-                      height: 30,
-                      flexShrink: 0,
-                      "&:hover": { bgcolor: "#d4ddef" },
-                    }}
-                  >
-                    <EditRoundedIcon sx={{ fontSize: 15 }} />
-                  </IconButton>
-                </Tooltip>
+                  {hasLogo ? <CheckCircleOutlineRoundedIcon sx={{ fontSize: 18, color: T.brand }} /> : <ImageRoundedIcon sx={{ fontSize: 18, color: T.subtle }} />}
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: T.ink2 }}>
+                    {hasLogo ? "Logo PDF aktif" : "Belum ada logo PDF"}
+                  </Typography>
+                  <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: T.muted, lineHeight: 1.4 }}>
+                    {hasLogo ? "Logo ini akan tampil di header PDF yang digenerate." : "Upload PNG atau JPG untuk dipakai di header PDF."}
+                  </Typography>
+                </Box>
               </Box>
-            ) : (
-              <Box sx={{ mb: 1.5 }}>
-                <TextField
-                  fullWidth
-                  autoFocus
-                  size="small"
-                  value={urlDraft}
-                  onChange={(e) => setUrlDraft(e.target.value)}
-                  placeholder="https://docs.google.com/spreadsheets/..."
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LinkRoundedIcon sx={{ color: T.brand, fontSize: 18 }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Tooltip title="Batal" placement="top">
-                          <IconButton
-                            size="small"
-                            onClick={handleCancelEdit}
-                            sx={{ color: T.subtle, "&:hover": { color: T.red } }}
-                          >
-                            <CloseRoundedIcon sx={{ fontSize: 16 }} />
-                          </IconButton>
-                        </Tooltip>
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    ...fieldStyle,
-                    "& .MuiOutlinedInput-root": {
-                      ...fieldStyle["& .MuiOutlinedInput-root"],
-                      "&.Mui-focused fieldset": {
-                        borderColor: T.brand,
-                        borderWidth: "1.5px",
-                      },
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": { color: T.brand },
-                  }}
-                />
 
-                <Typography
-                  sx={{
-                    fontFamily: FONT_SANS,
-                    fontSize: 12,
-                    color: T.subtle,
-                    mt: 0.75,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.5,
-                  }}
-                >
-                  <LockRoundedIcon sx={{ fontSize: 13 }} />
-                  URL tidak akan ditampilkan penuh setelah disimpan demi keamanan.
-                </Typography>
-              </Box>
-            )}
-
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
-              <ActionBtn
-                color="brand"
-                size="md"
-                startIcon={
-                  editingUrl ? (
-                    <CheckRoundedIcon sx={{ fontSize: "16px !important" }} />
-                  ) : (
-                    <SaveRoundedIcon sx={{ fontSize: "16px !important" }} />
-                  )
-                }
-                onClick={handleSaveGsheet}
-                disabled={editingUrl && !urlDraft.trim()}
-              >
-                {editingUrl ? "Simpan URL Baru" : "Simpan URL"}
-              </ActionBtn>
-            </Box>
-
-            <Box
-              sx={{
-                borderRadius: "8px",
-                border: `1px solid ${T.line}`,
-                overflow: "hidden",
-                bgcolor: T.surface,
-                px: 1.5,
-              }}
-            >
-              <DataRow label="Status koneksi" value={localGsheet ? "Terhubung" : "Belum diisi"} />
-              <DataRow label="Sheet aktif" value={localGsheetMeta.selectedSheet || "—"} />
-              <DataRow label="Auto sync" value={localGsheetMeta.autoSync ? "Aktif" : "Nonaktif"} />
-            </Box>
-          </Box>
-        </Panel>
-          </Grid>
-
-          <Grid item xs={12} lg={5}>
-            <Panel sx={{ height: "100%" }}>
-          <SectionTitle
-            icon={<ImageRoundedIcon />}
-            accentColor={T.brand}
-            action={<StatusPill label={hasLogo ? "Terpasang" : "Belum ada"} color={hasLogo ? "green" : "gray"} />}
-          >
-            Logo PDF
-          </SectionTitle>
-
-          <Box sx={{ p: 2.5 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                p: 1.75,
-                borderRadius: "10px",
-                bgcolor: T.surface,
-                border: `1px solid ${T.line}`,
-                mb: 1.5,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: "10px",
-                  border: `1px solid ${T.line}`,
-                  bgcolor: T.white,
-                  display: "grid",
-                  placeItems: "center",
-                  flexShrink: 0,
-                }}
-              >
-                {hasLogo ? <CheckCircleOutlineRoundedIcon sx={{ fontSize: 24, color: T.brand }} /> : <ImageRoundedIcon sx={{ fontSize: 24, color: T.subtle }} />}
-              </Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: T.ink2 }}>
-                  {hasLogo ? "Logo PDF aktif" : "Belum ada logo PDF"}
-                </Typography>
-                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12, color: T.muted, lineHeight: 1.6 }}>
-                  {hasLogo ? "Logo ini akan tampil di header PDF yang digenerate." : "Upload PNG atau JPG untuk dipakai di header PDF."}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              <ActionBtn
-                color="brand"
-                size="md"
-                onClick={() => logoRef.current?.click()}
-                disabled={logoLoading}
-                startIcon={logoLoading ? <CircularProgress size={14} color="inherit" /> : <ImageRoundedIcon sx={{ fontSize: "16px !important" }} />}
-              >
-                {hasLogo ? "Ganti Logo" : "Upload Logo"}
-              </ActionBtn>
-
-              {hasLogo && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: "auto" }}>
                 <ActionBtn
-                  variant="outline"
-                  color="red"
+                  color="brand"
                   size="md"
-                  onClick={handleDeleteLogo}
+                  onClick={() => logoRef.current?.click()}
                   disabled={logoLoading}
-                  startIcon={<DeleteOutlineRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                  startIcon={logoLoading ? <CircularProgress size={14} color="inherit" /> : <ImageRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                  sx={{ flex: 1, minWidth: 0, flexShrink: 1, px: 1.25 }}
                 >
-                  Hapus Logo
+                  {hasLogo ? "Ganti Logo" : "Upload Logo"}
                 </ActionBtn>
-              )}
-            </Box>
-          </Box>
-        </Panel>
+
+                {hasLogo && (
+                  <ActionBtn
+                    color="red"
+                    size="md"
+                    onClick={handleDeleteLogo}
+                    disabled={logoLoading}
+                    startIcon={<DeleteForeverRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                    sx={{ flex: 1, minWidth: 0, flexShrink: 1, px: 1.25 }}
+                  >
+                    Hapus Logo
+                  </ActionBtn>
+                )}
+              </Box>
+            </SettingsPanel>
           </Grid>
         </Grid>
 
-        <Panel>
-          <SectionTitle
-            icon={<CloudUploadRoundedIcon />}
-            accentColor="#1a73e8"
-            action={
-              <StatusPill
-                label={driveStatusLabel}
-                color={driveStatusColor}
-              />
-            }
-          >
-            Google Drive Integration
-          </SectionTitle>
-
-          <Box sx={{ p: 2.5 }}>
+        <SettingsPanel
+          icon={<AddToDriveRoundedIcon />}
+          title="Google Drive Integration"
+          action={
+            <StatusPill
+              label={driveStatusLabel}
+              color={driveStatusColor}
+            />
+          }
+        >
             <Box
               sx={{
-                p: 1.75,
+                p: 1.1,
                 borderRadius: "8px",
                 bgcolor: "#f0f4fc",
                 border: "1px solid #d2e3fc",
-                mb: 2,
+                mb: 1,
               }}
             >
               <Typography
@@ -1050,10 +1069,10 @@ export default function SettingsCard({
                   fontFamily: FONT_SANS,
                   fontSize: 12.5,
                   color: "#1a73e8",
-                  lineHeight: 1.7,
+                  lineHeight: 1.45,
                 }}
               >
-                Atur pengunggahan otomatis setiap PDF yang digenerate langsung ke folder Google Drive Anda.
+                Upload otomatis PDF yang digenerate ke folder Google Drive.
               </Typography>
             </Box>
 
@@ -1065,11 +1084,11 @@ export default function SettingsCard({
                     alignItems: "center",
                     gap: 1,
                     px: 1.5,
-                    py: 1.25,
+                    py: 0.75,
                     borderRadius: "8px",
                     bgcolor: T.surface,
                     border: `1px solid ${T.line}`,
-                    mb: 2,
+                    mb: 1,
                   }}
                 >
                   <LockRoundedIcon sx={{ fontSize: 16, color: T.subtle, flexShrink: 0 }} />
@@ -1098,8 +1117,8 @@ export default function SettingsCard({
                         bgcolor: "#e8f0fe",
                         border: "1px solid #c5d8fb",
                         borderRadius: "8px",
-                        width: 30,
-                        height: 30,
+                        width: 26,
+                        height: 26,
                         flexShrink: 0,
                         "&:hover": { bgcolor: "#dbe7fd" },
                       }}
@@ -1108,25 +1127,9 @@ export default function SettingsCard({
                     </IconButton>
                   </Tooltip>
                 </Box>
-
-                <Typography
-                  sx={{
-                    fontFamily: FONT_SANS,
-                    fontSize: 12,
-                    color: T.subtle,
-                    mt: -1.1,
-                    mb: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.5,
-                  }}
-                >
-                  <LockRoundedIcon sx={{ fontSize: 13 }} />
-                  Konfigurasi tidak akan ditampilkan penuh setelah disimpan demi keamanan.
-                </Typography>
               </>
             ) : (
-              <Box sx={{ mb: 2 }}>
+              <Box sx={{ mb: 1 }}>
                 <TextField
                   label="Apps Script URL"
                   fullWidth
@@ -1154,7 +1157,7 @@ export default function SettingsCard({
                       </InputAdornment>
                     ),
                   }}
-                  sx={{ ...fieldStyle, mb: 1.5 }}
+                  sx={{ ...fieldStyle, mb: 0.75 }}
                 />
 
                 <TextField
@@ -1171,30 +1174,20 @@ export default function SettingsCard({
                       </InputAdornment>
                     ),
                   }}
-                  sx={{ ...fieldStyle, mb: 1.25 }}
+                  sx={{ ...fieldStyle, mb: 0.75 }}
                 />
-
-                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12, color: T.subtle, display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <LockRoundedIcon sx={{ fontSize: 13 }} />
-                  Link Drive tetap bisa ditempel langsung, tapi setelah disimpan akan ditampilkan dalam bentuk aman.
-                </Typography>
               </Box>
             )}
 
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                <Switch
-                  size="small"
+                <ToggleSwitch
                   checked={currentDriveConfig.enabled}
-                  onChange={(e) =>
+                  onChange={(next) =>
                     editingDrive
-                      ? setDriveDraft((p) => ({ ...p, enabled: e.target.checked }))
-                      : setDriveConfig((p) => ({ ...p, enabled: e.target.checked }))
+                      ? setDriveDraft((p) => ({ ...p, enabled: next }))
+                      : setDriveConfig((p) => ({ ...p, enabled: next }))
                   }
-                  sx={{
-                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#1a73e8" },
-                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "#1a73e8" },
-                  }}
                 />
                 <Typography
                   sx={{
@@ -1209,23 +1202,23 @@ export default function SettingsCard({
               </Box>
               <ActionBtn
                 color="blue"
-                size="md"
-                startIcon={<SaveRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                size="lg"
+                startIcon={<SaveRoundedIcon sx={{ fontSize: "18px !important" }} />}
                 onClick={editingDrive ? handleSaveDriveConfig : handleStartDriveEdit}
                 disabled={driveLoading || (editingDrive && !driveDraft.scriptUrl.trim())}
               >
-                {editingDrive ? "Simpan Config" : "Ubah Config"}
+                {editingDrive ? "Simpan Config" : "Ubah Setting"}
               </ActionBtn>
             </Box>
 
             {currentDriveConfig.enabled && !currentDriveConfig.scriptUrl && (
-              <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 2, borderRadius: "8px" }}>
+              <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 1, borderRadius: "8px" }}>
                 Harap isi Apps Script URL agar upload otomatis dapat berfungsi.
               </Alert>
             )}
 
             {currentDriveConfig.enabled && currentDriveConfig.scriptUrl && !currentDriveConfig.folderId && (
-              <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 2, borderRadius: "8px" }}>
+              <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 1, borderRadius: "8px" }}>
                 Isi link atau ID folder Google Drive dulu agar file tahu harus diupload ke folder mana.
               </Alert>
             )}
@@ -1235,9 +1228,9 @@ export default function SettingsCard({
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 1.25,
-                  px: 1.75,
-                  py: 1.25,
+                  gap: 1,
+                  px: 1.25,
+                  py: 0.75,
                   borderRadius: "8px",
                   bgcolor: "#e8f0fe",
                   border: "1px solid #c5d8fb",
@@ -1249,8 +1242,7 @@ export default function SettingsCard({
                 </Typography>
               </Box>
             )}
-          </Box>
-        </Panel>
+        </SettingsPanel>
       </Box>
 
       <Snackbar
@@ -1274,6 +1266,7 @@ export default function SettingsCard({
           {toast.message}
         </Alert>
       </Snackbar>
-    </Box>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import {
@@ -7,19 +7,17 @@ import {
   CircularProgress,
   LinearProgress,
   Snackbar,
-  Skeleton,
-  Typography,
 } from "@mui/material";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import RemoveCircleOutlineRoundedIcon from "@mui/icons-material/RemoveCircleOutlineRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import TableChartRoundedIcon from "@mui/icons-material/TableChartRounded";
+import ListAltRoundedIcon from "@mui/icons-material/ListAltRounded";
 import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
-import PictureAsPdfRoundedIcon from "@mui/icons-material/PictureAsPdfRounded";
-import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
+import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import api from "../services/api";
 import CreateButton from "../piagam/button/CreateButton";
 
@@ -32,7 +30,7 @@ const PDF_FIELD_LABELS = {
   termin:         "Termin",
   customer:       "Customer",
   tagihan:        "Tagihan",
-  tempo:          "Tempo",
+  tempo:          "Jatuh Tempo",
   penagih:        "Penagih",
 };
 
@@ -49,31 +47,14 @@ const T = {
   line:        "#e5e7eb",
   surface:     "#f9fafb",
   white:       "#ffffff",
-  red:         "#dc2626",
-  redBg:       "#fef2f2",
+  accent:      "#f4a940",
 };
-
-function formatDateDisplay(v) {
-  if (v === null || v === undefined || v === "") return "";
-  // already a formatted string (not a bare number) — show as-is
-  if (typeof v === "string" && isNaN(Number(v.trim()))) return v;
-  // Excel date serial number (range covers years ~2009–2064)
-  const n = Number(v);
-  if (!isNaN(n) && n >= 40000 && n <= 60000) {
-    const epoch = new Date(Date.UTC(1899, 11, 30));
-    const d = new Date(epoch.getTime() + n * 86400000);
-    return new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
-  }
-  return String(v);
-}
 
 function parseAmount(v) {
   if (v === null || v === undefined || v === "") return 0;
   if (typeof v === "number") return v;
   const s = String(v).trim();
-  // English format: "2,950,000.00" — ends with dot then digits → remove commas, keep dot
   if (/\.\d+$/.test(s)) return parseFloat(s.replace(/,/g, "")) || 0;
-  // Indonesian format: "2.950.000" or "2.950.000,00" — dots=thousands, comma=decimal
   return parseFloat(s.replace(/\./g, "").replace(",", ".")) || 0;
 }
 
@@ -81,82 +62,262 @@ function formatCurrency(v) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(parseAmount(v));
 }
 
-const cellInputSx = {
-  width: "100%", border: `1.5px solid ${T.brand}`, borderRadius: "6px",
-  px: "8px", py: "4px", fontFamily: FONT_SANS, fontSize: 12, outline: "none",
-  bgcolor: "rgba(255,255,255,0.95)", color: T.ink, minWidth: 80,
-  boxShadow: `0 0 0 3px ${T.brandLight}`,
-  "&:focus": { borderColor: T.brandDark },
-};
+function getInitials(name) {
+  if (!name) return "?";
+  return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || "").join("");
+}
 
-function LoadingTableState({ syncing }) {
-  const skeletonRows = [
-    [32, 68, 52, 44, 60],
-    [28, 82, 44, 58, 38],
-    [35, 55, 60, 40, 72],
-    [30, 74, 48, 66, 44],
-    [32, 62, 56, 50, 56],
-    [28, 78, 42, 62, 40],
-    [35, 60, 64, 46, 68],
-  ];
+function GoogleSheetsLogo({ size = 18 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      aria-hidden="true"
+      focusable="false"
+      style={{ display: "block" }}
+    >
+      <path
+        d="M13 5.5h17.2L39 14.3V41c0 1.1-.9 2-2 2H13c-1.1 0-2-.9-2-2V7.5c0-1.1.9-2 2-2z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M30 6v8.5h8.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.8"
+        strokeLinejoin="round"
+      />
+      <rect x="16.5" y="21.5" width="17" height="15" rx="1.4" fill="none" stroke="currentColor" strokeWidth="2.4" />
+      <path d="M16.5 26.5h17M16.5 31.5h17M22.2 21.5v15M27.8 21.5v15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RowsPerPageDropdown({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const options = [25, 50, 100];
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   return (
-    <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+    <div ref={ref} style={{ position: "relative", width: 76 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          width: "100%",
+          height: 30,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 6,
+          borderRadius: 999,
+          border: `1.5px solid ${open ? "rgba(233,196,106,0.75)" : "#d4ddf0"}`,
+          background: "linear-gradient(180deg, #f8fafc 0%, #eef1f6 100%)",
+          padding: "0 8px 0 11px",
+          cursor: "pointer",
+          outline: "none",
+          boxShadow: open ? "0 0 0 3px rgba(233,196,106,0.13)" : "0 2px 8px rgba(22,58,107,0.06)",
+          transition: "border-color 0.18s, box-shadow 0.18s",
+        }}
+      >
+        <span style={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: 700, color: T.ink, lineHeight: 1 }}>
+          {value}
+        </span>
+        <KeyboardArrowDownRoundedIcon style={{ fontSize: 16, color: T.brand, flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
+      </button>
 
-      {/* Loading banner */}
-      <Box sx={{ px: 2.5, py: 1.75, borderBottom: `1px solid ${T.line}`, bgcolor: T.brandLight }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-            <CircularProgress size={16} thickness={4} sx={{ color: T.brand, flexShrink: 0 }} />
-            <Box>
-              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 700, color: T.ink, lineHeight: 1.2 }}>
-                {syncing ? "Menyinkronkan data dari Google Sheet" : "Memuat data sheet INPUT"}
-              </Typography>
-              <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11, color: T.muted, mt: 0.25 }}>
-                {syncing ? "Mengambil header, baris, dan mapping PDF..." : "Memeriksa konfigurasi dan memuat data terakhir..."}
-              </Typography>
-            </Box>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 1.25, py: 0.5, borderRadius: "999px", bgcolor: T.white, border: `1.5px solid ${T.brandBorder}`, boxShadow: `0 2px 8px rgba(35,57,113,0.06)`, flexShrink: 0 }}>
-            <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: T.brand, animation: "pulse 1.4s ease-in-out infinite", "@keyframes pulse": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.3 } } }} />
-            <Typography sx={{ fontFamily: FONT_MONO, fontSize: 10.5, fontWeight: 700, color: T.brand, letterSpacing: "0.07em" }}>
-              {syncing ? "SYNCING" : "LOADING"}
-            </Typography>
-          </Box>
-        </Box>
-        <LinearProgress sx={{ mt: 1.5, height: 3, borderRadius: 999, bgcolor: `${T.brand}18`, "& .MuiLinearProgress-bar": { borderRadius: 999, bgcolor: T.brand } }} />
-      </Box>
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 6px)",
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+            background: T.white,
+            border: `1.5px solid ${T.brandBorder}`,
+            borderRadius: 12,
+            boxShadow: "0 10px 30px rgba(22,58,107,0.14), 0 2px 8px rgba(22,58,107,0.07)",
+            overflow: "hidden",
+          }}
+        >
+          {options.map((opt) => {
+            const active = opt === value;
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => { onChange(opt); setOpen(false); }}
+                style={{
+                  width: "100%",
+                  minHeight: 30,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 8,
+                  padding: "7px 9px 7px 11px",
+                  background: active ? T.brandLight : "transparent",
+                  border: "none",
+                  borderBottom: opt === options[options.length - 1] ? "none" : `1px solid ${T.line}`,
+                  cursor: "pointer",
+                  textAlign: "left",
+                  transition: "background 0.12s",
+                }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f4f6fa"; }}
+                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
+              >
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: active ? 800 : 600, color: active ? T.brand : T.text }}>
+                  {opt}
+                </span>
+                {active && <CheckCircleOutlineRoundedIcon style={{ fontSize: 14, color: T.brand, flexShrink: 0 }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
-      {/* Skeleton table */}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: "hidden", bgcolor: T.white }}>
-        {/* Skeleton thead */}
-        <Box sx={{ display: "grid", gridTemplateColumns: "52px 1.3fr 1fr 0.9fr 0.9fr", borderBottom: `1.5px solid ${T.brandBorder}`, bgcolor: T.brandLight, px: 0 }}>
-          {[28, 55, 42, 48, 38].map((w, ci) => (
-            <Box key={ci} sx={{ px: 2, py: 1.4 }}>
-              <Skeleton variant="rounded" width={`${w}%`} height={10} sx={{ bgcolor: `${T.brand}18`, borderRadius: 2 }} />
-            </Box>
-          ))}
-        </Box>
+const SKEL_COLS = [48, 110, 90, 160, 80, 70, 90, 70, 60];
+const SKEL_ROWS = Array.from({ length: 12 });
 
-        {/* Skeleton rows */}
-        {skeletonRows.map((cols, rowIdx) => (
-          <Box key={rowIdx} sx={{ display: "grid", gridTemplateColumns: "52px 1.3fr 1fr 0.9fr 0.9fr", borderBottom: rowIdx === skeletonRows.length - 1 ? "none" : `1px solid ${T.line}`, bgcolor: rowIdx % 2 === 0 ? T.white : T.surface, alignItems: "center" }}>
-            {/* No column */}
-            <Box sx={{ px: 2, py: 1.25, display: "flex", justifyContent: "center" }}>
-              <Skeleton variant="rounded" width={20} height={10} sx={{ bgcolor: "rgba(148,163,184,0.2)", borderRadius: 2 }} />
-            </Box>
-            {/* Data columns */}
-            {cols.map((w, ci) => (
-              <Box key={ci} sx={{ px: 2, py: 1.25 }}>
-                <Skeleton variant="rounded" width={`${w}%`} height={11}
-                  sx={{ bgcolor: ci === 3 ? "rgba(22,101,52,0.1)" : "rgba(148,163,184,0.18)", borderRadius: 2,
-                    animationDelay: `${(rowIdx * 5 + ci) * 0.05}s` }} />
-              </Box>
-            ))}
-          </Box>
+function SkeletonBar({ w, delay = 0 }) {
+  return (
+    <div style={{
+      height: 10, borderRadius: 6, width: w,
+      background: "rgba(26,42,87,0.08)",
+      animation: `shimmer 1.4s ease-in-out ${delay}s infinite`,
+    }} />
+  );
+}
+
+function LoadingTableState() {
+  return (
+    <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", margin: "0 16px", overflow: "hidden" }}>
+      <div style={{ display: "flex", borderBottom: `1.5px solid rgba(26,42,87,0.1)`, background: T.surface, flexShrink: 0 }}>
+        {SKEL_COLS.map((w, ci) => (
+          <div key={ci} style={{ padding: "12px 16px", flex: ci === 3 ? 2 : 1, minWidth: w }}>
+            <SkeletonBar w={`${[40,55,48,52,44,38,50,42,36][ci]}%`} delay={ci * 0.05} />
+          </div>
         ))}
-      </Box>
-    </Box>
+      </div>
+      <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+        {SKEL_ROWS.map((_, ri) => (
+          <div key={ri} style={{ display: "flex", borderBottom: `1px solid rgba(26,42,87,0.05)`, background: ri % 2 === 0 ? T.white : T.surface, alignItems: "center" }}>
+            {SKEL_COLS.map((w, ci) => (
+              <div key={ci} style={{ padding: "11px 16px", flex: ci === 3 ? 2 : 1, minWidth: w }}>
+                <SkeletonBar w={`${Math.round(50 + ((ri * 7 + ci * 13) % 35))}%`} delay={(ri * 0.04 + ci * 0.02)} />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CellDropdown({ rect, value, label, onClose, onChange, onKeyDown }) {
+  if (!rect) return null;
+
+  const viewportH  = window.innerHeight;
+  const spaceBelow = viewportH - rect.bottom;
+  const spaceAbove = rect.top;
+  const dropH      = 118;
+
+  let top, transformOrigin;
+  if (spaceBelow >= dropH || spaceBelow >= spaceAbove) {
+    top = rect.bottom + 6;
+    transformOrigin = "top left";
+  } else {
+    top = rect.top - dropH - 6;
+    transformOrigin = "bottom left";
+  }
+
+  const left  = Math.max(8, Math.min(rect.left, window.innerWidth - Math.max(rect.width, 280) - 8));
+  const width = Math.max(rect.width, 280);
+
+  return createPortal(
+    <>
+      <div style={{ position: "fixed", inset: 0, zIndex: 8998 }} onMouseDown={(e) => { e.preventDefault(); onClose(); }} />
+      <div
+        style={{
+          position: "fixed", top, left, width, zIndex: 8999,
+          borderRadius: 16,
+          overflow: "hidden",
+          boxShadow: "0 28px 80px rgba(10,18,40,0.28), 0 4px 16px rgba(10,18,40,0.14)",
+          animation: "cellDrop 0.15s cubic-bezier(.22,.68,0,1.1) both",
+          transformOrigin,
+          border: "1px solid rgba(26,42,87,0.12)",
+          background: T.white,
+        }}
+      >
+        <style>{`@keyframes cellDrop { from{opacity:0;transform:scale(0.96) translateY(-4px)} to{opacity:1;transform:scale(1) translateY(0)} }`}</style>
+
+        {/* Header — sama persis dengan QR dialog */}
+        <div style={{
+          display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12,
+          padding: "14px 16px 12px",
+          background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)",
+          borderBottom: "1px solid rgba(26,42,87,0.10)",
+        }}>
+          <div>
+            <p style={{ fontFamily: FONT_MONO, fontSize: 10, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>
+              Edit Data
+            </p>
+            <h3 style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>
+              {label || "Edit"}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: 8, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.75)", cursor: "pointer", transition: "background 0.15s, border-color 0.15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; e.currentTarget.style.borderColor = "rgba(233,196,106,0.4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; }}
+          >
+            <CloseRoundedIcon style={{ fontSize: 14 }} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "12px 16px 14px", background: T.white }}>
+          <input
+            autoFocus
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={onKeyDown}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              width: "100%", boxSizing: "border-box",
+              height: 38, padding: "0 12px",
+              border: `1.5px solid rgba(26,42,87,0.18)`,
+              borderRadius: 10,
+              fontFamily: FONT_SANS, fontSize: 13, fontWeight: 500,
+              color: T.ink, outline: "none",
+              background: T.brandLight,
+              transition: "border-color 0.15s, box-shadow 0.15s",
+            }}
+            onFocus={(e) => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = `0 0 0 3px rgba(35,57,113,0.10)`; }}
+            onBlur={(e)  => { e.target.style.borderColor = "rgba(26,42,87,0.18)"; e.target.style.boxShadow = "none"; }}
+          />
+          <p style={{ margin: "7px 1px 0", fontFamily: FONT_SANS, fontSize: 10.5, color: T.subtle }}>
+            <span style={{ color: T.brand, fontWeight: 700 }}>Enter</span> simpan &nbsp;·&nbsp; <span style={{ fontWeight: 600 }}>Esc</span> batal
+          </p>
+        </div>
+      </div>
+    </>,
+    document.body
   );
 }
 
@@ -167,28 +328,39 @@ export default function InputPage() {
   const [pdfMapping, setPdfMapping]     = useState({});
 
   const [gsheetUrl, setGsheetUrl]         = useState("");
-  const [gsheetUrlEdit, setGsheetUrlEdit] = useState(false);
   const [syncing, setSyncing]             = useState(false);
   const [loading, setLoading]             = useState(true);
   const [savingPdf, setSavingPdf]         = useState(false);
   const [pdfSaved, setPdfSaved]           = useState(false);
 
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [page, setPage]               = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [editingCell, setEditingCell] = useState(null);
-  const [toast, setToast]             = useState({ open: false, message: "", severity: "success" });
-  const [headerSlot, setHeaderSlot]   = useState(null);
+  const [rowsPerPage, setRowsPerPage]   = useState(25);
+  const [page, setPage]                 = useState(0);
+  const [searchQuery, setSearchQuery]   = useState("");
+  const [expandedRow, setExpandedRow]   = useState(null);
+  const [editingCell, setEditingCell]   = useState(null);
+  const [cellRect,    setCellRect]      = useState(null);
+  const [toast, setToast]               = useState({ open: false, message: "", severity: "success" });
+  const [headerSlot, setHeaderSlot]     = useState(null);
 
   const gsheetSavedUrlRef = useRef("");
   const rowsRef           = useRef([]);
-  const skipBlurRef       = useRef(false);
+  const activeCellRef     = useRef(null);
 
   rowsRef.current = sheetRows;
 
   useEffect(() => {
     setTimeout(() => setHeaderSlot(document.getElementById("header-wa-slot")), 100);
   }, []);
+
+  useEffect(() => {
+    if (!editingCell) { setCellRect(null); return; }
+    requestAnimationFrame(() => {
+      if (activeCellRef.current) {
+        const r = activeCellRef.current.getBoundingClientRect();
+        setCellRect({ top: r.top, bottom: r.bottom, left: r.left, width: r.width });
+      }
+    });
+  }, [editingCell]);
 
   const showToast = (msg, sev = "success") => setToast({ open: true, message: msg, severity: sev });
 
@@ -197,7 +369,6 @@ export default function InputPage() {
       const url = res?.data?.url || "";
       setGsheetUrl(url);
       gsheetSavedUrlRef.current = url;
-      setGsheetUrlEdit(!url);
       if (url) {
         setSyncing(true);
         api.get("/gsheet/input").then((r) => {
@@ -206,29 +377,16 @@ export default function InputPage() {
           setSheetRows(Array.isArray(d.rows) ? d.rows : []);
           setPdfMapping(d.pdfMapping || {});
           setPage(0);
-          showToast(`${(d.rows || []).length} baris dimuat dari GSheet`, "success");
+          showToast(`${(d.rows || []).length} rows loaded from GSheet`, "success");
         }).catch((err) => {
-          showToast(err?.response?.data?.message || "Gagal auto-sync", "error");
+          showToast(err?.response?.data?.message || "Auto-sync failed", "error");
         }).finally(() => setSyncing(false));
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const handleGSheetSaveUrl = async () => {
-    if (!gsheetUrl.trim()) { showToast("Masukkan URL Google Sheet", "warning"); return; }
-    if (!gsheetUrl.includes("/spreadsheets/d/")) { showToast("URL tidak valid", "error"); return; }
-    try {
-      await api.post("/gsheet", { url: gsheetUrl.trim() });
-      gsheetSavedUrlRef.current = gsheetUrl.trim();
-      setGsheetUrlEdit(false);
-      showToast("URL disimpan", "success");
-    } catch (err) {
-      showToast(err?.response?.data?.message || "Gagal simpan URL", "error");
-    }
-  };
-
   const handleSync = async () => {
-    if (!gsheetSavedUrlRef.current) { showToast("Atur URL Google Sheet terlebih dahulu", "warning"); return; }
+    if (!gsheetSavedUrlRef.current) { showToast("Set the Google Sheet URL first", "warning"); return; }
     setSyncing(true); setPdfSaved(false);
     try {
       const res = await api.get("/gsheet/input");
@@ -237,9 +395,9 @@ export default function InputPage() {
       setSheetRows(Array.isArray(d.rows) ? d.rows : []);
       setPdfMapping(d.pdfMapping || {});
       setPage(0);
-      showToast(`${(d.rows || []).length} baris dimuat`, "success");
+      showToast(`${(d.rows || []).length} rows loaded`, "success");
     } catch (err) {
-      showToast(err?.response?.data?.message || "Gagal sync", "error");
+      showToast(err?.response?.data?.message || "Sync failed", "error");
     } finally { setSyncing(false); }
   };
 
@@ -248,84 +406,50 @@ export default function InputPage() {
     try {
       const res = await api.post("/pdf/generate-temporary");
       const count = res?.data?.rows?.length ?? 0;
-      showToast(`${count} baris siap untuk PDF`, "success");
+      showToast(`${count} rows ready for PDF`, "success");
       setPdfSaved(true);
       setTimeout(() => navigate("/pdf"), 800);
     } catch (err) {
-      showToast(err?.response?.data?.message || "Gagal generate temporary", "error");
+      showToast(err?.response?.data?.message || "Failed to generate temporary data", "error");
     } finally { setSavingPdf(false); }
   };
 
-  const handleCellClick = (rowIdx, colKey) => {
-    if (editingCell?.row === rowIdx && editingCell?.colKey === colKey) return;
+  const handleCellEdit = (rowIdx, colKey) => {
     setEditingCell({ row: rowIdx, colKey, orig: sheetRows[rowIdx]?.[colKey] });
   };
 
-  const handleCellChange = (rowIdx, colKey, value) => {
+  const handleDropdownChange = (value) => {
+    if (!editingCell) return;
     setSheetRows((prev) => {
-      const next = prev.map((r, i) => i === rowIdx ? { ...r, [colKey]: value } : r);
+      const next = prev.map((r, i) => i === editingCell.row ? { ...r, [editingCell.colKey]: value } : r);
       rowsRef.current = next;
       return next;
     });
     setPdfSaved(false);
   };
 
-  const handleCellBlur = () => {
-    if (skipBlurRef.current) return;
-    setEditingCell(null);
-  };
+  const closeDropdown = () => { setEditingCell(null); setCellRect(null); };
 
-  const handleCellKey = (e, rowIdx) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const next = rowIdx + 1;
-      if (next < rowsRef.current.length) {
-        skipBlurRef.current = true;
-        setEditingCell({ row: next, colKey: editingCell?.colKey, orig: rowsRef.current[next]?.[editingCell?.colKey] });
-        setTimeout(() => { skipBlurRef.current = false; }, 50);
-      } else { setEditingCell(null); }
-    } else if (e.key === "Tab") {
-      e.preventDefault();
-      const keys = sheetHeaders.map(h => h.key);
-      const ci = keys.indexOf(editingCell?.colKey);
-      skipBlurRef.current = true;
-      if (!e.shiftKey) {
-        if (ci < keys.length - 1) setEditingCell({ row: rowIdx, colKey: keys[ci + 1], orig: rowsRef.current[rowIdx]?.[keys[ci + 1]] });
-        else if (rowIdx < rowsRef.current.length - 1) setEditingCell({ row: rowIdx + 1, colKey: keys[0], orig: rowsRef.current[rowIdx + 1]?.[keys[0]] });
-        else setEditingCell(null);
-      } else {
-        if (ci > 0) setEditingCell({ row: rowIdx, colKey: keys[ci - 1], orig: rowsRef.current[rowIdx]?.[keys[ci - 1]] });
-        else if (rowIdx > 0) setEditingCell({ row: rowIdx - 1, colKey: keys[keys.length - 1], orig: rowsRef.current[rowIdx - 1]?.[keys[keys.length - 1]] });
-        else setEditingCell(null);
-      }
-      setTimeout(() => { skipBlurRef.current = false; }, 50);
-    } else if (e.key === "Escape") {
-      skipBlurRef.current = true;
-      if (editingCell) setSheetRows((prev) => prev.map((r, i) => i === rowIdx ? { ...r, [editingCell.colKey]: editingCell.orig } : r));
-      setEditingCell(null);
-      setTimeout(() => { skipBlurRef.current = false; }, 50);
+  const handleDropdownKey = (e) => {
+    if (e.key === "Enter") { e.preventDefault(); closeDropdown(); }
+    else if (e.key === "Escape") {
+      if (editingCell) setSheetRows((prev) => prev.map((r, i) => i === editingCell.row ? { ...r, [editingCell.colKey]: editingCell.orig } : r));
+      closeDropdown();
     }
-  };
-
-  const addRow = () => {
-    const empty = {};
-    sheetHeaders.forEach(h => { empty[h.key] = ""; });
-    const newRows = [...rowsRef.current, empty];
-    setSheetRows(newRows);
-    setPdfSaved(false);
-    const newRowIdx = newRows.length - 1;
-    setPage(Math.floor(newRowIdx / rowsPerPage));
-    setEditingCell({ row: newRowIdx, colKey: sheetHeaders[0]?.key, orig: "" });
   };
 
   const deleteRow = (idx) => {
     setSheetRows(sheetRows.filter((_, i) => i !== idx));
     setPdfSaved(false);
-    if (editingCell?.row === idx) setEditingCell(null);
+    if (editingCell?.row === idx) closeDropdown();
+    if (expandedRow === idx) setExpandedRow(null);
   };
 
-  const isPdfCol     = (key) => Object.values(pdfMapping).includes(key);
-  const pdfFieldLabel = (key) => {
+  // Split columns: PDF-mapped = primary (shown in table), others = secondary (shown in accordion)
+  const primaryCols   = sheetHeaders.filter(h => Object.values(pdfMapping).includes(h.key));
+  const secondaryCols = sheetHeaders.filter(h => !Object.values(pdfMapping).includes(h.key));
+
+  const pdfFieldKey = (key) => {
     const e = Object.entries(pdfMapping).find(([, v]) => v === key);
     return e ? e[0] : null;
   };
@@ -336,148 +460,136 @@ export default function InputPage() {
     const q = searchQuery.toLowerCase();
     return sheetHeaders.some(h => String(row[h.key] ?? "").toLowerCase().includes(q));
   });
-  const totalPages         = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+  const totalPages           = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
   const showFullLoadingState = loading || (syncing && sheetRows.length === 0);
+
+  const editingValue       = editingCell ? String(sheetRows[editingCell.row]?.[editingCell.colKey] ?? "") : "";
+  const editingHeaderLabel = editingCell ? sheetHeaders.find(h => h.key === editingCell.colKey)?.label || editingCell.colKey : "";
+
+  // Columns to show: primary first, then cap at 5 if too many, accordion handles rest
+  const tableCols = primaryCols.length > 0 ? primaryCols : sheetHeaders.slice(0, 5);
+  const accordionCols = primaryCols.length > 0 ? secondaryCols : sheetHeaders.slice(5);
+
+  const colSpan = tableCols.length + 1; // +1 Detail button
 
   return (
     <Box sx={{ fontFamily: FONT_SANS, p: 2, display: "flex", flexDirection: "column", gap: 1.5, height: "calc(100vh - 64px)", boxSizing: "border-box", overflow: "hidden" }}>
 
-      {/* ── Header portal ── */}
+      {/* Header portal */}
       {headerSlot && createPortal(
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <style>{`.hdr-search::placeholder { color: rgba(255,255,255,0.42); font-weight: 400; }`}</style>
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}
+            onMouseEnter={e => { const inp = e.currentTarget.querySelector("input"); if (inp !== document.activeElement) { inp.style.borderColor = "rgba(233,196,106,0.55)"; inp.style.background = "rgba(233,196,106,0.1)"; } }}
+            onMouseLeave={e => { const inp = e.currentTarget.querySelector("input"); if (inp !== document.activeElement) { inp.style.borderColor = searchQuery ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)"; inp.style.background = "rgba(255,255,255,0.12)"; } }}
+          >
+            <SearchRoundedIcon style={{ position: "absolute", left: 11, fontSize: 14, color: "rgba(255,255,255,0.55)", pointerEvents: "none" }} />
+            <input type="text" className="hdr-search" placeholder="Search..." value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
+              style={{ height: 34, paddingLeft: 32, paddingRight: searchQuery ? 30 : 14, width: 200, fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 500, color: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", borderRadius: 10, background: "rgba(255,255,255,0.12)", outline: "none", transition: "border-color 0.18s, background 0.18s", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.12)" }}
+              onFocus={e => { e.target.style.borderColor = "rgba(233,196,106,0.8)"; e.target.style.background = "rgba(233,196,106,0.12)"; }}
+              onBlur={e  => { e.target.style.borderColor = searchQuery ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)"; e.target.style.background = "rgba(255,255,255,0.12)"; }}
+            />
+            {searchQuery && (
+              <button onClick={() => { setSearchQuery(""); setPage(0); }} style={{ position: "absolute", right: 8, width: 16, height: 16, borderRadius: "50%", background: "rgba(255,255,255,0.28)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+                <CloseRoundedIcon style={{ fontSize: 9, color: "#fff" }} />
+              </button>
+            )}
+          </div>
           {gsheetSavedUrlRef.current ? (
-            <Box component="a" href={gsheetSavedUrlRef.current} target="_blank" rel="noopener noreferrer"
-              sx={{ display: "flex", alignItems: "center", gap: 0.6, height: 32, px: 1.5, borderRadius: "999px", fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, color: "#fff", textDecoration: "none", border: "1.5px solid rgba(255,255,255,0.45)", bgcolor: "rgba(255,255,255,0.18)", transition: "transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease", "&:hover": { bgcolor: "rgba(255,255,255,0.28)", borderColor: "rgba(255,255,255,0.7)", transform: "translateY(-1px)", boxShadow: "0 10px 20px rgba(26,42,87,0.18)" } }}>
-              <TableChartRoundedIcon sx={{ fontSize: 14 }} />
-              Buka Google Sheet
-              <OpenInNewRoundedIcon sx={{ fontSize: 11, opacity: 0.75 }} />
-            </Box>
+            <a href={gsheetSavedUrlRef.current} target="_blank" rel="noopener noreferrer" className="header-icon-button header-icon-button--compact" title="Open Google Sheet" style={{ textDecoration: "none" }}>
+              <GoogleSheetsLogo size={18} />
+            </a>
           ) : (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, height: 32, px: 1.5, borderRadius: "999px", fontFamily: FONT_SANS, fontSize: 12, color: "rgba(255,255,255,0.5)", fontStyle: "italic", border: "1px solid rgba(255,255,255,0.15)", bgcolor: "rgba(255,255,255,0.07)" }}>
-              <TableChartRoundedIcon sx={{ fontSize: 14 }} />
-              Belum dikonfigurasi
-            </Box>
+            <span className="header-icon-button header-icon-button--compact" style={{ opacity: 0.35, cursor: "default" }}>
+              <GoogleSheetsLogo size={18} />
+            </span>
           )}
-          <CreateButton variant="detail" onClick={handleSync} disabled={syncing || !gsheetSavedUrlRef.current}
-            style={{ height: 32, paddingInline: 14, fontSize: 12, gap: 6, color: "#fff", background: "rgba(255,255,255,0.18)", border: "1.5px solid rgba(255,255,255,0.45)" }}>
-            {syncing ? <CircularProgress size={12} sx={{ color: "#fff" }} /> : <SyncRoundedIcon style={{ fontSize: 14 }} />}
-            {syncing ? "Menyinkron..." : "Sync"}
-          </CreateButton>
-        </Box>,
+          <button className="header-icon-button header-icon-button--compact" onClick={handleSync} disabled={syncing || !gsheetSavedUrlRef.current} style={{ opacity: !gsheetSavedUrlRef.current ? 0.4 : 1 }}>
+            {syncing ? <CircularProgress size={15} sx={{ color: "#fff" }} /> : <SyncRoundedIcon style={{ fontSize: 17 }} />}
+          </button>
+        </div>,
         headerSlot
       )}
 
-      {/* ── Main Table Card ── */}
-      <section className="dashboard-panel" style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      {/* Main Card */}
+      <section className="dashboard-panel" style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", borderRadius: 28 }}>
 
-        {/* ── Card Header ── */}
-        <div className="dashboard-panel__header" style={{ padding: "16px 24px", borderBottom: `1px solid ${T.line}`, background: T.white, flexShrink: 0, margin: 0 }}>
-          {/* Left */}
+        {/* Card Header */}
+        <div className="dashboard-panel__header" style={{ padding: "18px 24px 12px", borderBottom: "none", background: T.white, flexShrink: 0, margin: 0 }}>
           <div>
-            <p className="dashboard-panel__eyebrow" style={{ fontFamily: FONT_SANS, marginBottom: 2 }}>
-              Google Sheet
-            </p>
+            <p className="dashboard-panel__eyebrow" style={{ fontFamily: FONT_SANS, marginBottom: 2 }}>Google Sheet</p>
             <h2 className="dashboard-panel__title" style={{ margin: 0 }}>Sheet INPUT</h2>
             {sheetRows.length > 0 && (
               <p className="dashboard-panel__description" style={{ margin: "3px 0 0", fontFamily: FONT_MONO }}>
-                {sheetRows.length} baris · {sheetHeaders.length} kolom
+                {sheetRows.length} rows · {sheetHeaders.length} columns
+                {accordionCols.length > 0 && <span style={{ color: T.brand }}> · {accordionCols.length} kolom di detail</span>}
               </p>
             )}
           </div>
-          {/* Right – Search + Generate PDF */}
-          <div className="dashboard-panel__action" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            {/* Search */}
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <SearchRoundedIcon style={{ position: "absolute", left: 9, fontSize: 14, color: T.subtle, pointerEvents: "none" }} />
-              <input
-                type="text"
-                placeholder="Cari data..."
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
-                style={{ height: 34, paddingLeft: 30, paddingRight: searchQuery ? 28 : 12, width: 170, fontFamily: FONT_SANS, fontSize: 12, color: T.ink, border: `1.5px solid ${searchQuery ? T.brand : T.line}`, borderRadius: 8, background: T.white, outline: "none", transition: "border-color 0.15s, box-shadow 0.15s", boxShadow: searchQuery ? `0 0 0 2px ${T.brandLight}` : "none" }}
-                onFocus={e => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = `0 0 0 2px ${T.brandLight}`; }}
-                onBlur={e => { e.target.style.borderColor = searchQuery ? T.brand : T.line; e.target.style.boxShadow = searchQuery ? `0 0 0 2px ${T.brandLight}` : "none"; }}
-              />
-              {searchQuery && (
-                <button onClick={() => { setSearchQuery(""); setPage(0); }}
-                  style={{ position: "absolute", right: 7, width: 16, height: 16, borderRadius: "50%", background: T.subtle, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
-                  onMouseEnter={e => e.currentTarget.style.background = T.muted}
-                  onMouseLeave={e => e.currentTarget.style.background = T.subtle}>
-                  <CloseRoundedIcon style={{ fontSize: 10, color: "#fff" }} />
-                </button>
-              )}
-            </div>
+          <div className="dashboard-panel__action" style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {sheetRows.length > 0 && (
-              <button className="users-table-card__action" onClick={handleSaveForPdf} disabled={savingPdf || pdfSaved}
-                style={{ opacity: (savingPdf || pdfSaved) ? 0.72 : 1 }}>
-                {savingPdf ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : pdfSaved ? <CheckCircleOutlineRoundedIcon style={{ fontSize: 16 }} /> : <PictureAsPdfRoundedIcon style={{ fontSize: 16 }} />}
-                {pdfSaved ? "Tersimpan ✓" : "Generate PDF"}
+              <button className="users-table-card__action" onClick={handleSaveForPdf} disabled={savingPdf || pdfSaved} style={{ opacity: (savingPdf || pdfSaved) ? 0.72 : 1, minHeight: 34, padding: "8px 14px", gap: 7, fontSize: 12.5 }}>
+                {savingPdf ? <CircularProgress size={13} sx={{ color: "#fff" }} /> : pdfSaved ? <CheckCircleOutlineRoundedIcon style={{ fontSize: 15 }} /> : <ReceiptLongRoundedIcon style={{ fontSize: 15 }} />}
+                {savingPdf ? "Generating..." : pdfSaved ? "Siap ✓" : "Generate PDF"}
               </button>
             )}
           </div>
         </div>
 
-
-        {/* ── Syncing overlay banner ── */}
+        {/* Syncing banner */}
         {syncing && sheetRows.length > 0 && (
-          <div style={{ padding: "8px 20px", borderBottom: `1px solid ${T.brandBorder}`, background: T.brandLight, flexShrink: 0 }}>
+          <div style={{ padding: "8px 24px 10px", flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <CircularProgress size={13} sx={{ color: T.brand, flexShrink: 0 }} />
-              <span style={{ fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, color: T.brand, flex: 1 }}>
-                Menyinkronkan data terbaru dari Google Sheet...
-              </span>
-              <span style={{ fontFamily: FONT_MONO, fontSize: 10.5, color: T.muted, letterSpacing: "0.04em" }}>mohon tunggu</span>
+              <span style={{ fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, color: T.brand, flex: 1 }}>Syncing from Google Sheet...</span>
             </div>
-            <LinearProgress sx={{ mt: 0.75, height: 3, borderRadius: 999, bgcolor: "rgba(35,57,113,0.1)", "& .MuiLinearProgress-bar": { borderRadius: 999, bgcolor: T.brand } }} />
+            <LinearProgress sx={{ mt: 0.9, height: 3, borderRadius: 999, bgcolor: "rgba(35,57,113,0.08)", "& .MuiLinearProgress-bar": { borderRadius: 999, bgcolor: T.brand } }} />
           </div>
         )}
 
-        {/* ── Body ── */}
-        {showFullLoadingState ? (
-          <LoadingTableState syncing={syncing} />
-        ) : sheetRows.length === 0 ? (
-
-          /* Empty state */
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 48 }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, padding: "40px 56px", border: `1.5px dashed ${T.brandBorder}`, borderRadius: 20, background: `${T.brandLight}60`, maxWidth: 380, textAlign: "center" }}>
-              <div style={{ width: 52, height: 52, borderRadius: 16, background: T.white, border: `1.5px solid ${T.brandBorder}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 14px rgba(35,57,113,0.08)` }}>
-                <TableChartRoundedIcon style={{ fontSize: 24, color: T.brand }} />
-              </div>
-              <div>
-                <p style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: T.ink, margin: "0 0 8px" }}>
-                  Belum ada data
-                </p>
-                <p style={{ fontFamily: FONT_SANS, fontSize: 12, color: T.muted, margin: 0, lineHeight: 1.65 }}>
-                  Klik <strong style={{ color: T.brand }}>Sync</strong> di header untuk memuat data dari sheet INPUT
-                </p>
-              </div>
-              {gsheetSavedUrlRef.current && (
-                <CreateButton variant="detail" onClick={handleSync} disabled={syncing} style={{ gap: 6, paddingInline: 22 }}>
-                  {syncing ? <CircularProgress size={13} sx={{ color: T.brand }} /> : <SyncRoundedIcon style={{ fontSize: 15 }} />}
-                  {syncing ? "Memuat..." : "Sync Sekarang"}
-                </CreateButton>
-              )}
-            </div>
+        {!showFullLoadingState && sheetRows.length === 0 && (
+          <div style={{ padding: "0 20px 10px", flexShrink: 0 }}>
+            <Alert severity="info" sx={{ fontFamily: FONT_SANS, fontSize: 12, py: 0.25, borderRadius: "10px" }}>
+              Belum ada data — klik Sync di header untuk memuat data terlebih dahulu
+            </Alert>
           </div>
+        )}
 
+        {/* Body */}
+        {showFullLoadingState ? (
+          <LoadingTableState />
         ) : (
-
-          /* Data table */
-          <div className="users-table-wrapper" style={{ flex: 1, minHeight: 0, margin: "10px 16px 0 16px" }}>
-            <table className="users-table" style={{ fontFamily: FONT_SANS }}>
+          <div className="users-table-wrapper" style={{ flex: 1, minHeight: 0, margin: "0 16px", overflowX: "hidden", overflowY: "auto" }}>
+            <table className="users-table" style={{ fontFamily: FONT_SANS, width: "100%", minWidth: 0, tableLayout: "fixed" }}>
               <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
                 <tr>
-                  <th style={{ width: 40, textAlign: "center", userSelect: "none", background: "rgba(24,43,88,0.04)" }}>No</th>
-                  {sheetHeaders.map((h) => {
-                    const field = pdfFieldLabel(h.key);
+                  {tableCols.map((h) => {
+                    const field = pdfFieldKey(h.key);
                     return (
-                      <th key={h.key} style={{ whiteSpace: "nowrap", background: "rgba(24,43,88,0.04)" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          {h.label}
-                          {field && (
+                      <th key={h.key} style={{ background: T.surface, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.label}</span>
+                          {field && field !== "customer" && (
                             <span className="users-table__status users-table__status--app users-table__status--inline"
-                              style={{ fontSize: 9, textTransform: "none", display: "inline-flex", alignItems: "center", gap: 3 }}>
-                              <PictureAsPdfRoundedIcon style={{ fontSize: 9 }} />
+                              style={{
+                                minWidth: "auto",
+                                padding: "3px 8px",
+                                borderRadius: 999,
+                                border: `1px solid rgba(22,58,107,0.28)`,
+                                background: "rgba(22,58,107,0.12)",
+                                color: T.brandDark,
+                                fontFamily: FONT_SANS,
+                                fontSize: 9,
+                                fontWeight: 700,
+                                lineHeight: 1,
+                                textTransform: "none",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4.5,
+                                flexShrink: 0,
+                              }}>
+                              <GoogleSheetsLogo size={10} />
                               {PDF_FIELD_LABELS[field] || field}
                             </span>
                           )}
@@ -485,54 +597,169 @@ export default function InputPage() {
                       </th>
                     );
                   })}
-                  <th style={{ width: 44, background: "rgba(24,43,88,0.04)" }} />
+                  <th className="users-table__detail-header" style={{ background: T.surface, width: 96, minWidth: 96, paddingInline: 8, textAlign: "center" }}>
+                    {accordionCols.length > 0 ? "Detail" : ""}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map(({ row, index: i }) => {
-                  const isCell = (k) => editingCell?.row === i && editingCell?.colKey === k;
+                {sheetRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={colSpan} style={{ padding: "48px 20px", textAlign: "center" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                        <ListAltRoundedIcon style={{ fontSize: 32, color: T.subtle }} />
+                        <span style={{ fontFamily: FONT_SANS, fontSize: 13, color: T.muted, fontWeight: 600 }}>Belum ada data</span>
+                        <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: T.subtle }}>Klik Sync di header untuk memuat data</span>
+                        {gsheetSavedUrlRef.current && (
+                          <CreateButton variant="detail" onClick={handleSync} disabled={syncing} style={{ gap: 6, paddingInline: 22, marginTop: 8 }}>
+                            {syncing ? <CircularProgress size={13} sx={{ color: T.brand }} /> : <SyncRoundedIcon style={{ fontSize: 15 }} />}
+                            {syncing ? "Memuat..." : "Sync Sekarang"}
+                          </CreateButton>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredRows.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map(({ row, index: i }) => {
+                  const isExpanded = expandedRow === i;
                   return (
-                    <tr key={i} className="users-table__row" style={{ background: i % 2 !== 0 ? T.surface : T.white, cursor: "default" }}>
-                      <td style={{ textAlign: "center", width: 40, userSelect: "none", color: T.subtle, fontWeight: 600 }}>
-                        {i + 1}
-                      </td>
-                      {sheetHeaders.map((h) => {
-                        const active   = isCell(h.key);
-                        const isMapped = isPdfCol(h.key);
-                        const raw      = row[h.key];
-                        const hasValue = raw !== null && raw !== undefined && String(raw) !== "";
-                        const isTagihan = h.key === pdfMapping.tagihan || h.label.toLowerCase().includes("tagihan");
-                        const displayText = (isTagihan && hasValue && !active)
-                          ? formatCurrency(raw)
-                          : String(raw ?? "");
-                        return (
-                          <td key={h.key} onClick={() => handleCellClick(i, h.key)}
-                            style={{ minWidth: 90, cursor: "text", background: active ? T.brandLight : undefined, borderLeft: isMapped ? `2.5px solid ${T.brandBorder}` : undefined }}>
-                            {active ? (
-                              <Box component="input" autoFocus value={String(row[h.key] ?? "")}
-                                onChange={(e) => handleCellChange(i, h.key, e.target.value)}
-                                onBlur={handleCellBlur} onKeyDown={(e) => handleCellKey(e, i)} sx={cellInputSx} />
-                            ) : (
-                              <span style={{
-                                fontFamily:  h.key === pdfMapping.noInvoice ? FONT_MONO : FONT_SANS,
-                                fontSize:    12,
-                                fontWeight:  h.key === pdfMapping.customer ? 600 : h.key === pdfMapping.noInvoice ? 700 : 400,
-                                color:       isTagihan ? T.green : h.key === pdfMapping.noInvoice ? T.brand : h.key === pdfMapping.customer ? T.ink : T.text,
-                              }}>
-                                {displayText || <span style={{ color: T.subtle, fontStyle: "italic", fontWeight: 400 }}>—</span>}
-                              </span>
-                            )}
+                    <Fragment key={i}>
+                      <tr
+                        className={`users-table__row users-table__row--interactive${isExpanded ? " users-table__row--expanded" : ""}`}
+                        style={{ background: i % 2 !== 0 ? T.surface : T.white }}
+                        onClick={() => { closeDropdown(); setExpandedRow(isExpanded ? null : i); }}
+                      >
+                        {tableCols.map((h) => {
+                          const raw       = row[h.key];
+                          const hasValue  = raw !== null && raw !== undefined && String(raw) !== "";
+                          const isTagihan = h.key === pdfMapping.tagihan || h.label.toLowerCase().includes("tagihan");
+                          const isTermin  = h.key === pdfMapping.termin;
+                          const hasAvatar = h.key === pdfMapping.customer || h.key === pdfMapping.penagih;
+                          const displayText = (isTagihan && hasValue) ? formatCurrency(raw) : String(raw ?? "");
+                          const isActive  = editingCell?.row === i && editingCell?.colKey === h.key;
+                          return (
+                            <td key={h.key} style={{ overflow: "hidden", padding: "4px 8px" }}>
+                              <button
+                                ref={isActive ? activeCellRef : null}
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleCellEdit(i, h.key); }}
+                                style={{
+                                  display: "inline-flex", alignItems: "center", gap: 5, width: "100%",
+                                  border: `1px solid ${isActive ? "rgba(233,196,106,0.9)" : "transparent"}`,
+                                  borderRadius: 5, padding: "3px 6px",
+                                  background: isActive ? "rgba(233,196,106,0.14)" : "transparent",
+                                  cursor: "text", textAlign: "left",
+                                  boxShadow: isActive ? "0 0 0 3px rgba(233,196,106,0.12)" : "none",
+                                  transition: "border-color 0.12s, background 0.12s, box-shadow 0.12s",
+                                }}
+                                onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "rgba(233,196,106,0.65)"; e.currentTarget.style.background = "rgba(233,196,106,0.08)"; } }}
+                                onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.background = "transparent"; } }}
+                              >
+                                {hasAvatar ? (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 7, overflow: "hidden", width: "100%" }}>
+                                    <span className="users-table__avatar" style={{ width: 30, height: 30, fontFamily: FONT_SANS, fontSize: 9.5, letterSpacing: "0.04em", flexShrink: 0 }}>{getInitials(displayText)}</span>
+                                    <span style={{ fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, color: isActive ? T.brandDark : T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {displayText || <span style={{ color: T.subtle, fontStyle: "italic", fontWeight: 400 }}>—</span>}
+                                    </span>
+                                  </div>
+                                ) : isTermin && hasValue ? (
+                                  <span className={`users-table__status users-table__status--inline ${/3\s*bulan/i.test(displayText) ? "users-table__status--app" : "users-table__status--pending"}`}>{displayText}</span>
+                                ) : (
+                                  <span style={{ display: "block", width: "100%", fontFamily: h.key === pdfMapping.noInvoice ? FONT_MONO : FONT_SANS, fontSize: 12, fontWeight: 400, color: isActive ? T.brandDark : T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {displayText || <span style={{ color: T.subtle, fontStyle: "italic", fontWeight: 400 }}>—</span>}
+                                  </span>
+                                )}
+                              </button>
+                            </td>
+                          );
+                        })}
+                        <td className="users-table__detail-cell" style={{ width: 96, minWidth: 96, padding: "4px 8px", textAlign: "center", overflow: "visible" }}>
+                          <CreateButton
+                            variant="detail"
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); closeDropdown(); setExpandedRow(isExpanded ? null : i); }}
+                            aria-expanded={isExpanded}
+                            style={{
+                              width: "100%",
+                              minHeight: 32,
+                              padding: "6px 10px",
+                              gap: 4,
+                              fontSize: 11.5,
+                              lineHeight: 1,
+                              borderRadius: 999,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <span style={{ fontFamily: FONT_SANS, fontSize: 11.5, lineHeight: 1 }}>Detail</span>
+                            <KeyboardArrowDownRoundedIcon
+                              style={{ fontSize: 15, flexShrink: 0, transition: "transform 0.2s", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}
+                              className={`users-table__detail-icon${isExpanded ? " users-table__detail-icon--open" : ""}`}
+                            />
+                          </CreateButton>
+                        </td>
+                      </tr>
+
+                      {/* Accordion detail row */}
+                      {isExpanded && (
+                        <tr className="users-table__accordion-row">
+                          <td colSpan={colSpan}>
+                            <div className="users-table__accordion">
+
+                              {/* Editable fields grid */}
+                              {accordionCols.length > 0 && (
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: "16px 20px 16px" }}>
+                                  {accordionCols.map((h) => {
+                                    const raw = row[h.key];
+                                    const displayText = String(raw ?? "");
+                                    const isActive = editingCell?.row === i && editingCell?.colKey === h.key;
+                                    return (
+                                      <div key={h.key} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                        <span style={{ fontFamily: FONT_SANS, fontSize: 10, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                          {h.label}
+                                        </span>
+                                        <button
+                                          ref={isActive ? activeCellRef : null}
+                                          type="button"
+                                          onClick={(e) => { e.stopPropagation(); handleCellEdit(i, h.key); }}
+                                          style={{
+                                            display: "flex", alignItems: "center", width: "100%",
+                                            border: `1.5px solid ${isActive ? "rgba(233,196,106,0.9)" : T.line}`,
+                                            borderRadius: 8, padding: "7px 11px",
+                                            background: isActive ? "rgba(233,196,106,0.14)" : T.white,
+                                            cursor: "text", textAlign: "left",
+                                            boxShadow: isActive ? "0 0 0 3px rgba(233,196,106,0.12)" : "none",
+                                            transition: "border-color 0.12s, background 0.12s, box-shadow 0.12s",
+                                          }}
+                                          onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "rgba(233,196,106,0.65)"; e.currentTarget.style.background = "rgba(233,196,106,0.08)"; } }}
+                                          onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.borderColor = T.line; e.currentTarget.style.background = T.white; } }}
+                                        >
+                                          <span style={{ fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 500, color: isActive ? T.brandDark : displayText ? T.ink : T.subtle, fontStyle: displayText ? "normal" : "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                            {displayText || "—"}
+                                          </span>
+                                        </button>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Accordion actions */}
+                              <div className="users-table__accordion-actions">
+                                <CreateButton
+                                  variant="accordion"
+                                  tone="danger"
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); deleteRow(i); }}
+                                  style={{ minHeight: 30, padding: "6px 11px", gap: 5, fontSize: 11.5 }}
+                                >
+                                  <RemoveCircleOutlineRoundedIcon style={{ fontSize: 13 }} />
+                                  Hapus Baris
+                                </CreateButton>
+                              </div>
+                            </div>
                           </td>
-                        );
-                      })}
-                      <td style={{ textAlign: "center", width: 44 }}>
-                        <button onClick={() => deleteRow(i)}
-                          className="users-table__accordion-button users-table__accordion-button--danger"
-                          style={{ width: 32, height: 32, minHeight: "unset", padding: 0 }}>
-                          <DeleteOutlineRoundedIcon style={{ fontSize: 16 }} />
-                        </button>
-                      </td>
-                    </tr>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })}
               </tbody>
@@ -540,53 +767,59 @@ export default function InputPage() {
           </div>
         )}
 
-        {/* ── Pagination ── */}
+        {/* Pagination */}
         {filteredRows.length > 0 && (
-          <div className="users-table-pagination" style={{ padding: "0 24px", borderTop: `1px solid ${T.line}`, marginTop: 0 }}>
-            <div className="users-table-pagination__meta">
-              <p className="users-table-pagination__summary">
-                {page * rowsPerPage + 1}–{Math.min((page + 1) * rowsPerPage, filteredRows.length)} dari{" "}
-                <strong>{filteredRows.length}</strong> baris
+          <div className="users-table-pagination" style={{ padding: "9px 22px 8px", borderTop: `1px solid ${T.line}`, marginTop: 0 }}>
+            <div className="users-table-pagination__meta" style={{ gap: 10 }}>
+              <p className="users-table-pagination__summary" style={{ fontSize: 11.5, lineHeight: 1.35 }}>
+                {page * rowsPerPage + 1}–{Math.min((page + 1) * rowsPerPage, filteredRows.length)} of{" "}
+                <strong>{filteredRows.length}</strong> rows
                 {searchQuery && <span style={{ marginLeft: 6, color: T.brand, fontWeight: 600 }}>· filter aktif</span>}
               </p>
-              <label className="users-table-pagination__page-size">
-                <span>Tampilkan</span>
-                <select className="users-table-pagination__select" value={rowsPerPage}
-                  onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-                <span>baris</span>
+              <label className="users-table-pagination__page-size" style={{ gap: 6, fontSize: 11.5 }}>
+                <span>Show</span>
+                <RowsPerPageDropdown
+                  value={rowsPerPage}
+                  onChange={(nextRows) => { setRowsPerPage(nextRows); setPage(0); }}
+                />
+                <span>rows</span>
               </label>
             </div>
-            <div className="users-table-pagination__controls">
-              <CreateButton variant="pagination" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
-                <ChevronLeftRoundedIcon style={{ fontSize: 16 }} /> Sebelumnya
+            <div className="users-table-pagination__controls" style={{ gap: 5 }}>
+              <CreateButton variant="pagination" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ minHeight: 30, padding: "6px 10px", fontSize: 11.5, gap: 4 }}>
+                <ChevronLeftRoundedIcon style={{ fontSize: 14 }} /> Previous
               </CreateButton>
               {Array.from({ length: totalPages }, (_, i) => i)
                 .filter(i => i === 0 || i === totalPages - 1 || Math.abs(i - page) <= 1)
-                .reduce((acc, i, idx, arr) => {
-                  if (idx > 0 && i - arr[idx - 1] > 1) acc.push("...");
-                  acc.push(i);
-                  return acc;
-                }, [])
+                .reduce((acc, i, idx, arr) => { if (idx > 0 && i - arr[idx - 1] > 1) acc.push("..."); acc.push(i); return acc; }, [])
                 .map((item, idx) =>
                   item === "..." ? (
-                    <span key={`dot-${idx}`} className="users-table-pagination__ellipsis">...</span>
+                    <span key={`dot-${idx}`} className="users-table-pagination__ellipsis" style={{ fontSize: 11.5, paddingInline: 2 }}>...</span>
                   ) : (
-                    <CreateButton key={item} variant="pagination" active={item === page} onClick={() => setPage(item)}>
-                      {item + 1}
+                    <CreateButton key={item} variant="pagination" active={item === page} onClick={() => setPage(item)} style={{ minWidth: 30, minHeight: 30, padding: "6px 9px" }}>
+                      <span style={{ fontSize: 11.5, lineHeight: 1 }}>{item + 1}</span>
                     </CreateButton>
                   )
                 )}
-              <CreateButton variant="pagination" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
-                Berikutnya <ChevronRightRoundedIcon style={{ fontSize: 16 }} />
+              <CreateButton variant="pagination" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ minHeight: 30, padding: "6px 10px", fontSize: 11.5, gap: 4 }}>
+                Next <ChevronRightRoundedIcon style={{ fontSize: 14 }} />
               </CreateButton>
             </div>
           </div>
         )}
       </section>
+
+      {/* Floating dropdown cell editor */}
+      {editingCell && (
+        <CellDropdown
+          rect={cellRect}
+          value={editingValue}
+          label={editingHeaderLabel}
+          onClose={closeDropdown}
+          onChange={handleDropdownChange}
+          onKeyDown={handleDropdownKey}
+        />
+      )}
 
       <Snackbar open={toast.open} autoHideDuration={3200} onClose={() => setToast((p) => ({ ...p, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
         <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: "12px", fontFamily: FONT_SANS, boxShadow: "0 8px 24px rgba(0,0,0,0.14)" }}>

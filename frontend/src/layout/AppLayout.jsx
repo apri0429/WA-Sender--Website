@@ -5,6 +5,7 @@ import { BarChartSquare02, MessageChatSquare, Settings01, FilePlus02, FileCheck0
 import AppSidebar from "./components/AppSidebar";
 import AppHeader from "./components/AppHeader";
 import BackgroundMain from "./components/BackgroundMain";
+import SettingsCard from "../pages/SettingsCard";
 
 const waPrimaryItems = [
   { label: "Dashboard", href: "/", icon: BarChartSquare02 },
@@ -26,7 +27,7 @@ const waPrimaryItems = [
     ],
   },
   { label: "Master Data", href: "/masterdata", icon: Database01 },
-  { label: "Settings", href: "/settings", icon: Settings01 },
+  { label: "Settings", action: "open-settings", icon: Settings01 },
 ];
 
 const pageBreadcrumbs = {
@@ -37,7 +38,6 @@ const pageBreadcrumbs = {
   "/pdf": [{ label: "Generate PDF", active: true }],
   "/pdf/hasil": [{ label: "Generate PDF" }, { label: "Hasil PDF", active: true }],
   "/masterdata": [{ label: "Master Data", active: true }],
-  "/settings": [{ label: "Settings", active: true }],
 };
 
 
@@ -45,8 +45,13 @@ export default function AppLayout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const breadcrumb =
     pageBreadcrumbs[location.pathname] ?? [{ label: "Halaman", active: true }];
+
+  const handleSidebarAction = (action) => {
+    if (action === "open-settings") setSettingsOpen(true);
+  };
 
   useEffect(() => {
     if (!document.getElementById("plus-jakarta-sans-font")) {
@@ -71,9 +76,12 @@ export default function AppLayout() {
         activePath={location.pathname}
         primaryItems={waPrimaryItems}
         secondaryItems={[]}
+        onAction={handleSidebarAction}
         onToggleCollapse={() => setCollapsed((v) => !v)}
         onCloseMobile={() => setMobileOpen(false)}
       />
+
+      <SettingsCard open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       <div
         className={`sidebar-overlay${mobileOpen ? " active" : ""}`}

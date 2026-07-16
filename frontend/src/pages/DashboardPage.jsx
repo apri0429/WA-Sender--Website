@@ -29,6 +29,12 @@ import DeleteSweepRoundedIcon      from "@mui/icons-material/DeleteSweepRounded"
 import AddRoundedIcon              from "@mui/icons-material/AddRounded";
 import CheckCircleRoundedIcon      from "@mui/icons-material/CheckCircleRounded";
 import ChecklistRoundedIcon        from "@mui/icons-material/ChecklistRounded";
+import TableChartRoundedIcon       from "@mui/icons-material/TableChartRounded";
+import SearchRoundedIcon           from "@mui/icons-material/SearchRounded";
+import TaskAltRoundedIcon          from "@mui/icons-material/TaskAltRounded";
+import CancelRoundedIcon           from "@mui/icons-material/CancelRounded";
+import FormatListNumberedRoundedIcon from "@mui/icons-material/FormatListNumberedRounded";
+import OpenInNewRoundedIcon        from "@mui/icons-material/OpenInNewRounded";
 
 // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Design tokens Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
@@ -555,26 +561,40 @@ function SendResultCard({ summary, label = "Hasil Terakhir" }) {
   const failed  = summary.failed  || 0;
   return (
     <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid rgba(26, 42, 87, 0.12)", boxShadow: "0 4px 16px rgba(10, 18, 40, 0.08)" }}>
-      {/* Header piagam */}
-      <div style={{ padding: "11px 14px 10px", background: "linear-gradient(180deg, rgba(24, 43, 88, 1) 0%, rgba(27, 55, 112, 0.96) 100%)", borderBottom: "1px solid rgba(26, 42, 87, 0.10)" }}>
-        <p style={{ fontFamily: F.mono, fontSize: 10, fontWeight: 600, color: "rgba(233, 196, 106, 0.92)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>
-          {label}
-        </p>
-        <h3 style={{ fontFamily: F.sans, fontSize: 14, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>
-          Pengiriman Selesai
-        </h3>
+      {/* Header */}
+      <div style={{ padding: "10px 14px", background: "linear-gradient(180deg, rgba(24, 43, 88, 1) 0%, rgba(27, 55, 112, 0.96) 100%)", borderBottom: "1px solid rgba(26, 42, 87, 0.10)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <p style={{ fontFamily: F.mono, fontSize: 10, fontWeight: 600, color: "rgba(233, 196, 106, 0.92)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 2px" }}>
+            {label}
+          </p>
+          <h3 style={{ fontFamily: F.sans, fontSize: 13.5, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>
+            Pengiriman Selesai
+          </h3>
+        </div>
+        <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <TaskAltRoundedIcon style={{ fontSize: 18, color: "#4ade80" }} />
+        </div>
       </div>
-      {/* Body */}
-      <div style={{ padding: "10px 14px", background: "#fff", display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: F.sans, fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 7, background: "rgba(26, 42, 87, 0.07)", color: C.ink }}>
-          Total <span style={{ fontFamily: F.mono }}>{total}</span>
-        </span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: F.sans, fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 7, background: "rgba(42, 157, 143, 0.12)", color: "#18786e" }}>
-          Berhasil <span style={{ fontFamily: F.mono }}>{success}</span>
-        </span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: F.sans, fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 7, background: "rgba(239, 68, 68, 0.10)", color: "#b42318" }}>
-          Gagal <span style={{ fontFamily: F.mono }}>{failed}</span>
-        </span>
+      {/* Body — stat grid */}
+      <div style={{ padding: "10px 12px", background: "#fff", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+        {/* Total */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "7px 6px", borderRadius: 9, background: "rgba(26, 42, 87, 0.05)", border: "1px solid rgba(26, 42, 87, 0.08)" }}>
+          <FormatListNumberedRoundedIcon style={{ fontSize: 15, color: C.brand }} />
+          <span style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 700, color: C.ink, lineHeight: 1 }}>{total}</span>
+          <span style={{ fontFamily: F.sans, fontSize: 10, fontWeight: 600, color: C.subtle, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total</span>
+        </div>
+        {/* Berhasil */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "7px 6px", borderRadius: 9, background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.18)" }}>
+          <CheckCircleRoundedIcon style={{ fontSize: 15, color: "#16a34a" }} />
+          <span style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 700, color: "#15803d", lineHeight: 1 }}>{success}</span>
+          <span style={{ fontFamily: F.sans, fontSize: 10, fontWeight: 600, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.05em" }}>Berhasil</span>
+        </div>
+        {/* Gagal */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "7px 6px", borderRadius: 9, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.16)" }}>
+          <CancelRoundedIcon style={{ fontSize: 15, color: "#dc2626" }} />
+          <span style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 700, color: "#b91c1c", lineHeight: 1 }}>{failed}</span>
+          <span style={{ fontFamily: F.sans, fontSize: 10, fontWeight: 600, color: "#dc2626", textTransform: "uppercase", letterSpacing: "0.05em" }}>Gagal</span>
+        </div>
       </div>
     </div>
   );
@@ -679,6 +699,7 @@ export default function DashboardPage() {
   const [waError,              setWaError]              = useState({ open: false, message: "" });
   const [deleteConfirm,        setDeleteConfirm]        = useState({ open: false, label: "" });
   const [headerSlot,           setHeaderSlot]           = useState(null);
+  const [customerSearch,       setCustomerSearch]       = useState("");
   const lastWhatsappLogRef = useRef("");
   const logSeqRef          = useRef(0);
 
@@ -1081,6 +1102,12 @@ export default function DashboardPage() {
   const waLabel           = whatsappReady ? "Connected" : waInitializing ? "Preparing..." : "Not logged in";
   const sendDisabled      = !whatsappReady || !customers.length || sending;
   const hasPdfResult      = sourceMode === "pdf" && pdfLogRows.length > 0;
+  const filteredCustomers = customerSearch.trim()
+    ? customers.filter((c) =>
+        (c.nama || "").toLowerCase().includes(customerSearch.toLowerCase()) ||
+        (c.nomor || "").includes(customerSearch)
+      )
+    : customers;
 
   // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Render Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   return (
@@ -1127,7 +1154,7 @@ export default function DashboardPage() {
             detail={
               sourceMode === "pdf"    ? `PDF Results - ${pdfLogRows.length} total` :
               sourceMode === "gsheet" ? `Google Sheet - ${selectedSheet || "-"}` :
-              fileInfo?.fileName || "No data yet"
+              fileInfo?.fileName || "Belum ada data"
             }
           />
         </Grid>
@@ -1189,19 +1216,14 @@ export default function DashboardPage() {
                   className="users-table-card__action"
                   onClick={() => navigate("/pdf/hasil")}
                   style={{
-                    minHeight: 38,
-                    padding: "0.58rem 1rem",
-                    fontFamily: F.sans,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    boxShadow: "0 8px 18px rgba(42, 157, 143, 0.22)",
-                    borderRadius: 999,
-                    width: "auto",
+                    minHeight: 32, padding: "0 10px", fontFamily: F.sans,
+                    fontSize: 12, fontWeight: 700, lineHeight: 1,
+                    boxShadow: "0 4px 12px rgba(42,157,143,0.18)",
+                    borderRadius: 999, width: "auto",
                   }}
                 >
-                  <DescriptionOutlinedIcon style={{ fontSize: 14 }} />
-                  PDF Details
+                  <OpenInNewRoundedIcon style={{ fontSize: 14 }} />
+                  Details
                 </button>
               ) : null
             }
@@ -1252,7 +1274,10 @@ export default function DashboardPage() {
               <div style={S.customerFooter}>
                 <p style={S.customerFooterText}>
                   <GroupsRoundedIcon style={{ fontSize: 15, color: "#8a97ad", flexShrink: 0 }} />
-                  Total customer data ready to process: <span style={S.customerFooterValue}>{customers.length}</span>
+                  Total customer data ready to process:{" "}
+                  <span style={S.customerFooterValue}>
+                    {customers.length}
+                  </span>
                 </p>
               </div>
             </div>

@@ -12,6 +12,26 @@ const NAVY_LIGHT = "#e8edf7";
 const NAVY_SOFT = "#f0f3fa";
 const NAVY_MID = "#3d5a9e";
 
+const AVATAR_GRADIENTS = [
+  ["#6366f1", "#8b5cf6"],
+  ["#0ea5e9", "#2563eb"],
+  ["#10b981", "#059669"],
+  ["#f59e0b", "#d97706"],
+  ["#ef4444", "#dc2626"],
+  ["#ec4899", "#db2777"],
+  ["#14b8a6", "#0d9488"],
+  ["#f97316", "#ea580c"],
+  ["#8b5cf6", "#7c3aed"],
+  ["#06b6d4", "#0284c7"],
+];
+
+function getAvatarGradient(name) {
+  if (!name) return AVATAR_GRADIENTS[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
+}
+
 function formatRupiah(value) {
   if (!value) return "Rp 0";
   const num = Number(String(value).replace(/[^\d.-]/g, ""));
@@ -226,13 +246,14 @@ export default function CustomerPreview({ customers }) {
                   width: 38,
                   height: 38,
                   borderRadius: "10px",
-                  bgcolor: NAVY,
+                  background: `linear-gradient(135deg, ${getAvatarGradient(item.nama)[0]} 0%, ${getAvatarGradient(item.nama)[1]} 100%)`,
                   color: "#fff",
                   fontSize: 12,
                   fontWeight: 800,
                   fontFamily: FONT,
                   flexShrink: 0,
                   letterSpacing: "0.5px",
+                  boxShadow: `0 2px 8px ${getAvatarGradient(item.nama)[0]}40`,
                 }}
               >
                 {getInitials(item.nama)}

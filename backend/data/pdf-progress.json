@@ -1,11 +1,11 @@
 {
   "running": false,
-  "current": 0,
-  "total": 0,
-  "ptName": "",
-  "status": "",
-  "step": 0,
-  "complete": false,
+  "current": 4,
+  "total": 4,
+  "ptName": "Selesai",
+  "status": "Semua PDF berhasil dibuat",
+  "step": 4,
+  "complete": true,
   "error": "",
-  "updatedAt": "2026-06-02T02:31:25.015Z"
+  "updatedAt": "2026-07-16T09:50:19.181Z"
 }
