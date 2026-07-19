@@ -134,6 +134,25 @@ function rejectDisallowedOrigin(req, res, next) {
     return next();
   }
 
+  const requestOrigin = String(req.headers.origin || "").replace(/\/+$/, "");
+  const requestHosts = [
+    req.headers.host,
+    req.headers["x-forwarded-host"],
+  ]
+    .flatMap((value) => String(value || "").split(","))
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+  if (requestOrigin && requestHosts.length > 0) {
+    try {
+      const parsedOrigin = new URL(requestOrigin);
+      if (requestHosts.includes(parsedOrigin.host.toLowerCase())) {
+        return next();
+      }
+    } catch {
+      // Fall through to the configured allow-list check below.
+    }
+  }
+
   if (!isAllowedOrigin(req.headers.origin)) {
     return res.status(403).json({ success: false, message: "Origin tidak diizinkan" });
   }
