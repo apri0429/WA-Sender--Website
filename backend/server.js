@@ -20,7 +20,7 @@ const app = express();
 const server = http.createServer(app);
 
 const PORT = process.env.PORT || 8090;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://192.168.21.6:5173";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://192.168.1.254:5173";
 const API_KEY = String(process.env.API_KEY || "").trim();
 const BODY_LIMIT = process.env.BODY_LIMIT || "2mb";
 const EXCEL_UPLOAD_LIMIT = Number(process.env.EXCEL_UPLOAD_LIMIT || 15 * 1024 * 1024);
@@ -4345,7 +4345,7 @@ io.on("connection", (socket) => {
 server.listen(PORT, "0.0.0.0", () => {
   activeSessionId = getPreferredWhatsAppSessionId();
   clearWhatsAppWebCache();
-  console.log(`Backend running on http://192.168.21.6:${PORT}`);
+  console.log(`Backend running on http://192.168.1.254:${PORT}`);
   if (!API_KEY) {
     console.warn("Security warning: API_KEY belum diset. Endpoint terlindungi CORS/rate-limit, tetapi belum punya autentikasi API penuh.");
   }

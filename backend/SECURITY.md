@@ -16,8 +16,8 @@ The backend applies these protections globally:
 ## Recommended Environment Variables
 
 ```env
-FRONTEND_URL=http://192.168.21.6:5173
-ALLOWED_ORIGINS=http://192.168.21.6:5173,http://localhost:5173
+FRONTEND_URL=http://192.168.1.254:5173
+ALLOWED_ORIGINS=http://192.168.1.254:5173,http://192.168.1.254:8098,http://localhost:5173,http://localhost:8098
 BODY_LIMIT=2mb
 EXCEL_UPLOAD_LIMIT=15728640
 CHAT_MEDIA_UPLOAD_LIMIT=67108864
