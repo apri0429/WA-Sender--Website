@@ -54,6 +54,7 @@ function isAllowedOrigin(origin) {
     const parsed = new URL(origin);
     const normalized = `${parsed.protocol}//${parsed.host}`;
     if (ALLOWED_ORIGINS.has(normalized)) return true;
+    if (isPrivateHostname(parsed.hostname) && ["5173", String(PORT)].includes(parsed.port)) return true;
     return process.env.ALLOW_PRIVATE_NETWORK_ORIGINS === "true" && isPrivateHostname(parsed.hostname);
   } catch {
     return false;
@@ -129,6 +130,10 @@ function setSecurityHeaders(req, res, next) {
 }
 
 function rejectDisallowedOrigin(req, res, next) {
+  if (!req.path.startsWith("/api") && !req.path.startsWith("/socket.io")) {
+    return next();
+  }
+
   if (!isAllowedOrigin(req.headers.origin)) {
     return res.status(403).json({ success: false, message: "Origin tidak diizinkan" });
   }
