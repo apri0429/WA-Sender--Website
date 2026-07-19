@@ -2,6 +2,7 @@ backend/sessions/
 backend/uploads/
 backend/server.err.log
 backend/server.out.log
+backend/data/pdf-drive-config.json
 *.log
 **/Code Cache/
 node_modules/

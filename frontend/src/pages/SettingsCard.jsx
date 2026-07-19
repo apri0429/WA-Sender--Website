@@ -20,7 +20,6 @@ import EditNoteRoundedIcon from "@mui/icons-material/EditNoteRounded";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
-import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
@@ -88,24 +87,6 @@ const T = {
 // ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
-function maskGsheetUrl(url) {
-  if (!url) return "";
-  try {
-    const u = new URL(url);
-    const parts = u.pathname.split("/").filter(Boolean);
-    const masked = parts
-      .map((p, i) => {
-        if (i === 2) return "••••••••••••";
-        return p;
-      })
-      .join("/");
-    return `${u.hostname}/${masked}`;
-  } catch {
-    const clean = url.replace(/^https?:\/\//, "");
-    return clean.slice(0, 22) + "••••••••••••";
-  }
-}
-
 function extractDriveFolderId(value) {
   const raw = String(value || "").trim();
   if (!raw) return "";
@@ -123,6 +104,18 @@ function maskSecret(value, visible = 6) {
 // ─────────────────────────────────────────────
 // Reusable UI Atoms
 // ─────────────────────────────────────────────
+function normalizeDriveConfig(data = {}) {
+  return {
+    folderId: data.folderId || "",
+    enabled: !!data.enabled,
+    scriptUrl: data.scriptUrl || "",
+    hasFolderId: !!(data.hasFolderId || data.folderId),
+    hasScriptUrl: !!(data.hasScriptUrl || data.scriptUrl),
+    folderIdMasked: data.folderIdMasked || (data.folderId ? maskSecret(data.folderId, 8) : ""),
+    scriptUrlMasked: data.scriptUrlMasked || (data.scriptUrl ? maskSecret(data.scriptUrl, 10) : ""),
+  };
+}
+
 function SettingsPanel({ icon, eyebrow = "Pengaturan", title, action, sx = {}, children }) {
   return (
     <Box
@@ -396,6 +389,7 @@ export default function SettingsCard({
   const [localDelay, setLocalDelay] = useState(controlledDelay || 4000);
   const [localTemplate, setLocalTemplate] = useState(controlledTemplate || "");
   const [localGsheet, setLocalGsheet] = useState(controlledGsheetUrl || "");
+  const [localGsheetConfigured, setLocalGsheetConfigured] = useState(!!controlledGsheetUrl);
   const [localGsheetMeta, setLocalGsheetMeta] = useState({
     selectedSheet: "",
     autoSync: false,
@@ -404,9 +398,9 @@ export default function SettingsCard({
   const [editingUrl, setEditingUrl] = useState(false);
   const [urlDraft, setUrlDraft] = useState("");
   const [editingDrive, setEditingDrive] = useState(false);
-  const [driveDraft, setDriveDraft] = useState({ folderId: "", enabled: false, scriptUrl: "" });
+  const [driveDraft, setDriveDraft] = useState(() => normalizeDriveConfig());
 
-  const [driveConfig, setDriveConfig] = useState({ folderId: "", enabled: false, scriptUrl: "" });
+  const [driveConfig, setDriveConfig] = useState(() => normalizeDriveConfig());
   const [driveLoading, setDriveLoading] = useState(false);
   const [hasLogo, setHasLogo] = useState(false);
   const [logoLoading, setLogoLoading] = useState(false);
@@ -419,19 +413,21 @@ export default function SettingsCard({
   const logoRef = useRef(null);
 
   const currentDriveConfig = editingDrive ? driveDraft : driveConfig;
-  const driveReady = !!currentDriveConfig.enabled && !!currentDriveConfig.scriptUrl && !!currentDriveConfig.folderId;
+  const currentHasScriptUrl = !!(currentDriveConfig.scriptUrl || currentDriveConfig.hasScriptUrl);
+  const currentHasFolderId = !!(currentDriveConfig.folderId || currentDriveConfig.hasFolderId);
+  const driveReady = !!currentDriveConfig.enabled && currentHasScriptUrl && currentHasFolderId;
   const driveStatusLabel = driveReady
     ? "Siap upload"
-    : currentDriveConfig.scriptUrl
+    : currentHasScriptUrl
       ? currentDriveConfig.enabled
         ? "Folder belum diisi"
         : "Nonaktif"
-      : currentDriveConfig.folderId
+      : currentHasFolderId
         ? "Script belum diisi"
         : "Belum diisi";
   const driveStatusColor = driveReady
     ? "blue"
-    : currentDriveConfig.scriptUrl || currentDriveConfig.folderId
+    : currentHasScriptUrl || currentHasFolderId
       ? "amber"
       : "gray";
 
@@ -484,6 +480,7 @@ export default function SettingsCard({
         if (gsheetRes.status === "fulfilled") {
           const d = gsheetRes.value?.data || {};
           setLocalGsheet(d.url || "");
+          setLocalGsheetConfigured(!!d.configured);
           setLocalGsheetMeta({
             selectedSheet: d.selectedSheet || "",
             autoSync: !!d.autoSync,
@@ -492,7 +489,7 @@ export default function SettingsCard({
 
         if (driveRes.status === "fulfilled") {
           const d = driveRes.value?.data || {};
-          const nextDriveConfig = { folderId: d.folderId || "", enabled: !!d.enabled, scriptUrl: d.scriptUrl || "" };
+          const nextDriveConfig = normalizeDriveConfig(d);
           setDriveConfig(nextDriveConfig);
           setDriveDraft(nextDriveConfig);
         }
@@ -533,20 +530,25 @@ export default function SettingsCard({
   };
 
   const handleSaveGsheet = async () => {
+    const urlToSave = urlDraft.trim();
+    if (!urlToSave) return;
     try {
-      const urlToSave = editingUrl ? urlDraft.trim() : localGsheet;
-
       if (typeof onSaveGsheet === "function") {
         onSaveGsheet(urlToSave);
+        setLocalGsheetConfigured(true);
       } else {
-        await api.post("/gsheet", {
+        const res = await api.post("/gsheet", {
           url: urlToSave,
           selectedSheet: localGsheetMeta.selectedSheet || "",
           autoSync: !!localGsheetMeta.autoSync,
         });
+        const cfg = res?.data?.config || {};
+        // Server never echoes the raw URL back — only a masked display
+        // string — so the real link never lingers in frontend state.
+        setLocalGsheet(cfg.url || "");
+        setLocalGsheetConfigured(!!cfg.configured);
       }
 
-      setLocalGsheet(urlToSave);
       setEditingUrl(false);
       setUrlDraft("");
       showToast("URL Google Sheet berhasil disimpan", "success");
@@ -559,7 +561,10 @@ export default function SettingsCard({
     setDriveLoading(true);
     try {
       await api.post("/pdf/drive-config", driveDraft);
-      setDriveConfig(driveDraft);
+      const refreshed = await api.get("/pdf/drive-config");
+      const nextDriveConfig = normalizeDriveConfig(refreshed?.data || {});
+      setDriveConfig(nextDriveConfig);
+      setDriveDraft(nextDriveConfig);
       setEditingDrive(false);
       showToast("Konfigurasi Google Drive disimpan", "success");
     } catch {
@@ -611,7 +616,7 @@ export default function SettingsCard({
   };
 
   const handleStartDriveEdit = () => {
-    setDriveDraft(driveConfig);
+    setDriveDraft({ ...driveConfig, scriptUrl: "", folderId: "" });
     setEditingDrive(true);
   };
 
@@ -835,8 +840,8 @@ export default function SettingsCard({
               title="Google Sheet"
               action={
                 <StatusPill
-                  label={localGsheet ? "Terhubung" : "Belum diisi"}
-                  color={localGsheet ? "green" : "amber"}
+                  label={localGsheetConfigured ? "Terhubung" : "Belum diisi"}
+                  color={localGsheetConfigured ? "green" : "amber"}
                 />
               }
             >
@@ -880,14 +885,14 @@ export default function SettingsCard({
                     sx={{
                       fontFamily: FONT_SANS,
                       fontSize: 13,
-                      color: localGsheet ? T.text : T.subtle,
+                      color: localGsheetConfigured ? T.text : T.subtle,
                       flex: 1,
-                      fontStyle: localGsheet ? "normal" : "italic",
-                      letterSpacing: localGsheet ? "0.02em" : "normal",
+                      fontStyle: localGsheetConfigured ? "normal" : "italic",
+                      letterSpacing: localGsheetConfigured ? "0.02em" : "normal",
                       wordBreak: "break-all",
                     }}
                   >
-                    {localGsheet ? maskGsheetUrl(localGsheet) : "URL belum diisi"}
+                    {localGsheetConfigured ? localGsheet : "URL belum diisi"}
                   </Typography>
 
                   <Tooltip title="Ubah URL" placement="top">
@@ -953,23 +958,19 @@ export default function SettingsCard({
                 </Box>
               )}
 
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: "auto" }}>
-                <ActionBtn
-                  color="brand"
-                  size="md"
-                  startIcon={
-                    editingUrl ? (
-                      <CheckRoundedIcon sx={{ fontSize: "16px !important" }} />
-                    ) : (
-                      <SaveRoundedIcon sx={{ fontSize: "16px !important" }} />
-                    )
-                  }
-                  onClick={handleSaveGsheet}
-                  disabled={editingUrl && !urlDraft.trim()}
-                >
-                  {editingUrl ? "Simpan URL Baru" : "Simpan URL"}
-                </ActionBtn>
-              </Box>
+              {editingUrl && (
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: "auto" }}>
+                  <ActionBtn
+                    color="brand"
+                    size="md"
+                    startIcon={<CheckRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                    onClick={handleSaveGsheet}
+                    disabled={!urlDraft.trim()}
+                  >
+                    Simpan URL Baru
+                  </ActionBtn>
+                </Box>
+              )}
             </SettingsPanel>
           </Grid>
 
@@ -1096,15 +1097,15 @@ export default function SettingsCard({
                     sx={{
                       fontFamily: FONT_SANS,
                       fontSize: 13,
-                      color: driveConfig.scriptUrl || driveConfig.folderId ? T.text : T.subtle,
+                      color: driveConfig.hasScriptUrl || driveConfig.hasFolderId ? T.text : T.subtle,
                       flex: 1,
-                      fontStyle: driveConfig.scriptUrl || driveConfig.folderId ? "normal" : "italic",
-                      letterSpacing: driveConfig.scriptUrl || driveConfig.folderId ? "0.02em" : "normal",
+                      fontStyle: driveConfig.hasScriptUrl || driveConfig.hasFolderId ? "normal" : "italic",
+                      letterSpacing: driveConfig.hasScriptUrl || driveConfig.hasFolderId ? "0.02em" : "normal",
                       wordBreak: "break-all",
                     }}
                   >
-                    {driveConfig.scriptUrl || driveConfig.folderId
-                      ? `Apps Script: ${maskSecret(driveConfig.scriptUrl, 10)} | Folder: ${maskSecret(driveConfig.folderId, 8)}`
+                    {driveConfig.hasScriptUrl || driveConfig.hasFolderId
+                      ? `Apps Script: ${driveConfig.scriptUrlMasked || "tersimpan"} | Folder: ${driveConfig.folderIdMasked || "tersimpan"}`
                       : "Konfigurasi Drive belum diisi"}
                   </Typography>
 
@@ -1137,6 +1138,7 @@ export default function SettingsCard({
                   placeholder="https://script.google.com/macros/s/.../exec"
                   value={driveDraft.scriptUrl}
                   onChange={(e) => setDriveDraft((p) => ({ ...p, scriptUrl: e.target.value }))}
+                  helperText={driveDraft.hasScriptUrl ? `Tersimpan: ${driveDraft.scriptUrlMasked || "disembunyikan"}. Kosongkan jika tidak ingin mengubah.` : ""}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -1167,6 +1169,7 @@ export default function SettingsCard({
                   placeholder="https://drive.google.com/drive/folders/... atau ID folder"
                   value={driveDraft.folderId}
                   onChange={(e) => setDriveDraft((p) => ({ ...p, folderId: extractDriveFolderId(e.target.value) }))}
+                  helperText={driveDraft.hasFolderId ? `Tersimpan: ${driveDraft.folderIdMasked || "disembunyikan"}. Kosongkan jika tidak ingin mengubah.` : ""}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -1205,19 +1208,19 @@ export default function SettingsCard({
                 size="lg"
                 startIcon={<SaveRoundedIcon sx={{ fontSize: "18px !important" }} />}
                 onClick={editingDrive ? handleSaveDriveConfig : handleStartDriveEdit}
-                disabled={driveLoading || (editingDrive && !driveDraft.scriptUrl.trim())}
+                disabled={driveLoading || (editingDrive && !driveDraft.scriptUrl.trim() && !driveDraft.hasScriptUrl)}
               >
                 {editingDrive ? "Simpan Config" : "Ubah Setting"}
               </ActionBtn>
             </Box>
 
-            {currentDriveConfig.enabled && !currentDriveConfig.scriptUrl && (
+            {currentDriveConfig.enabled && !currentHasScriptUrl && (
               <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 1, borderRadius: "8px" }}>
                 Harap isi Apps Script URL agar upload otomatis dapat berfungsi.
               </Alert>
             )}
 
-            {currentDriveConfig.enabled && currentDriveConfig.scriptUrl && !currentDriveConfig.folderId && (
+            {currentDriveConfig.enabled && currentHasScriptUrl && !currentHasFolderId && (
               <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 1, borderRadius: "8px" }}>
                 Isi link atau ID folder Google Drive dulu agar file tahu harus diupload ke folder mana.
               </Alert>

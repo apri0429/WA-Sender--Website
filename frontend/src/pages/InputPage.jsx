@@ -328,6 +328,7 @@ export default function InputPage() {
   const [pdfMapping, setPdfMapping]     = useState({});
 
   const [gsheetUrl, setGsheetUrl]         = useState("");
+  const [gsheetConfigured, setGsheetConfigured] = useState(false);
   const [syncing, setSyncing]             = useState(false);
   const [loading, setLoading]             = useState(true);
   const [savingPdf, setSavingPdf]         = useState(false);
@@ -367,9 +368,11 @@ export default function InputPage() {
   useEffect(() => {
     api.get("/gsheet").then((res) => {
       const url = res?.data?.url || "";
+      const configured = !!res?.data?.configured;
       setGsheetUrl(url);
-      gsheetSavedUrlRef.current = url;
-      if (url) {
+      setGsheetConfigured(configured);
+      gsheetSavedUrlRef.current = configured ? url : "";
+      if (configured) {
         setSyncing(true);
         api.get("/gsheet/input").then((r) => {
           const d = r?.data || {};
@@ -399,6 +402,18 @@ export default function InputPage() {
     } catch (err) {
       showToast(err?.response?.data?.message || "Sync failed", "error");
     } finally { setSyncing(false); }
+  };
+
+  const handleOpenGSheet = async () => {
+    try {
+      const res = await api.get("/gsheet/open");
+      const url = res?.data?.url;
+      if (!url) throw new Error("URL Google Sheet belum tersedia");
+      const tab = window.open(url, "_blank", "noopener,noreferrer");
+      if (tab) tab.opener = null;
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Gagal membuka Google Sheet", "error");
+    }
   };
 
   const handleSaveForPdf = async () => {
@@ -496,10 +511,10 @@ export default function InputPage() {
               </button>
             )}
           </div>
-          {gsheetSavedUrlRef.current ? (
-            <a href={gsheetSavedUrlRef.current} target="_blank" rel="noopener noreferrer" className="header-icon-button header-icon-button--compact" title="Open Google Sheet" style={{ textDecoration: "none" }}>
+          {gsheetConfigured ? (
+            <button type="button" onClick={handleOpenGSheet} className="header-icon-button header-icon-button--compact" title="Open Google Sheet">
               <GoogleSheetsLogo size={18} />
-            </a>
+            </button>
           ) : (
             <span className="header-icon-button header-icon-button--compact" style={{ opacity: 0.35, cursor: "default" }}>
               <GoogleSheetsLogo size={18} />

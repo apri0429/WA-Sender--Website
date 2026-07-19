@@ -1,7 +1,6 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
 import AppLayout from "./layout/AppLayout";
 import DashboardPage from "./pages/DashboardPage";
-import ChatInboxPage from "./pages/ChatInboxPage";
 import PdfPage from "./pages/PdfPage";
 import HasilPdfPage from "./pages/HasilPdfPage";
 import InputPage from "./pages/InputPage";
@@ -14,7 +13,6 @@ export default function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<DashboardPage />} />
-          <Route path="/chats" element={<ChatInboxPage />} />
           <Route path="/input" element={<InputPage />} />
           <Route path="/input/periode" element={<PeriodePage />} />
           <Route path="/masterdata" element={<MasterDataPage />} />

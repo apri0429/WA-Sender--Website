@@ -1,9 +1,19 @@
 import { ChevronLeft, ChevronRight, XClose } from '@untitledui/icons'
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import '../styles/layout.css'
 import { submitLogout } from '../lib/logoutService.js'
+
+function BackToPilarGroupIcon({ size = 22, className }) {
+  return (
+    <LogoutRoundedIcon
+      className={className}
+      style={{ width: size, height: size, transform: 'scaleX(-1)' }}
+    />
+  )
+}
 
 function getInitials(name) {
   return name
@@ -173,9 +183,9 @@ function Sidebar({
 }) {
   const backToPilarGroupItem = {
     id: 'back-to-pilargroup',
-    label: 'Pilargroup',
+    label: 'Back Pilargroup',
     href: 'https://pilargroup.id',
-    icon: ChevronLeft,
+    icon: BackToPilarGroupIcon,
     className: 'nav-item--back-to-pilargroup',
   }
   const [selectedPath, setSelectedPath] = useState(activePath)

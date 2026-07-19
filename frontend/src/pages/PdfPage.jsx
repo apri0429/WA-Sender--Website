@@ -63,6 +63,18 @@ function extractDriveFolderId(value) {
   return match ? match[1] : raw;
 }
 
+function normalizeDriveConfig(data = {}) {
+  return {
+    folderId: data.folderId || "",
+    enabled: !!data.enabled,
+    scriptUrl: data.scriptUrl || "",
+    hasFolderId: !!(data.hasFolderId || data.folderId),
+    hasScriptUrl: !!(data.hasScriptUrl || data.scriptUrl),
+    folderIdMasked: data.folderIdMasked || "",
+    scriptUrlMasked: data.scriptUrlMasked || "",
+  };
+}
+
 function formatCurrency(v) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(v) || 0);
 }
@@ -495,7 +507,7 @@ export default function PdfPage() {
   const [toast, setToast]                 = useState({ open: false, message: "", severity: "success" });
   const [editingCell, setEditingCell]     = useState(null);
   const [cellRect, setCellRect]           = useState(null);
-  const [driveConfig, setDriveConfig]     = useState({ folderId: "", enabled: false, scriptUrl: "" });
+  const [driveConfig, setDriveConfig]     = useState(() => normalizeDriveConfig());
   const [driveLoading, setDriveLoading]   = useState(false);
   const [driveConfigOpen, setDriveConfigOpen] = useState(false);
   const [showScriptUrl, setShowScriptUrl] = useState(false);
@@ -511,7 +523,7 @@ export default function PdfPage() {
 
   const rowsRef  = useRef([]);
   const activeCellRef = useRef(null);
-  const driveReady      = !!driveConfig.enabled && !!driveConfig.scriptUrl && !!driveConfig.folderId;
+  const driveReady      = !!driveConfig.enabled && !!(driveConfig.scriptUrl || driveConfig.hasScriptUrl) && !!(driveConfig.folderId || driveConfig.hasFolderId);
   const hasProgressState = !!progress.status || progress.current > 0 || progress.total > 0;
 
   const penagihOptions = Array.from(
@@ -562,7 +574,7 @@ export default function PdfPage() {
       }
       if (driveRes.status === "fulfilled") {
         const d = driveRes.value?.data || {};
-        setDriveConfig({ folderId: d.folderId || "", enabled: !!d.enabled, scriptUrl: d.scriptUrl || "" });
+        setDriveConfig(normalizeDriveConfig(d));
       }
     } catch { /* intentional */ }
     finally { setLoading(false); }
@@ -575,7 +587,7 @@ export default function PdfPage() {
       setProgress({ current: d.current || 0, total: d.total || 0, status: d.status || "", ptName: d.ptName || "" });
       if (!d.running) setCancelling(false);
     };
-    const onPdfDone      = () => { setGenerating(false); setCancelling(false); showToast("Semua PDF berhasil dibuat!", "success"); };
+    const onPdfDone      = () => { setGenerating(false); setCancelling(false); setProgress({ current: 0, total: 0, status: "", ptName: "" }); showToast("Semua PDF berhasil dibuat!", "success"); };
     const onPdfError     = (d) => { setGenerating(false); setCancelling(false); showToast(d?.error || "Generate PDF gagal", "error"); };
     const onPdfCancelled = (d) => { setGenerating(false); setCancelling(false); showToast(d?.message || "Generate PDF dibatalkan", "warning"); };
 
@@ -675,7 +687,12 @@ export default function PdfPage() {
 
   const handleSaveDriveConfig = async () => {
     setDriveLoading(true);
-    try { await api.post("/pdf/drive-config", { folderId: driveConfig.folderId, enabled: driveConfig.enabled, scriptUrl: driveConfig.scriptUrl }); showToast("Konfigurasi Google Drive disimpan", "success"); }
+    try {
+      await api.post("/pdf/drive-config", { folderId: driveConfig.folderId, enabled: driveConfig.enabled, scriptUrl: driveConfig.scriptUrl });
+      const refreshed = await api.get("/pdf/drive-config");
+      setDriveConfig(normalizeDriveConfig(refreshed?.data || {}));
+      showToast("Konfigurasi Google Drive disimpan", "success");
+    }
     catch (err) { showToast(err?.response?.data?.message || "Gagal simpan konfigurasi", "error"); }
     finally { setDriveLoading(false); }
   };
@@ -1198,8 +1215,9 @@ export default function PdfPage() {
             type={showScriptUrl ? "text" : "password"}
             value={driveConfig.scriptUrl}
             onChange={(e) => setDriveConfig((p) => ({ ...p, scriptUrl: e.target.value }))}
+            helperText={driveConfig.hasScriptUrl ? `Tersimpan: ${driveConfig.scriptUrlMasked || "disembunyikan"}. Kosongkan jika tidak ingin mengubah.` : ""}
             InputProps={{
-              startAdornment: <InputAdornment position="start"><LinkRoundedIcon sx={{ fontSize: 15, color: driveConfig.scriptUrl ? T.brand : T.muted }} /></InputAdornment>,
+              startAdornment: <InputAdornment position="start"><LinkRoundedIcon sx={{ fontSize: 15, color: driveConfig.scriptUrl || driveConfig.hasScriptUrl ? T.brand : T.muted }} /></InputAdornment>,
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton size="small" onClick={() => setShowScriptUrl((v) => !v)} sx={{ color: T.muted }}>
@@ -1209,11 +1227,12 @@ export default function PdfPage() {
               ),
               sx: { fontFamily: FONT_MONO, fontSize: 10.5, borderRadius: "10px" },
             }}
-            sx={{ "& .MuiOutlinedInput-root": { background: "#f3f4f6", "& fieldset": { borderColor: driveConfig.scriptUrl ? T.brandBorder : T.line }, "&:hover fieldset": { borderColor: T.brand }, "&.Mui-focused fieldset": { borderColor: T.brand } }, "& label": { fontFamily: FONT_SANS, fontSize: 12 }, "& label.Mui-focused": { color: T.brand } }} />
+            sx={{ "& .MuiOutlinedInput-root": { background: "#f3f4f6", "& fieldset": { borderColor: driveConfig.scriptUrl || driveConfig.hasScriptUrl ? T.brandBorder : T.line }, "&:hover fieldset": { borderColor: T.brand }, "&.Mui-focused fieldset": { borderColor: T.brand } }, "& label": { fontFamily: FONT_SANS, fontSize: 12 }, "& label.Mui-focused": { color: T.brand } }} />
           <TextField size="small" fullWidth label="Folder ID / Link Folder" placeholder="https://drive.google.com/drive/folders/... atau ID folder"
             type={showFolderId ? "text" : "password"}
             value={driveConfig.folderId}
             onChange={(e) => setDriveConfig((p) => ({ ...p, folderId: extractDriveFolderId(e.target.value) }))}
+            helperText={driveConfig.hasFolderId ? `Tersimpan: ${driveConfig.folderIdMasked || "disembunyikan"}. Kosongkan jika tidak ingin mengubah.` : ""}
             InputProps={{
               startAdornment: <InputAdornment position="start"><FolderOpenRoundedIcon sx={{ fontSize: 15, color: T.muted }} /></InputAdornment>,
               endAdornment: (
@@ -1241,8 +1260,8 @@ export default function PdfPage() {
               Simpan
             </Btn>
           </Box>
-          {driveConfig.enabled && !driveConfig.scriptUrl && <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 11, py: 0.25, borderRadius: "10px" }}>Isi Apps Script URL dulu agar upload berhasil.</Alert>}
-          {driveConfig.enabled && driveConfig.scriptUrl && !driveConfig.folderId && <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 11, py: 0.25, borderRadius: "10px" }}>Isi link atau ID folder Google Drive dulu.</Alert>}
+          {driveConfig.enabled && !(driveConfig.scriptUrl || driveConfig.hasScriptUrl) && <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 11, py: 0.25, borderRadius: "10px" }}>Isi Apps Script URL dulu agar upload berhasil.</Alert>}
+          {driveConfig.enabled && (driveConfig.scriptUrl || driveConfig.hasScriptUrl) && !(driveConfig.folderId || driveConfig.hasFolderId) && <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 11, py: 0.25, borderRadius: "10px" }}>Isi link atau ID folder Google Drive dulu.</Alert>}
         </DialogContent>
       </Dialog>
 

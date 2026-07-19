@@ -55,12 +55,6 @@ import socket from "../services/socket";
 const picCache = new Map();
 const picSubs = new Map();
 
-const API_RAW = import.meta.env.DEV ? "http://192.168.1.254:8098" : "";
-function mkMediaUrl(serializedId, download = false) {
-  const baseUrl = `${API_RAW}/api/messages/${encodeURIComponent(serializedId)}/media`;
-  return download ? `${baseUrl}?download=1` : baseUrl;
-}
-
 const FONT_SANS = "'Plus Jakarta Sans', 'Inter', sans-serif";
 const FONT_MONO = "'JetBrains Mono', 'Fira Code', monospace";
 
@@ -396,24 +390,53 @@ function QuotedMsgBlock({ quotedMsg, fromMe }) {
 function MediaBubble({ msg, fromMe }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [mediaError, setMediaError] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState("");
   const meta = MSG_TYPE[msg?.type];
-  if (!meta) return null;
-  const { Icon } = meta;
+  const Icon = meta?.Icon;
   const caption = String(msg?.body || "").trim();
   const sid = msg?.serializedId;
   const downloadName = msg?.filename || caption || `${msg?.type || "media"}-${sid || "file"}`;
   const mediaCapableTypes = new Set(["image", "sticker", "video", "audio", "ptt", "document"]);
   const canTryMedia = sid && (msg?.hasMedia || mediaCapableTypes.has(msg?.type));
-  const mUrl = canTryMedia ? mkMediaUrl(sid) : null;
-  const downloadUrl = canTryMedia ? mkMediaUrl(sid, true) : null;
+  const mUrl = canTryMedia ? mediaUrl : null;
   const iconColor = fromMe ? "#057C5D" : WA.green;
   const bgColor = fromMe ? "rgba(0,0,0,0.08)" : "#F0F2F5";
+
+  useEffect(() => {
+    if (!canTryMedia) {
+      setMediaUrl("");
+      return undefined;
+    }
+
+    let active = true;
+    let objectUrl = "";
+    setMediaError(false);
+    setMediaUrl("");
+
+    api.get(`/messages/${encodeURIComponent(sid)}/media`, { responseType: "blob" })
+      .then((res) => {
+        objectUrl = URL.createObjectURL(res.data);
+        if (active) setMediaUrl(objectUrl);
+        else URL.revokeObjectURL(objectUrl);
+      })
+      .catch(() => {
+        if (active) setMediaError(true);
+      });
+
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [canTryMedia, sid]);
+
   const handleDownload = (e) => {
     e?.preventDefault?.();
     e?.stopPropagation?.();
-    if (!downloadUrl) return;
-    forceDownload(downloadUrl, downloadName);
+    if (!mUrl) return;
+    forceDownload(mUrl, downloadName);
   };
+
+  if (!meta) return null;
 
   if (msg.type === "revoked") {
     return (
@@ -433,7 +456,7 @@ function MediaBubble({ msg, fromMe }) {
           <Box component="img" src={mUrl} alt={meta.label} onError={() => setMediaError(true)}
             sx={{ width: "100%", display: "block", maxHeight: 300, objectFit: "cover", transition: "opacity 0.15s", "&:hover": { opacity: 0.88 } }} />
         </Box>
-        {downloadUrl && (
+        {mUrl && (
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 0.5 }}>
             <Tooltip title="Download gambar">
               <IconButton size="small" onClick={handleDownload} sx={{ color: iconColor }}>
@@ -450,7 +473,7 @@ function MediaBubble({ msg, fromMe }) {
               sx={{ position: "absolute", top: -16, right: -16, color: "#fff", zIndex: 1, bgcolor: "rgba(255,255,255,0.18)", "&:hover": { bgcolor: "rgba(255,255,255,0.32)" } }}>
               <CloseRoundedIcon sx={{ fontSize: 20 }} />
             </IconButton>
-            {downloadUrl && (
+            {mUrl && (
               <IconButton
                 onClick={handleDownload}
                 sx={{ position: "absolute", top: -16, right: 28, color: "#fff", zIndex: 1, bgcolor: "rgba(255,255,255,0.18)", "&:hover": { bgcolor: "rgba(255,255,255,0.32)" } }}
@@ -473,7 +496,7 @@ function MediaBubble({ msg, fromMe }) {
           <Box component="video" src={mUrl} controls onError={() => setMediaError(true)}
             sx={{ width: "100%", display: "block", maxHeight: 280 }} />
         </Box>
-        {downloadUrl && (
+        {mUrl && (
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 0.5 }}>
             <Tooltip title="Download video">
               <IconButton size="small" onClick={handleDownload} sx={{ color: iconColor }}>
@@ -494,7 +517,7 @@ function MediaBubble({ msg, fromMe }) {
           <Icon sx={{ fontSize: 20, color: iconColor, flexShrink: 0 }} />
           <Box component="audio" controls src={mUrl} onError={() => setMediaError(true)}
             sx={{ height: 36, minWidth: 180, maxWidth: 240, display: "block" }} />
-          {downloadUrl && (
+          {mUrl && (
             <Tooltip title="Download audio">
               <IconButton size="small" onClick={handleDownload} sx={{ color: iconColor, flexShrink: 0 }}>
                 <DownloadRoundedIcon sx={{ fontSize: 18 }} />
@@ -657,18 +680,18 @@ export default function ChatInboxPage() {
     setWaAccount({ name: data?.account?.name || "", number: data?.account?.number || "" });
   };
 
-  const loadChats = useCallback(async ({ preserveSelection = true } = {}) => {
+  const loadChats = useCallback(async ({ preserveSelection = true, silent = false } = {}) => {
     try {
-      setLoadingChats(true);
+      if (!silent) setLoadingChats(true);
       const res = await api.get("/chats");
       const next = sortChatsByActivity(Array.isArray(res?.data?.chats) ? res.data.chats : []);
       setChats(next);
       if (preserveSelection && next.some((c) => c.id === selectedChatId)) return;
       setSelectedChatId(next[0]?.id || "");
     } catch (err) {
-      showToast(err?.response?.data?.message || "Gagal memuat daftar chat", "error");
+      if (!silent) showToast(err?.response?.data?.message || "Gagal memuat daftar chat", "error");
     } finally {
-      setLoadingChats(false);
+      if (!silent) setLoadingChats(false);
     }
   }, [selectedChatId]);
 
@@ -842,6 +865,12 @@ export default function ChatInboxPage() {
     if (!whatsappReady) return;
     loadChats();
     api.get("/my-profile").then((r) => setMyPicUrl(r?.data?.picUrl || null)).catch(() => {});
+    // WhatsApp Web syncs chats into the browser store progressively after
+    // login, so the first /chats call can be incomplete. Keep pulling
+    // silently in the background so chats that sync in late still show up
+    // without the user needing to hit refresh manually.
+    const t = window.setInterval(() => loadChats({ preserveSelection: true, silent: true }), 20000);
+    return () => window.clearInterval(t);
   }, [whatsappReady]);
   useEffect(() => {
     shouldSnapToLatestRef.current = true;

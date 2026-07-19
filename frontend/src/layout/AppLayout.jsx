@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { BarChartSquare02, MessageChatSquare, Settings01, FilePlus02, FileCheck02, Table, Database01, CalendarDate } from "@untitledui/icons";
+import { BarChartSquare02, Settings01, FilePlus02, FileCheck02, Table, Database01, CalendarDate } from "@untitledui/icons";
 
 import AppSidebar from "./components/AppSidebar";
 import AppHeader from "./components/AppHeader";
@@ -9,7 +9,6 @@ import SettingsCard from "../pages/SettingsCard";
 
 const waPrimaryItems = [
   { label: "Dashboard", href: "/", icon: BarChartSquare02 },
-  { label: "Chat Inbox", href: "/chats", icon: MessageChatSquare },
   {
     label: "Input Data",
     icon: Table,
@@ -31,8 +30,7 @@ const waPrimaryItems = [
 ];
 
 const pageBreadcrumbs = {
-  "/": [],
-  "/chats": [{ label: "Chat Inbox", active: true }],
+  "/": [{ label: "Dashboard", active: true }],
   "/input": [{ label: "Input Data" }, { label: "Input", active: true }],
   "/input/periode": [{ label: "Input Data" }, { label: "Periode", active: true }],
   "/pdf": [{ label: "Generate PDF", active: true }],

@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Dialog, DialogContent, DialogTitle,
-  Grid, IconButton, InputAdornment,
-  LinearProgress, TextField, Typography, useMediaQuery,
+  Grid, IconButton,
+  LinearProgress, Typography, useMediaQuery,
 } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 
@@ -21,7 +21,7 @@ import SendRoundedIcon             from "@mui/icons-material/SendRounded";
 import DescriptionRoundedIcon      from "@mui/icons-material/DescriptionRounded";
 import DescriptionOutlinedIcon     from "@mui/icons-material/DescriptionOutlined";
 import AccessTimeRoundedIcon       from "@mui/icons-material/AccessTimeRounded";
-import GroupsRoundedIcon           from "@mui/icons-material/GroupsRounded";
+import BadgeRoundedIcon            from "@mui/icons-material/BadgeRounded";
 import QrCode2RoundedIcon          from "@mui/icons-material/QrCode2Rounded";
 import DevicesRoundedIcon          from "@mui/icons-material/DevicesRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
@@ -35,6 +35,7 @@ import TaskAltRoundedIcon          from "@mui/icons-material/TaskAltRounded";
 import CancelRoundedIcon           from "@mui/icons-material/CancelRounded";
 import FormatListNumberedRoundedIcon from "@mui/icons-material/FormatListNumberedRounded";
 import OpenInNewRoundedIcon        from "@mui/icons-material/OpenInNewRounded";
+import RefreshRoundedIcon          from "@mui/icons-material/RefreshRounded";
 
 // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Design tokens Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
@@ -60,6 +61,34 @@ const C = {
 };
 
 // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Shared style objects (keeps JSX clean) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+
+const ICON_TONES = {
+  teal: {
+    bg: "#ecfdf5",
+    color: "#0f766e",
+    ring: "#bbf7d0",
+  },
+  green: {
+    bg: "#f0fdf4",
+    color: "#16a34a",
+    ring: "#bbf7d0",
+  },
+  amber: {
+    bg: "#fffbeb",
+    color: "#d97706",
+    ring: "#fde68a",
+  },
+  blue: {
+    bg: "#eff6ff",
+    color: "#1d4ed8",
+    ring: "#bfdbfe",
+  },
+  slate: {
+    bg: "#f8fafc",
+    color: "#475569",
+    ring: "#e2e8f0",
+  },
+};
 
 const S = {
   page:         { fontFamily: F.sans, height: "100%", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box", padding: 16, paddingBottom: 16, display: "flex", flexDirection: "column" },
@@ -164,6 +193,41 @@ function normalizeSessions(sessions) {
 }
 
 // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Sub-components Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+
+function statIcon(icon, toneName = "slate") {
+  const tone = ICON_TONES[toneName] || ICON_TONES.slate;
+  return (
+    <span
+      className={`dashboard-stat-icon dashboard-stat-icon--${toneName}`}
+      style={{
+        "--icon-bg": tone.bg,
+        "--icon-color": tone.color,
+        "--icon-ring": tone.ring,
+      }}
+    >
+      {icon}
+    </span>
+  );
+}
+
+function panelTitle(icon, label, toneName = "slate") {
+  const tone = ICON_TONES[toneName] || ICON_TONES.slate;
+  return (
+    <span className="dashboard-panel-title">
+      <span
+        className={`dashboard-panel-title__icon dashboard-panel-title__icon--${toneName}`}
+        style={{
+          "--icon-bg": tone.bg,
+          "--icon-color": tone.color,
+          "--icon-ring": tone.ring,
+        }}
+      >
+        {icon}
+      </span>
+      <span>{label}</span>
+    </span>
+  );
+}
 
 function SessionDropdown({ sessions, value, onChange, disabled }) {
   const [open, setOpen] = useState(false);
@@ -337,26 +401,25 @@ function DataRow({ label, value, mono = false, last = false, even = false }) {
 
 function AnimatedCheck() {
   return (
-    <svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <style>{`
-        @keyframes _circ { from { stroke-dashoffset: 166; } to { stroke-dashoffset: 0; } }
-        @keyframes _tick  { from { stroke-dashoffset: 48;  } to { stroke-dashoffset: 0; } }
+        @keyframes _check-circle { from { stroke-dashoffset: 60; } to { stroke-dashoffset: 0; } }
+        @keyframes _check-mark { from { stroke-dashoffset: 18; } to { stroke-dashoffset: 0; } }
       `}</style>
-      <circle cx="27" cy="27" r="24" stroke="rgba(74,222,128,0.18)" strokeWidth="2.5" fill="none" />
       <circle
-        cx="27" cy="27" r="24"
-        stroke="#4ade80" strokeWidth="2.5" fill="none"
+        cx="12" cy="12" r="9"
+        stroke="#16a34a" strokeWidth="2.1" fill="none"
         strokeLinecap="round"
-        strokeDasharray="166" strokeDashoffset="166"
-        style={{ animation: "_circ 0.55s cubic-bezier(.6,0,.4,1) 0.1s forwards", animationFillMode: "both" }}
-        transform="rotate(-90 27 27)"
+        strokeDasharray="60" strokeDashoffset="60"
+        style={{ animation: "_check-circle 0.42s cubic-bezier(.65,0,.35,1) 0.08s forwards" }}
+        transform="rotate(-90 12 12)"
       />
-      <polyline
-        points="16,27 23,34 38,19"
-        stroke="#4ade80" strokeWidth="3" fill="none"
+      <path
+        d="M7.8 12.4L10.6 15.1L16.5 8.9"
+        stroke="#16a34a" strokeWidth="2.3" fill="none"
         strokeLinecap="round" strokeLinejoin="round"
-        strokeDasharray="48" strokeDashoffset="48"
-        style={{ animation: "_tick 0.35s cubic-bezier(.4,0,.2,1) 0.52s forwards", animationFillMode: "both" }}
+        strokeDasharray="18" strokeDashoffset="18"
+        style={{ animation: "_check-mark 0.28s cubic-bezier(.4,0,.2,1) 0.46s forwards" }}
       />
     </svg>
   );
@@ -396,27 +459,36 @@ function WaConnectedPopup({ open, name, number, onClose }) {
   return (
     <>
       <style>{`
-        @keyframes _wap-in  { 0% { opacity:0; transform:scale(0.86); } 65% { transform:scale(1.03); } 100% { opacity:1; transform:scale(1); } }
-        @keyframes _wap-out { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.86); } }
+        @keyframes _wap-in  { 0% { opacity:0; transform:translateY(10px) scale(0.96); } 100% { opacity:1; transform:translateY(0) scale(1); } }
+        @keyframes _wap-out { from { opacity:1; transform:translateY(0) scale(1); } to { opacity:0; transform:translateY(8px) scale(0.96); } }
+        @keyframes _success-card-pop { 0% { opacity:0; transform:scale(0.9); } 58% { opacity:1; transform:scale(1.025); } 100% { opacity:1; transform:scale(1); } }
+        @keyframes _success-card-glow { 0% { box-shadow:0 0 0 0 rgba(34,197,94,0.18); } 100% { box-shadow:0 0 0 18px rgba(34,197,94,0); } }
+        @keyframes _success-pop { 0% { opacity:0; transform:scale(0.72); } 60% { opacity:1; transform:scale(1.08); } 100% { opacity:1; transform:scale(1); } }
+        @keyframes _success-ring { 0% { opacity:0.45; transform:scale(0.72); } 100% { opacity:0; transform:scale(1.55); } }
       `}</style>
-      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 1400, width: 290 }}>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 1400, width: 320, maxWidth: "calc(100vw - 32px)" }}>
         <div style={{
-          borderRadius: 18, overflow: "hidden",
-          border: "1px solid rgba(26,42,87,0.14)",
-          boxShadow: "0 20px 56px rgba(10,18,40,0.30), 0 4px 14px rgba(10,18,40,0.12)",
-          animation: fading ? "_wap-out 0.38s cubic-bezier(.4,0,1,1) forwards" : "_wap-in 0.46s cubic-bezier(.22,.68,0,1.1) both",
+          borderRadius: 16, overflow: "hidden",
+          background: "#fff",
+          border: "1px solid rgba(22, 163, 74, 0.22)",
+          boxShadow: "0 20px 48px rgba(15, 23, 42, 0.18), 0 2px 8px rgba(15, 23, 42, 0.08)",
+          transformOrigin: "center",
+          animation: fading
+            ? "_wap-out 0.32s cubic-bezier(.4,0,1,1) forwards"
+            : "_success-card-pop 0.5s cubic-bezier(.2,.85,.2,1) both, _success-card-glow 0.8s ease-out 0.12s both",
         }}>
-          {/* Header */}
-          <div style={{ padding: "16px 14px 14px", background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)", borderBottom: "1px solid rgba(26,42,87,0.10)", display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ flexShrink: 0 }}><AnimatedCheck /></div>
+          <div style={{ padding: "14px 14px 12px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <div style={{ position: "relative", width: 34, height: 34, borderRadius: 10, background: "#f0fdf4", border: "1px solid #bbf7d0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, animation: "_success-pop 0.42s cubic-bezier(.2,.8,.2,1) 0.08s both" }}>
+              <span style={{ position: "absolute", inset: -2, borderRadius: 12, border: "1px solid rgba(34,197,94,0.42)", animation: "_success-ring 0.7s ease-out 0.18s both" }} />
+              <AnimatedCheck />
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: F.mono, fontSize: 10, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 3px" }}>WhatsApp</p>
-              <h3 style={{ fontFamily: F.sans, fontSize: 15, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>Berhasil Terhubung!</h3>
+              <h3 style={{ fontFamily: F.sans, fontSize: 14.5, fontWeight: 700, color: C.ink, margin: 0, lineHeight: 1.25 }}>WhatsApp terhubung</h3>
+              <p style={{ fontFamily: F.sans, fontSize: 12, color: C.muted, margin: "3px 0 0", lineHeight: 1.45 }}>Session siap digunakan untuk mengirim pesan.</p>
             </div>
           </div>
-          {/* Body */}
           {(name || number) && (
-            <div style={{ padding: "10px 14px 12px", background: "#fff", display: "flex", flexDirection: "column", gap: 5 }}>
+            <div style={{ margin: "0 14px 12px", padding: "9px 10px", borderRadius: 10, background: "#f8fafc", border: `1px solid ${C.line}`, display: "flex", flexDirection: "column", gap: 5 }}>
               {name && (
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontFamily: F.sans, fontSize: 10.5, color: C.subtle, flexShrink: 0, minWidth: 44 }}>Nama</span>
@@ -431,13 +503,6 @@ function WaConnectedPopup({ open, name, number, onClose }) {
               )}
             </div>
           )}
-          {/* Progress bar auto-close */}
-          <div style={{ height: 3, background: "rgba(26,42,87,0.08)" }}>
-            <div
-              style={{ height: "100%", background: "linear-gradient(90deg, #4ade80, #22c55e)", width: fading ? "100%" : "0%", transition: fading ? "none" : "width 3.6s linear" }}
-              ref={(el) => { if (el && !fading) window.requestAnimationFrame(() => { el.style.width = "100%"; }); }}
-            />
-          </div>
         </div>
       </div>
     </>
@@ -560,37 +625,37 @@ function SendResultCard({ summary, label = "Hasil Terakhir" }) {
   const success = summary.success || 0;
   const failed  = summary.failed  || 0;
   return (
-    <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid rgba(26, 42, 87, 0.12)", boxShadow: "0 4px 16px rgba(10, 18, 40, 0.08)" }}>
+    <div style={{ borderRadius: 14, overflow: "hidden", background: "#fff", border: "1px solid rgba(26, 42, 87, 0.10)", boxShadow: "0 2px 10px rgba(15, 23, 42, 0.06)" }}>
       {/* Header */}
-      <div style={{ padding: "10px 14px", background: "linear-gradient(180deg, rgba(24, 43, 88, 1) 0%, rgba(27, 55, 112, 0.96) 100%)", borderBottom: "1px solid rgba(26, 42, 87, 0.10)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ padding: "11px 12px", borderBottom: `1px solid ${C.line}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
         <div>
-          <p style={{ fontFamily: F.mono, fontSize: 10, fontWeight: 600, color: "rgba(233, 196, 106, 0.92)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 2px" }}>
+          <p style={{ fontFamily: F.mono, fontSize: 10, fontWeight: 700, color: C.subtle, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 2px" }}>
             {label}
           </p>
-          <h3 style={{ fontFamily: F.sans, fontSize: 13.5, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>
+          <h3 style={{ fontFamily: F.sans, fontSize: 13.5, fontWeight: 700, color: C.ink, margin: 0, lineHeight: 1.2 }}>
             Pengiriman Selesai
           </h3>
         </div>
-        <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <TaskAltRoundedIcon style={{ fontSize: 18, color: "#4ade80" }} />
+        <div style={{ width: 32, height: 32, borderRadius: 10, background: "#f0fdf4", border: "1px solid #bbf7d0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <TaskAltRoundedIcon style={{ fontSize: 18, color: "#16a34a" }} />
         </div>
       </div>
       {/* Body — stat grid */}
-      <div style={{ padding: "10px 12px", background: "#fff", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+      <div style={{ padding: "10px 12px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
         {/* Total */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "7px 6px", borderRadius: 9, background: "rgba(26, 42, 87, 0.05)", border: "1px solid rgba(26, 42, 87, 0.08)" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 6px", borderRadius: 10, background: "#f8fafc", border: `1px solid ${C.line}` }}>
           <FormatListNumberedRoundedIcon style={{ fontSize: 15, color: C.brand }} />
           <span style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 700, color: C.ink, lineHeight: 1 }}>{total}</span>
           <span style={{ fontFamily: F.sans, fontSize: 10, fontWeight: 600, color: C.subtle, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total</span>
         </div>
         {/* Berhasil */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "7px 6px", borderRadius: 9, background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.18)" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 6px", borderRadius: 10, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
           <CheckCircleRoundedIcon style={{ fontSize: 15, color: "#16a34a" }} />
           <span style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 700, color: "#15803d", lineHeight: 1 }}>{success}</span>
           <span style={{ fontFamily: F.sans, fontSize: 10, fontWeight: 600, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.05em" }}>Berhasil</span>
         </div>
         {/* Gagal */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "7px 6px", borderRadius: 9, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.16)" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 6px", borderRadius: 10, background: "#fff7f7", border: "1px solid #fecaca" }}>
           <CancelRoundedIcon style={{ fontSize: 15, color: "#dc2626" }} />
           <span style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 700, color: "#b91c1c", lineHeight: 1 }}>{failed}</span>
           <span style={{ fontFamily: F.sans, fontSize: 10, fontWeight: 600, color: "#dc2626", textTransform: "uppercase", letterSpacing: "0.05em" }}>Gagal</span>
@@ -665,6 +730,9 @@ function DeleteConfirmPopup({ open, label, onConfirm, onCancel }) {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width:899px)");
+  const isNarrow = useMediaQuery("(max-width:599px)");
+  const isTablet = useMediaQuery("(min-width:900px) and (max-width:1199px)");
+  const isDesktop = useMediaQuery("(min-width:1200px)");
   const [customers,            setCustomers]            = useState([]);
   const [logs,                 setLogs]                 = useState([]);
   const [delay,                setDelay]                = useState(4000);
@@ -700,6 +768,7 @@ export default function DashboardPage() {
   const [deleteConfirm,        setDeleteConfirm]        = useState({ open: false, label: "" });
   const [headerSlot,           setHeaderSlot]           = useState(null);
   const [customerSearch,       setCustomerSearch]       = useState("");
+  const [openingWaBrowser,     setOpeningWaBrowser]     = useState(false);
   const lastWhatsappLogRef = useRef("");
   const logSeqRef          = useRef(0);
 
@@ -828,11 +897,18 @@ export default function DashboardPage() {
     } finally { setSyncingSheet(false); }
   };
 
-  const handleSaveGsheetConfig = async ({ url = gsheetUrl, selected = selectedSheet, auto = autoSync, showSuccess = true } = {}) => {
+  const handleSaveGsheetConfig = async ({ url, selected = selectedSheet, auto = autoSync, showSuccess = true } = {}) => {
     try {
       setSavingGsheet(true);
-      const { data } = await api.post("/gsheet", { url, selectedSheet: selected || "", autoSync: !!auto });
-      setGsheetUrl(url); setSelectedSheet(selected || ""); setAutoSync(!!auto);
+      // url is omitted here on purpose unless the caller explicitly passes
+      // a freshly-typed one — gsheetUrl in state is only ever the server's
+      // masked display string, never the real link, so re-sending it would
+      // overwrite the saved URL with garbage.
+      const payload = { selectedSheet: selected || "", autoSync: !!auto };
+      if (typeof url === "string" && url.trim()) payload.url = url.trim();
+      const { data } = await api.post("/gsheet", payload);
+      if (payload.url) setGsheetUrl(data?.config?.url || payload.url);
+      setSelectedSheet(selected || ""); setAutoSync(!!auto);
       addLog("success", "Google Sheet configuration saved");
       return true;
     } catch (err) {
@@ -860,8 +936,17 @@ export default function DashboardPage() {
     await loadCustomersFromGSheet(selectedSheet, true, false);
   };
 
+  const handleRefreshCustomers = async () => {
+    if (syncingSheet || loadingAutoCustomers) return;
+    if (sourceMode === "pdf") {
+      await loadCustomersFromPdf(true);
+      return;
+    }
+    await handleSyncGSheet();
+  };
+
   const handleToggleAutoSync = async (checked) => {
-    const ok = await handleSaveGsheetConfig({ url: gsheetUrl, selected: selectedSheet, auto: checked, showSuccess: true });
+    const ok = await handleSaveGsheetConfig({ selected: selectedSheet, auto: checked, showSuccess: true });
     if (ok) setAutoSync(checked);
   };
 
@@ -901,8 +986,21 @@ export default function DashboardPage() {
   // WA handlers
   const handleInitWhatsapp = async () => {
     addLog("info", "Connecting WhatsApp...");
-    const ready = await syncWhatsappSession({ showToastMessage: true, sessionId: activeWaSessionId, createNew: !activeWaSessionId });
+    const ready = await syncWhatsappSession({ showToastMessage: true, sessionId: activeWaSessionId, createNew: false });
     addLog("info", ready ? "Session is active" : "Waiting for QR scan");
+  };
+
+  const handleOpenWaBrowser = async () => {
+    if (!activeWaSessionId) { addLog("error", "Pilih akun WhatsApp dulu"); return; }
+    setOpeningWaBrowser(true);
+    try {
+      const res = await api.post("/open-whatsapp-browser", { browser: "auto", sessionId: activeWaSessionId });
+      addLog("success", res?.data?.message || "Browser WhatsApp dibuka di server");
+    } catch (err) {
+      addLog("error", err?.response?.data?.message || "Gagal membuka browser WhatsApp");
+    } finally {
+      setOpeningWaBrowser(false);
+    }
   };
 
   const handleAddWhatsappAccount = async () => {
@@ -1108,34 +1206,136 @@ export default function DashboardPage() {
         (c.nomor || "").includes(customerSearch)
       )
     : customers;
+  const panelListHeight = isNarrow ? 340 : isMobile ? 420 : "auto";
+  const mainGridHeight = isTablet ? 720 : "100%";
+  const pagePadding = isNarrow ? 12 : 16;
+  const customerGridTemplate = isNarrow ? "minmax(0, 1fr)" : S.customerHead.gridTemplateColumns;
+  const customerRowStyle = (index, last) => ({
+    ...S.customerRow(index % 2 === 0, last),
+    gridTemplateColumns: customerGridTemplate,
+    alignItems: isNarrow ? "flex-start" : "center",
+    gap: isNarrow ? 4 : 10,
+    padding: isDesktop ? "5px 12px" : isNarrow ? "9px 12px" : "7px 14px",
+  });
+  const headerChipStyle = {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    minWidth: 0,
+    maxWidth: isNarrow ? 160 : 240,
+    height: 32,
+    paddingInline: 12,
+    borderRadius: 10,
+    fontFamily: F.sans,
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#fff",
+    whiteSpace: "nowrap",
+  };
 
   // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Render Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   return (
-    <div className="dashboard-scrollbar-none" style={S.page}>
+    <div
+      className={`dashboard-scrollbar-none${isDesktop ? " dashboard-page--compact" : ""}`}
+      style={{
+        ...S.page,
+        height: "calc(100vh - 64px)",
+        minHeight: 0,
+        overflowY: "hidden",
+        gap: 12,
+        padding: pagePadding,
+        paddingBottom: pagePadding,
+      }}
+    >
 
       {/* Header slot portal */}
       {headerSlot && createPortal(
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <style>{`.hdr-search::placeholder { color: rgba(255,255,255,0.42); font-weight: 400; }`}</style>
+          <div
+            style={{ position: "relative", display: "flex", alignItems: "center" }}
+            onMouseEnter={(e) => {
+              const inp = e.currentTarget.querySelector("input");
+              if (inp !== document.activeElement) {
+                inp.style.borderColor = "rgba(233,196,106,0.55)";
+                inp.style.background = "rgba(233,196,106,0.1)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              const inp = e.currentTarget.querySelector("input");
+              if (inp !== document.activeElement) {
+                inp.style.borderColor = customerSearch ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)";
+                inp.style.background = "rgba(255,255,255,0.12)";
+              }
+            }}
+          >
+            <SearchRoundedIcon style={{ position: "absolute", left: 11, fontSize: 14, color: "rgba(255,255,255,0.55)", pointerEvents: "none" }} />
+            <input
+              type="text"
+              className="hdr-search"
+              placeholder="Search..."
+              value={customerSearch}
+              onChange={(e) => setCustomerSearch(e.target.value)}
+              style={{
+                height: 34,
+                paddingLeft: 32,
+                paddingRight: customerSearch ? 30 : 14,
+                width: isNarrow ? 154 : 200,
+                fontFamily: F.sans,
+                fontSize: 12.5,
+                fontWeight: 500,
+                color: "#fff",
+                border: "1.5px solid rgba(255,255,255,0.22)",
+                borderRadius: 10,
+                background: "rgba(255,255,255,0.12)",
+                outline: "none",
+                transition: "border-color 0.18s, background 0.18s",
+                boxShadow: "inset 0 1px 3px rgba(0,0,0,0.12)",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "rgba(233,196,106,0.8)";
+                e.target.style.background = "rgba(233,196,106,0.12)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = customerSearch ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)";
+                e.target.style.background = "rgba(255,255,255,0.12)";
+              }}
+            />
+            {customerSearch && (
+              <button
+                type="button"
+                onClick={() => setCustomerSearch("")}
+                style={{ position: "absolute", right: 8, width: 16, height: 16, borderRadius: "50%", background: "rgba(255,255,255,0.28)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+              >
+                <CloseRoundedIcon style={{ fontSize: 9, color: "#fff" }} />
+              </button>
+            )}
+          </div>
           {/* WA status pill */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, height: 32, paddingInline: 12, borderRadius: 999, border: "1.5px solid rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.18)", fontFamily: F.sans, fontSize: 12, fontWeight: 600, color: "#fff" }}>
+          <div style={{ ...headerChipStyle, border: "1.5px solid rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.18)" }}>
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: whatsappReady ? "#4ade80" : waInitializing ? "#fbbf24" : "rgba(255,255,255,0.4)", flexShrink: 0 }} />
             <WhatsAppIcon style={{ fontSize: 14 }} />
-            {whatsappReady
-              ? (waAccount.number || selectedWaSession?.lastKnownNumber || "Connected")
-              : waInitializing ? "Preparing..." : "Not connected"}
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+              {whatsappReady
+                ? (waAccount.number || selectedWaSession?.lastKnownNumber || "Connected")
+                : waInitializing ? "Preparing..." : "Not connected"}
+            </span>
           </div>
-          {/* Customer count pill */}
-          {customers.length > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, height: 32, paddingInline: 12, borderRadius: 999, border: "1.5px solid rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.13)", fontFamily: F.sans, fontSize: 12, fontWeight: 600, color: "#fff" }}>
-              <GroupsRoundedIcon style={{ fontSize: 14 }} />
-              {customers.length.toLocaleString()} customers
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={handleRefreshCustomers}
+            className="header-icon-button header-icon-button--compact"
+            title={sourceMode === "pdf" ? "Refresh PDF customers" : "Sync customers"}
+            disabled={syncingSheet || loadingAutoCustomers}
+            style={{ opacity: syncingSheet || loadingAutoCustomers ? 0.55 : 1 }}
+          >
+            <RefreshRoundedIcon style={{ fontSize: 17 }} />
+          </button>
           {/* Sending badge */}
           {sending && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, height: 32, paddingInline: 12, borderRadius: 999, border: "1.5px solid rgba(233,196,106,0.5)", background: "rgba(233,196,106,0.18)", fontFamily: F.sans, fontSize: 12, fontWeight: 700, color: "rgba(233,196,106,0.95)" }}>
+            <div style={{ ...headerChipStyle, border: "1.5px solid rgba(233,196,106,0.5)", background: "rgba(233,196,106,0.18)", fontWeight: 700, color: "rgba(233,196,106,0.95)" }}>
               <SendRoundedIcon style={{ fontSize: 13 }} />
-              Sending {progress.current}/{progress.total}
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>Sending {progress.current}/{progress.total}</span>
             </div>
           )}
         </div>,
@@ -1143,13 +1343,13 @@ export default function DashboardPage() {
       )}
 
       {/* Ã¢â€â‚¬Ã¢â€â‚¬ Stat Cards Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
-      <Grid container spacing={1.5} alignItems="stretch" sx={{ mb: 2, flexShrink: 0 }}>
+      <Grid container spacing={1.5} alignItems="stretch" sx={{ mb: 0, flexShrink: 0 }}>
 
-        <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
+        <Grid item xs={12} sm={6} lg={3} sx={{ display: "flex" }}>
           <CardBox
-            style={{ height: "100%", width: "100%" }}
+            style={{ height: "100%", width: "100%", minHeight: isDesktop ? 108 : isNarrow ? 118 : 132 }}
             eyebrow="Customers Loaded"
-            icon={<GroupsRoundedIcon style={{ fontSize: 30, color: "#0f766e" }} />}
+            icon={statIcon(<BadgeRoundedIcon />, "teal")}
             value={customers.length.toLocaleString()}
             detail={
               sourceMode === "pdf"    ? `PDF Results - ${pdfLogRows.length} total` :
@@ -1159,31 +1359,31 @@ export default function DashboardPage() {
           />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
+        <Grid item xs={12} sm={6} lg={3} sx={{ display: "flex" }}>
           <CardBox
-            style={{ height: "100%", width: "100%" }}
+            style={{ height: "100%", width: "100%", minHeight: isDesktop ? 108 : isNarrow ? 118 : 132 }}
             eyebrow="WhatsApp Status"
-            icon={<WhatsAppIcon style={{ fontSize: 30, color: "#16a34a" }} />}
+            icon={statIcon(<WhatsAppIcon />, "green")}
             value={waLabel}
             detail={waAccount.number || selectedWaSession?.lastKnownNumber || activeWaSessionId || "Not connected"}
           />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
+        <Grid item xs={12} sm={6} lg={3} sx={{ display: "flex" }}>
           <CardBox
-            style={{ height: "100%", width: "100%" }}
+            style={{ height: "100%", width: "100%", minHeight: isDesktop ? 108 : isNarrow ? 118 : 132 }}
             eyebrow="Message Template"
-            icon={<DescriptionRoundedIcon style={{ fontSize: 30, color: "#d97706" }} />}
+            icon={statIcon(<DescriptionRoundedIcon />, "amber")}
             value={template?.trim() ? "Ready to Send" : "Not Set"}
             detail={template?.trim() ? `${template.trim().split("\n").length} message lines` : "Open Settings"}
           />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3} sx={{ display: "flex" }}>
+        <Grid item xs={12} sm={6} lg={3} sx={{ display: "flex" }}>
           <CardBox
-            style={{ height: "100%", width: "100%" }}
+            style={{ height: "100%", width: "100%", minHeight: isDesktop ? 108 : isNarrow ? 118 : 132 }}
             eyebrow="Saved WA Sessions"
-            icon={<DevicesRoundedIcon style={{ fontSize: 30, color: "#1d4ed8" }} />}
+            icon={statIcon(<DevicesRoundedIcon />, "blue")}
             value={`${waSessions.length} Accounts`}
             detail={activeWaSessionId ? (selectedWaSession?.lastKnownName || selectedWaSession?.label || activeWaSessionId) : "No active session yet"}
           />
@@ -1194,21 +1394,22 @@ export default function DashboardPage() {
       {/* Ã¢â€â‚¬Ã¢â€â‚¬ Main Grid Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <Grid
         container
-        spacing={{ xs: 1.5, md: 2 }}
+        spacing={1.5}
         alignItems="stretch"
         sx={{
           flex: { xs: "0 0 auto", md: 1 },
+          height: { xs: "auto", md: mainGridHeight },
           minHeight: { xs: "auto", md: 0 },
           overflow: { xs: "visible", md: "hidden" },
-          pb: { xs: 2, md: 0 },
+          pb: 0,
         }}
       >
 
         {/* Col 1 Ã¢â‚¬â€ Pelanggan PDF */}
-        <Grid item xs={12} md={4} sx={{ display: "flex", height: { xs: "auto", md: "100%" }, minHeight: 0 }}>
+        <Grid item xs={12} md={6} lg={4} sx={{ display: "flex", height: { xs: "auto", md: "100%" }, minHeight: 0 }}>
           <CardBigBox
-            style={{ height: "100%", width: "100%" }}
-            title="Customer Data"
+            style={{ height: "100%", width: "100%", minWidth: 0 }}
+            title={panelTitle(<BadgeRoundedIcon />, "Customer Data", "teal")}
             description="List of message recipients"
             headerAction={
               hasPdfResult ? (
@@ -1234,37 +1435,45 @@ export default function DashboardPage() {
                 style={{
                   ...S.listScroll,
                   flex: isMobile ? "0 0 auto" : "1 1 auto",
-                  height: isMobile ? 420 : "auto",
-                  minHeight: isMobile ? 420 : 0,
+                  height: panelListHeight,
+                  minHeight: panelListHeight === "auto" ? 0 : panelListHeight,
                   marginBottom: 0,
                 }}
               >
                 {customers.length === 0 ? (
                   <div style={S.customerEmpty}>
                     <div style={S.customerEmptyIcon}>
-                      <GroupsRoundedIcon style={{ fontSize: 28 }} />
+                      <BadgeRoundedIcon style={{ fontSize: 28 }} />
                     </div>
                     <p style={S.customerEmptyTitle}>No Customer Data Yet</p>
                     <p style={S.customerEmptyText}>
                       Customer data will appear here once the PDF results are available.
                     </p>
                   </div>
+                ) : filteredCustomers.length === 0 ? (
+                  <div style={S.customerEmpty}>
+                    <div style={S.customerEmptyIcon}>
+                      <SearchRoundedIcon style={{ fontSize: 28 }} />
+                    </div>
+                    <p style={S.customerEmptyTitle}>Customer tidak ditemukan</p>
+                    <p style={S.customerEmptyText}>Coba kata kunci atau nomor WhatsApp yang berbeda.</p>
+                  </div>
                 ) : (
                   <div style={S.customerTable}>
-                    <div style={S.customerHead}>
+                    <div style={{ ...S.customerHead, gridTemplateColumns: customerGridTemplate, padding: isDesktop ? "8px 12px" : isNarrow ? "9px 12px" : "10px 14px" }}>
                       <span style={S.customerHeadText}>Customer</span>
-                      <span style={{ ...S.customerHeadText, textAlign: "right" }}>No. WhatsApp</span>
+                      {!isNarrow && <span style={{ ...S.customerHeadText, textAlign: "right" }}>No. WhatsApp</span>}
                     </div>
-                    {customers.map((c, i) => {
+                    {filteredCustomers.map((c, i) => {
                       const name = c.nama || "?";
                       const initials = name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || "").join("") || "?";
                       return (
-                        <div key={`${c.nomor || "cust"}-${i}`} style={S.customerRow(i % 2 === 0, i === customers.length - 1)}>
+                        <div key={`${c.nomor || "cust"}-${i}`} style={customerRowStyle(i, i === filteredCustomers.length - 1)}>
                           <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
                             <span className="users-table__avatar" style={S.customerAvatar}>{initials}</span>
-                            <span style={S.customerName}>{c.nama || "-"}</span>
+                            <span style={{ ...S.customerName, whiteSpace: isNarrow ? "normal" : "nowrap" }}>{c.nama || "-"}</span>
                           </div>
-                          <span style={S.customerPhone}>{c.nomor || "-"}</span>
+                          <span style={{ ...S.customerPhone, textAlign: isNarrow ? "left" : "right", paddingLeft: isNarrow ? 37 : 0 }}>{c.nomor || "-"}</span>
                         </div>
                       );
                     })}
@@ -1273,7 +1482,7 @@ export default function DashboardPage() {
               </div>
               <div style={S.customerFooter}>
                 <p style={S.customerFooterText}>
-                  <GroupsRoundedIcon style={{ fontSize: 15, color: "#8a97ad", flexShrink: 0 }} />
+                  <BadgeRoundedIcon style={{ fontSize: 15, color: "#8a97ad", flexShrink: 0 }} />
                   Total customer data ready to process:{" "}
                   <span style={S.customerFooterValue}>
                     {customers.length}
@@ -1285,10 +1494,10 @@ export default function DashboardPage() {
         </Grid>
 
         {/* Col 2 Ã¢â‚¬â€ WhatsApp Control */}
-        <Grid item xs={12} md={4} sx={{ display: "flex", height: { xs: "auto", md: "100%" }, minHeight: 0 }}>
+        <Grid item xs={12} md={6} lg={4} sx={{ display: "flex", height: { xs: "auto", md: "100%" }, minHeight: 0 }}>
           <CardBigBox
-            style={{ height: "100%", width: "100%" }}
-            title="WhatsApp"
+            style={{ height: "100%", width: "100%", minWidth: 0 }}
+            title={panelTitle(<WhatsAppIcon />, "WhatsApp", "green")}
             description="Manage sessions & send messages"
             headerAction={
               waQr && !whatsappReady ? (
@@ -1312,6 +1521,23 @@ export default function DashboardPage() {
                 </button>
               ) : null
             }
+            footer={
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <button className="users-table-card__action" style={S.primaryBtn(true)} onClick={handleInitWhatsapp}>
+                  <WhatsAppIcon style={{ fontSize: 14 }} />
+                  {whatsappReady ? "WhatsApp Connected" : waInitializing ? "Preparing..." : "Connect WhatsApp"}
+                </button>
+                <button
+                  className="users-table-card__action"
+                  onClick={handleOpenWaBrowser}
+                  disabled={!activeWaSessionId || openingWaBrowser}
+                  style={S.primaryBtn(true, !activeWaSessionId || openingWaBrowser)}
+                >
+                  <OpenInNewRoundedIcon style={{ fontSize: 14 }} />
+                  {openingWaBrowser ? "Opening..." : "Open WhatsApp"}
+                </button>
+              </div>
+            }
           >
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
 
@@ -1322,7 +1548,7 @@ export default function DashboardPage() {
                   disabled={waSessions.length === 0}
                 />
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "1fr 1fr", gap: 6 }}>
                   <CreateButton
                     variant="detail"
                     onClick={handleAddWhatsappAccount}
@@ -1347,16 +1573,6 @@ export default function DashboardPage() {
                   <DataRow label="WA Number"    value={waAccount.number || selectedWaSession?.lastKnownNumber || "-"} mono />
                   <DataRow label="Status"       value={whatsappReady ? "Connected" : waInitializing ? "Preparing..." : "Not connected"} even />
                   <DataRow label="Session ID"   value={activeWaSessionId || "Not selected"} mono last />
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <button className="users-table-card__action" style={S.primaryBtn(true)} onClick={handleInitWhatsapp}>
-                    <WhatsAppIcon style={{ fontSize: 14 }} />
-                    {whatsappReady ? "WhatsApp Connected" : waInitializing ? "Preparing..." : "Connect WhatsApp"}
-                  </button>
-                  <button className="users-table-card__action" onClick={handleSend} disabled={sendDisabled} style={S.primaryBtn(true, sendDisabled)}>
-                    <SendRoundedIcon style={{ fontSize: 14 }} />{sending ? "Sending..." : "Send Message"}
-                  </button>
                 </div>
 
                 {(progress.total > 0 || loadingAutoCustomers || sending) && (
@@ -1391,10 +1607,10 @@ export default function DashboardPage() {
         </Grid>
 
         {/* Col 3 Ã¢â‚¬â€ Activity Log */}
-        <Grid item xs={12} md={4} sx={{ display: "flex", height: { xs: "auto", md: "100%" }, minHeight: 0 }}>
+        <Grid item xs={12} lg={4} sx={{ display: "flex", height: { xs: "auto", lg: "100%" }, minHeight: 0 }}>
           <CardBigBox
-            style={{ height: "100%", width: "100%" }}
-            title="Activity Log"
+            style={{ height: "100%", width: "100%", minWidth: 0 }}
+            title={panelTitle(<ChecklistRoundedIcon />, "Activity Log", "blue")}
             description="Sending activity history"
           >
             <div style={S.customerPanelBody}>
@@ -1405,13 +1621,13 @@ export default function DashboardPage() {
                 className="dashboard-scrollbar-none"
                 style={{
                   ...S.listScroll,
-                  flex: isMobile ? "0 0 auto" : "1 1 auto",
-                  height: isMobile ? 420 : "auto",
-                  minHeight: isMobile ? 420 : 0,
+                  flex: isMobile || isTablet ? "0 0 auto" : "1 1 auto",
+                  height: isNarrow ? 340 : isMobile || isTablet ? 420 : "auto",
+                  minHeight: isNarrow ? 340 : isMobile || isTablet ? 420 : 0,
                   marginBottom: 0,
                 }}
               >
-                <div style={{ position: "sticky", top: 0, zIndex: 2, display: "grid", gridTemplateColumns: "minmax(0, 1fr) 80px", alignItems: "center", gap: 10, padding: "10px 14px", background: "#eef1f6", borderBottom: "1px solid #d4ddf0" }}>
+                <div style={{ position: "sticky", top: 0, zIndex: 2, display: "grid", gridTemplateColumns: "minmax(0, 1fr) 80px", alignItems: "center", gap: 10, padding: isDesktop ? "8px 12px" : "10px 14px", background: "#eef1f6", borderBottom: "1px solid #d4ddf0" }}>
                   <span style={S.customerHeadText}>Activity</span>
                   <span style={{ ...S.customerHeadText, textAlign: "right" }}>Time</span>
                 </div>

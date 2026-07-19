@@ -267,6 +267,7 @@ export default function PeriodePage() {
   const [headerSlot, setHeaderSlot]   = useState(null);
 
   const gsheetUrlRef = useRef("");
+  const [gsheetConfigured, setGsheetConfigured] = useState(false);
   const activeCellRef = useRef(null);
 
   const showToast = (msg, sev = "success") => setToast({ open: true, message: msg, severity: sev });
@@ -288,9 +289,11 @@ export default function PeriodePage() {
   useEffect(() => {
     api.get("/gsheet").then((res) => {
       const url = res?.data?.url || "";
+      const configured = !!res?.data?.configured;
       setGsheetUrl(url);
-      gsheetUrlRef.current = url;
-      if (url) {
+      setGsheetConfigured(configured);
+      gsheetUrlRef.current = configured ? url : "";
+      if (configured) {
         setSyncing(true);
         api.get("/gsheet/periode").then((r) => {
           const d = r?.data || {};
@@ -318,6 +321,18 @@ export default function PeriodePage() {
     } catch (err) {
       showToast(err?.response?.data?.message || "Gagal sync", "error");
     } finally { setSyncing(false); }
+  };
+
+  const handleOpenGSheet = async () => {
+    try {
+      const res = await api.get("/gsheet/open");
+      const url = res?.data?.url;
+      if (!url) throw new Error("URL Google Sheet belum tersedia");
+      const tab = window.open(url, "_blank", "noopener,noreferrer");
+      if (tab) tab.opener = null;
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Gagal membuka Google Sheet", "error");
+    }
   };
 
   const handleCellEdit = (rowIdx, colKey) => {
@@ -377,10 +392,10 @@ export default function PeriodePage() {
               </button>
             )}
           </div>
-          {gsheetUrlRef.current ? (
-            <a href={gsheetUrlRef.current} target="_blank" rel="noopener noreferrer" className="header-icon-button header-icon-button--compact" title="Open Google Sheet" style={{ textDecoration: "none" }}>
+          {gsheetConfigured ? (
+            <button type="button" onClick={handleOpenGSheet} className="header-icon-button header-icon-button--compact" title="Open Google Sheet">
               <GoogleSheetsLogo size={18} />
-            </a>
+            </button>
           ) : (
             <span className="header-icon-button header-icon-button--compact" style={{ opacity: 0.35, cursor: "default" }}>
               <GoogleSheetsLogo size={18} />

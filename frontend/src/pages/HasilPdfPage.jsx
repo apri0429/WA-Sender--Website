@@ -13,9 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import PictureAsPdfRoundedIcon from "@mui/icons-material/PictureAsPdfRounded";
 import DescriptionRoundedIcon   from "@mui/icons-material/DescriptionRounded";
-import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import CloudDoneRoundedIcon     from "@mui/icons-material/CloudDoneRounded";
 import SyncRoundedIcon          from "@mui/icons-material/SyncRounded";
 import ChevronLeftRoundedIcon   from "@mui/icons-material/ChevronLeftRounded";
@@ -54,7 +52,7 @@ const T = {
   waBorder:    "#86efac",
 };
 
-const API_RAW = import.meta.env.DEV ? "http://192.168.1.254:8098" : "";
+const RAW_BACKEND_URL = import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:8098` : "";
 
 function getInitials(name) {
   if (!name) return "?";
@@ -304,7 +302,7 @@ function ActionBtn({ href, onClick, disabled, tooltip, icon, colorScheme = "bran
 }
 
 // ── PDF / Kirim segmented toggle (nempel, tema brand + accent-teal) ─────────
-function PdfSendToggle({ pdfHref, onSend, sendDisabled, sendTooltip, sendActive }) {
+function PdfSendToggle({ hasPdf, onOpenPdf, onSend, sendDisabled, sendTooltip, sendActive }) {
   const segStyle = {
     display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5,
     height: 32, flex: 1, fontFamily: FONT_SANS, fontSize: 11, fontWeight: 700,
@@ -315,16 +313,16 @@ function PdfSendToggle({ pdfHref, onSend, sendDisabled, sendTooltip, sendActive 
   };
   return (
     <div style={{ display: "inline-flex", alignItems: "stretch", width: 132, height: 32, borderRadius: 999, overflow: "visible", border: `1.5px solid ${T.line}` }}>
-      {pdfHref ? (
-        <a href={pdfHref} target="_blank" rel="noopener noreferrer"
+      {hasPdf ? (
+        <button type="button" onClick={onOpenPdf}
           style={{ ...segStyle, background: "linear-gradient(135deg, #a5790f 0%, #8a680f 100%)", color: "#fff", borderRadius: "999px 0 0 999px" }}
           onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.15)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(138,104,15,0.55)"; e.currentTarget.style.transform = "translateY(-1.5px)"; }}
           onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "none"; }}>
-          <InsertDriveFileOutlinedIcon style={{ fontSize: 14 }} /> Pdf
-        </a>
+          <DescriptionRoundedIcon style={{ fontSize: 14 }} /> Pdf
+        </button>
       ) : (
         <span style={{ ...segStyle, background: T.surface, color: T.subtle, cursor: "not-allowed", borderRadius: "999px 0 0 999px" }}>
-          <InsertDriveFileOutlinedIcon style={{ fontSize: 14 }} /> Pdf
+          <DescriptionRoundedIcon style={{ fontSize: 14 }} /> Pdf
         </span>
       )}
       <Tooltip title={sendTooltip || ""}>
@@ -435,6 +433,18 @@ export default function HasilPdfPage() {
     } catch (err) {
       setWaSending(false);
       showToast(err?.response?.data?.message || "Gagal memulai pengiriman", "error");
+    }
+  };
+
+  const handleOpenPdf = async (pdfPath) => {
+    try {
+      const res = await api.get(`${RAW_BACKEND_URL}${pdfPath}`, { responseType: "blob", baseURL: "" });
+      const url = URL.createObjectURL(res.data);
+      const tab = window.open(url, "_blank", "noopener,noreferrer");
+      if (tab) tab.opener = null;
+      window.setTimeout(() => URL.revokeObjectURL(url), 60 * 1000);
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Gagal membuka PDF", "error");
     }
   };
 
@@ -614,7 +624,8 @@ export default function HasilPdfPage() {
                     <td style={{ padding: "6px 10px", textAlign: "center" }}>
                       <div style={{ display: "flex", gap: 6, justifyContent: "center", alignItems: "center" }}>
                         <PdfSendToggle
-                          pdfHref={row.pdf ? `${API_RAW}${row.pdf}` : null}
+                          hasPdf={!!row.pdf}
+                          onOpenPdf={() => handleOpenPdf(row.pdf)}
                           onSend={() => openSendConfirm([row], "single")}
                           sendDisabled={waSending || !row.nomor || row.nomor === "TIDAK DITEMUKAN" || !selectedSession}
                           sendTooltip={row.nomor && row.nomor !== "TIDAK DITEMUKAN" ? "Kirim via WA" : "Nomor tidak tersedia"}

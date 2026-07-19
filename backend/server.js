@@ -19,16 +19,74 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+const PORT = process.env.PORT || 8090;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://192.168.21.6:5173";
+const API_KEY = String(process.env.API_KEY || "").trim();
+const BODY_LIMIT = process.env.BODY_LIMIT || "2mb";
+const EXCEL_UPLOAD_LIMIT = Number(process.env.EXCEL_UPLOAD_LIMIT || 15 * 1024 * 1024);
+const CHAT_MEDIA_UPLOAD_LIMIT = Number(process.env.CHAT_MEDIA_UPLOAD_LIMIT || 64 * 1024 * 1024);
+
+function buildAllowedOrigins() {
+  const defaults = [
+    FRONTEND_URL,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    `http://localhost:${PORT}`,
+    `http://127.0.0.1:${PORT}`,
+  ];
+  return new Set(
+    [...defaults, ...String(process.env.ALLOWED_ORIGINS || "").split(",")]
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+      .map((origin) => origin.replace(/\/+$/, ""))
+  );
+}
+
+const ALLOWED_ORIGINS = buildAllowedOrigins();
+
+function isPrivateHostname(hostname) {
+  return /^(localhost|127\.0\.0\.1|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(hostname || "");
+}
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  try {
+    const parsed = new URL(origin);
+    const normalized = `${parsed.protocol}//${parsed.host}`;
+    if (ALLOWED_ORIGINS.has(normalized)) return true;
+    return process.env.ALLOW_PRIVATE_NETWORK_ORIGINS === "true" && isPrivateHostname(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
+const corsOptions = {
+  origin(origin, callback) {
+    callback(null, isAllowedOrigin(origin));
+  },
+  credentials: true,
+};
+
 const io = new Server(server, {
   cors: {
-    origin: true,
+    origin(origin, callback) {
+      callback(null, isAllowedOrigin(origin));
+    },
     credentials: true,
     methods: ["GET", "POST"],
   },
 });
 
-const PORT = process.env.PORT || 8090;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://192.168.1.254:5173";
+io.use((socket, next) => {
+  if (!API_KEY) return next();
+
+  const provided = String(socket.handshake.auth?.apiKey || socket.handshake.headers["x-api-key"] || "").trim();
+  if (provided !== API_KEY) {
+    return next(new Error("Unauthorized"));
+  }
+
+  next();
+});
 
 const BASE_DIR = __dirname;
 const SESSION_DIR = path.join(BASE_DIR, "sessions");
@@ -54,19 +112,175 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(GENERATED_DIR)) fs.mkdirSync(GENERATED_DIR, { recursive: true });
 if (!fs.existsSync(PDF_OUTPUT_DIR)) fs.mkdirSync(PDF_OUTPUT_DIR, { recursive: true });
 
+app.disable("x-powered-by");
+
+function setSecurityHeaders(req, res, next) {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+
+  if (req.path.startsWith("/api/") || req.path.startsWith("/generated/")) {
+    res.setHeader("Cache-Control", "no-store");
+  }
+
+  next();
+}
+
+function rejectDisallowedOrigin(req, res, next) {
+  if (!isAllowedOrigin(req.headers.origin)) {
+    return res.status(403).json({ success: false, message: "Origin tidak diizinkan" });
+  }
+  next();
+}
+
+function requireApiKeyIfConfigured(req, res, next) {
+  if (!API_KEY || req.method === "OPTIONS") {
+    return next();
+  }
+
+  const provided = String(req.headers["x-api-key"] || "").trim();
+  if (provided !== API_KEY) {
+    return res.status(401).json({ success: false, message: "API key tidak valid" });
+  }
+
+  next();
+}
+
+function getClientIp(req) {
+  return String(req.ip || req.socket?.remoteAddress || "unknown");
+}
+
+function createRateLimiter({ windowMs, max, label }) {
+  const buckets = new Map();
+
+  return (req, res, next) => {
+    const now = Date.now();
+    const key = `${label}:${getClientIp(req)}`;
+    const bucket = buckets.get(key);
+
+    if (!bucket || now >= bucket.resetAt) {
+      buckets.set(key, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+
+    bucket.count += 1;
+    if (bucket.count > max) {
+      res.setHeader("Retry-After", Math.ceil((bucket.resetAt - now) / 1000));
+      return res.status(429).json({ success: false, message: "Terlalu banyak request, coba lagi sebentar" });
+    }
+
+    next();
+  };
+}
+
+const SENSITIVE_RESPONSE_KEYS = new Set([
+  "password",
+  "token",
+  "secret",
+  "apikey",
+  "api_key",
+  "credential",
+  "credentials",
+  "privatekey",
+  "private_key",
+  "scripturl",
+  "folderid",
+]);
+
+function isSensitiveResponseKey(key) {
+  return SENSITIVE_RESPONSE_KEYS.has(String(key || "").replace(/[-_\s]/g, "").toLowerCase());
+}
+
+function maskSensitiveValue(value) {
+  const raw = String(value || "");
+  return raw
+    .replace(/https:\/\/script\.google\.com\/macros\/s\/[^/\s"'<>]+\/exec/gi, "[apps-script-url-hidden]")
+    .replace(/https:\/\/docs\.google\.com\/spreadsheets\/d\/[^/\s"'<>]+/gi, "[google-sheet-url-hidden]");
+}
+
+function sanitizePayloadForClient(payload, parentKey = "") {
+  if (payload === null || payload === undefined) return payload;
+
+  if (typeof payload === "string") {
+    return maskSensitiveValue(payload);
+  }
+
+  if (Array.isArray(payload)) {
+    return payload.map((item) => sanitizePayloadForClient(item, parentKey));
+  }
+
+  if (typeof payload === "object") {
+    const output = {};
+    for (const [key, value] of Object.entries(payload)) {
+      if (isSensitiveResponseKey(key)) {
+        output[key] = value ? "[hidden]" : value;
+      } else {
+        output[key] = sanitizePayloadForClient(value, key);
+      }
+    }
+    return output;
+  }
+
+  return payload;
+}
+
+function sanitizeApiResponse(req, res, next) {
+  const originalJson = res.json.bind(res);
+
+  res.json = (payload) => {
+    let nextPayload = res.locals.allowSensitiveResponse ? payload : sanitizePayloadForClient(payload);
+    if (
+      req.path.startsWith("/api/") &&
+      res.statusCode >= 500 &&
+      nextPayload &&
+      typeof nextPayload === "object" &&
+      "message" in nextPayload
+    ) {
+      nextPayload = {
+        ...nextPayload,
+        message: "Terjadi kesalahan server. Cek log backend untuk detail.",
+      };
+    }
+    return originalJson(nextPayload);
+  };
+
+  next();
+}
+
+app.use(setSecurityHeaders);
+app.use(cors(corsOptions));
+app.use(rejectDisallowedOrigin);
+app.use(sanitizeApiResponse);
+app.use("/api", createRateLimiter({ windowMs: 60 * 1000, max: 600, label: "api" }));
 app.use(
-  cors({
-    origin: true,
-    credentials: true,
+  ["/api/send-messages", "/api/pdf/send-via-wa", "/api/chats", "/api/init-whatsapp"],
+  createRateLimiter({ windowMs: 5 * 60 * 1000, max: 80, label: "high-risk" })
+);
+app.use("/api", requireApiKeyIfConfigured);
+app.use(express.json({ limit: BODY_LIMIT }));
+app.use(express.urlencoded({ extended: false, limit: BODY_LIMIT }));
+app.use(express.static(FRONTEND_DIST_DIR, { index: false }));
+app.use(
+  "/generated",
+  requireApiKeyIfConfigured,
+  express.static(GENERATED_DIR, {
+    index: false,
+    fallthrough: false,
+    setHeaders(res) {
+      res.setHeader("Cache-Control", "no-store");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Content-Disposition", "inline");
+    },
   })
 );
 
-app.use(express.json());
-app.use(express.static(FRONTEND_DIST_DIR));
-app.use("/generated", express.static(GENERATED_DIR));
-
 const upload = multer({
   storage: multer.memoryStorage(),
+  limits: {
+    fileSize: EXCEL_UPLOAD_LIMIT,
+  },
   fileFilter: (req, file, cb) => {
     const allowed = [
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -100,7 +314,7 @@ const imageUpload = multer({
 
 const chatMediaUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 64 * 1024 * 1024 },
+  limits: { fileSize: CHAT_MEDIA_UPLOAD_LIMIT },
   fileFilter: (req, file, cb) => {
     const allowed = /^(image\/(png|jpeg|jpg|webp|gif)|video\/(mp4|3gpp)|audio\/(mpeg|ogg|mp4|aac)|application\/pdf)$/i;
     if (allowed.test(file.mimetype || "")) {
@@ -123,6 +337,8 @@ let currentClientVisible = false;
 let currentClientBrowser = "auto";
 let isWhatsAppReady = false;
 let isWhatsAppInitializing = false;
+let readyWatchdogTimer = null;
+let initWatchdogTimer = null;
 let isSending = false;
 let lastQrString = null;
 let lastQrAt = null;
@@ -141,8 +357,31 @@ let isPdfCancelRequested = false;
 const chatHistory = new Map(); // chatId -> { id, name, phone, unread, messages[] }
 const CHAT_MESSAGE_LIMIT = 1500;
 
+// Cumulative chat-list cache. WhatsApp Web syncs chats into the browser store
+// progressively after login, so a single getChats() call can return an
+// incomplete list. We merge every call into this cache instead of replacing
+// it wholesale, so a chat that was seen once never disappears from the UI.
+const chatsCache = new Map(); // chatId -> chat summary
+
 function clearChatHistory() {
   chatHistory.clear();
+  chatsCache.clear();
+}
+
+function upsertChatsCacheEntry(chatId, { name, phone, isGroup, unread, lastMessage }) {
+  const existing = chatsCache.get(chatId) || {};
+  chatsCache.set(chatId, {
+    id: chatId,
+    name: name || existing.name || phone || chatId,
+    phone: phone || existing.phone || "",
+    isGroup: typeof isGroup === "boolean" ? isGroup : (existing.isGroup ?? chatId.endsWith("@g.us")),
+    unread: typeof unread === "number" ? unread : (existing.unread || 0),
+    lastMessage: lastMessage || existing.lastMessage || null,
+  });
+}
+
+function sortedChatsCacheList() {
+  return Array.from(chatsCache.values()).sort((a, b) => (b?.lastMessage?.timestamp || 0) - (a?.lastMessage?.timestamp || 0));
 }
 
 function serializeMessage(msg) {
@@ -487,11 +726,25 @@ function buildWhatsAppStatusResponse(overrides = {}) {
       name: runtimeAccount.name || activeMeta?.lastKnownName || "",
       platform: runtimeAccount.platform || activeMeta?.lastKnownPlatform || "",
     },
-    gsheet: getGSheetConfig(),
+    gsheet: toPublicGSheetConfig(getGSheetConfig()),
     lastSendSummary,
     lastSendResults,
     ...overrides,
   };
+}
+
+function clearReadyWatchdog() {
+  if (readyWatchdogTimer) {
+    clearTimeout(readyWatchdogTimer);
+    readyWatchdogTimer = null;
+  }
+}
+
+function clearInitWatchdog() {
+  if (initWatchdogTimer) {
+    clearTimeout(initWatchdogTimer);
+    initWatchdogTimer = null;
+  }
 }
 
 function resetWhatsAppRuntimeState() {
@@ -499,6 +752,7 @@ function resetWhatsAppRuntimeState() {
   isWhatsAppInitializing = false;
   lastQrString = null;
   lastQrAt = null;
+  clearInitWatchdog();
 }
 
 async function focusWhatsAppBrowserWindow(timeoutMs = 15000) {
@@ -545,6 +799,7 @@ async function focusWhatsAppBrowserWindow(timeoutMs = 15000) {
 }
 
 async function destroyWhatsAppClient() {
+  clearReadyWatchdog();
   if (!waClient) return;
 
   const clientToDestroy = waClient;
@@ -793,6 +1048,32 @@ function saveGSheetConfig(newData = {}) {
   };
   writeJsonFile(GSHEET_FILE, merged);
   return merged;
+}
+
+// The Google Sheet URL embeds the spreadsheet ID, which grants access to
+// anyone who has it. Never return the raw URL to the client — only a
+// masked display string plus whether a URL is configured.
+function maskGSheetUrlForClient(url) {
+  const raw = String(url || "").trim();
+  if (!raw) return "";
+  try {
+    const u = new URL(raw);
+    const parts = u.pathname.split("/").filter(Boolean);
+    const masked = parts.map((p, i) => (i === 2 ? "••••••••••••" : p)).join("/");
+    return `${u.hostname}/${masked}`;
+  } catch {
+    return "••••••••••••";
+  }
+}
+
+function toPublicGSheetConfig(config = {}) {
+  return {
+    url: maskGSheetUrlForClient(config.url),
+    configured: !!String(config.url || "").trim(),
+    selectedSheet: config.selectedSheet || "",
+    autoSync: !!config.autoSync,
+    lastSyncAt: config.lastSyncAt || null,
+  };
 }
 
 function formatRupiah(value) {
@@ -1412,6 +1693,38 @@ function saveDriveConfig(data = {}) {
   writeJsonFile(PDF_DRIVE_CONFIG_FILE, { ...getDriveConfig(), ...data });
 }
 
+function maskSecretForClient(value, visible = 6) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.length <= visible) return "*".repeat(raw.length);
+  return `${"*".repeat(Math.max(raw.length - visible, 8))}${raw.slice(-visible)}`;
+}
+
+function toPublicDriveConfig(config = {}) {
+  const scriptUrl = String(config.scriptUrl || "").trim();
+  const folderId = String(config.folderId || "").trim();
+  return {
+    enabled: !!config.enabled,
+    hasScriptUrl: !!scriptUrl,
+    hasFolderId: !!folderId,
+    scriptUrlMasked: maskSecretForClient(scriptUrl, 10),
+    folderIdMasked: maskSecretForClient(folderId, 8),
+  };
+}
+
+function isValidAppsScriptUrl(value) {
+  try {
+    const url = new URL(String(value || "").trim());
+    return url.protocol === "https:" && url.hostname === "script.google.com" && /^\/macros\/s\/[^/]+\/exec$/.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function isValidDriveFolderId(value) {
+  return /^[a-zA-Z0-9_-]{10,}$/.test(String(value || "").trim());
+}
+
 function httpPostFollowRedirects(urlStr, payload, maxRedirects = 5) {
   return new Promise((resolve, reject) => {
     const bodyBuffer = Buffer.from(payload, "utf8");
@@ -1471,7 +1784,7 @@ async function uploadToDrive(filePath, fileName) {
     folderId: config.folderId || "",
   });
   const responseText = await httpPostFollowRedirects(config.scriptUrl, payload);
-  emitLog("log", `[Drive] Raw response: ${responseText.substring(0, 300)}`);
+  emitLog("log", "[Drive] Apps Script memberi response upload");
   let result;
   try { result = JSON.parse(responseText); } catch { throw new Error(`Response tidak valid dari Apps Script: ${responseText.substring(0, 200)}`); }
   if (!result.success) throw new Error(result.error || "Upload ke Drive gagal");
@@ -1882,7 +2195,11 @@ function buildWhatsAppClient(sessionId, options = {}) {
   const executablePath = resolveBrowserExecutablePath(browserTarget);
   const puppeteerOptions = {
     headless: !visible,
-    defaultViewport: { width: 1920, height: 1080 },
+    // In visible mode, let Chrome size the page to the actual OS window
+    // (maximized via --start-maximized) instead of forcing a fixed
+    // viewport — otherwise the page renders at 1920x1080 regardless of the
+    // real window size, making it look cropped/not full screen.
+    defaultViewport: visible ? null : { width: 1920, height: 1080 },
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
@@ -1894,7 +2211,13 @@ function buildWhatsAppClient(sessionId, options = {}) {
       "--disable-background-timer-throttling",
       "--disable-backgrounding-occluded-windows",
       "--disable-renderer-backgrounding",
+      ...(visible ? ["--start-maximized"] : []),
     ],
+    // Default 30s launch timeout is too tight when the machine is busy
+    // (many chrome.exe children from other sessions) — bump both so a slow
+    // launch/navigation doesn't get misreported as a hard failure.
+    timeout: 60000,
+    protocolTimeout: 180000,
   };
 
   if (executablePath) {
@@ -1906,8 +2229,13 @@ function buildWhatsAppClient(sessionId, options = {}) {
       dataPath: SESSION_DIR,
       clientId: `wa-sender-${sessionId}`,
     }),
+    // Pin to a WA Web build known to work with this whatsapp-web.js version
+    // instead of always fetching the latest — the newest WA Web build
+    // sometimes breaks the library's internal store hooks, causing the
+    // client to get stuck at "authenticated" and never reach "ready".
     webVersionCache: {
-      type: "none",
+      type: "remote",
+      remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1023556678.html",
     },
     puppeteer: puppeteerOptions,
   });
@@ -1982,9 +2310,32 @@ async function initWhatsAppClient(options = {}) {
     currentClientVisible = requestedVisible;
     currentClientBrowser = requestedBrowser;
 
+    // When a valid session already exists, whatsapp-web.js skips the "qr"
+    // event and should go straight to "authenticated" -> "ready". Sometimes
+    // it instead hangs during page load / Store injection and never fires
+    // any event at all, leaving the dashboard stuck on "Preparing
+    // Connection..." forever even though the browser itself is logged in.
+    // Watch for that and rebuild the client if nothing happens in time.
+    clearInitWatchdog();
+    const clientAtInitStart = waClient;
+    initWatchdogTimer = setTimeout(() => {
+      if (waClient !== clientAtInitStart || isWhatsAppReady || lastWhatsAppEvent !== "initializing") return;
+      emitLog("error", "WhatsApp macet saat memuat sesi, menyambungkan ulang otomatis...");
+      destroyWhatsAppClient()
+        .catch((e) => console.error("Destroy after init-watchdog timeout:", e.message))
+        .finally(() => {
+          resetWhatsAppRuntimeState();
+          initWhatsAppClient({ sessionId: requestedSessionId, label: requestedLabel }).catch((error) => {
+            lastWhatsAppEvent = "error";
+            emitLog("error", `Gagal menyambungkan ulang WhatsApp: ${error.message}`);
+          });
+        });
+    }, 45000);
+
     let qrRefreshCount = 0;
 
     waClient.on("qr", (qr) => {
+      clearInitWatchdog();
       qrRefreshCount += 1;
       lastQrString = qr;
       lastQrAt = new Date().toISOString();
@@ -2007,6 +2358,8 @@ async function initWhatsAppClient(options = {}) {
     });
 
     waClient.on("ready", () => {
+      clearReadyWatchdog();
+      clearInitWatchdog();
       const account = getWhatsAppAccountInfo();
       isWhatsAppReady = true;
       isWhatsAppInitializing = false;
@@ -2033,6 +2386,7 @@ async function initWhatsAppClient(options = {}) {
     });
 
     waClient.on("authenticated", () => {
+      clearInitWatchdog();
       isWhatsAppInitializing = true;
       lastWhatsAppEvent = "authenticated";
       emitLog("success", "WhatsApp berhasil diautentikasi");
@@ -2041,9 +2395,30 @@ async function initWhatsAppClient(options = {}) {
         authenticated: true,
         time: new Date().toISOString(),
       });
+
+      // Known whatsapp-web.js issue: the client can get stuck at
+      // "authenticated" and never fire "ready". If that happens, rebuild
+      // the client from scratch instead of leaving the session dead until
+      // someone reopens the page.
+      clearReadyWatchdog();
+      const stuckClient = waClient;
+      readyWatchdogTimer = setTimeout(() => {
+        if (waClient !== stuckClient || isWhatsAppReady) return;
+        emitLog("error", "WhatsApp macet di status 'authenticated', menyambungkan ulang otomatis...");
+        destroyWhatsAppClient()
+          .catch((e) => console.error("Destroy after ready-watchdog timeout:", e.message))
+          .finally(() => {
+            resetWhatsAppRuntimeState();
+            initWhatsAppClient({ sessionId: requestedSessionId, label: requestedLabel }).catch((error) => {
+              lastWhatsAppEvent = "error";
+              emitLog("error", `Gagal menyambungkan ulang WhatsApp: ${error.message}`);
+            });
+          });
+      }, 45000);
     });
 
     waClient.on("auth_failure", (msg) => {
+      clearReadyWatchdog();
       const failedClient = waClient;
       waClient = null;
       currentClientSessionId = null;
@@ -2056,6 +2431,7 @@ async function initWhatsAppClient(options = {}) {
     });
 
     waClient.on("disconnected", (reason) => {
+      clearReadyWatchdog();
       const disconnectedClient = waClient;
       waClient = null;
       currentClientSessionId = null;
@@ -2075,6 +2451,10 @@ async function initWhatsAppClient(options = {}) {
         const phone = chatId.replace("@c.us", "").replace("@g.us", "");
         const entry = storeMessage(chatId, name, phone, msg);
         const chat = chatHistory.get(chatId);
+        upsertChatsCacheEntry(chatId, {
+          name, phone, isGroup: chatId.endsWith("@g.us"), unread: chat.unread,
+          lastMessage: { id: entry.id, from: entry.from, body: entry.body || "", timestamp: entry.timestamp, type: entry.type },
+        });
         io.emit("chat:new-message", { chatId, name, phone, message: entry, unread: chat.unread });
       } catch (e) {
         console.error("chat message handler error:", e.message);
@@ -2089,6 +2469,10 @@ async function initWhatsAppClient(options = {}) {
         const name = contact?.pushname || contact?.name || contact?.number || chatId.replace("@c.us", "");
         const phone = chatId.replace("@c.us", "").replace("@g.us", "");
         const entry = storeMessage(chatId, name, phone, msg);
+        upsertChatsCacheEntry(chatId, {
+          name, phone, isGroup: chatId.endsWith("@g.us"), unread: 0,
+          lastMessage: { id: entry.id, from: entry.from, body: entry.body || "", timestamp: entry.timestamp, type: entry.type },
+        });
         io.emit("chat:new-message", { chatId, name, phone, message: entry, unread: 0 });
       } catch (e) {
         console.error("chat message_create handler error:", e.message);
@@ -2099,18 +2483,32 @@ async function initWhatsAppClient(options = {}) {
       await waClient.initialize();
     } catch (error) {
       console.error("WhatsApp initialize() failed:", error.message);
-    try {
-      await destroyWhatsAppClient();
-    } catch (destroyErr) {
-      console.error("Failed to destroy client after init error:", destroyErr.message);
-      waClient = null;
-      currentClientSessionId = null;
+      try {
+        await destroyWhatsAppClient();
+      } catch (destroyErr) {
+        console.error("Failed to destroy client after init error:", destroyErr.message);
+        waClient = null;
+        currentClientSessionId = null;
+      }
+      clearWhatsAppWebCache();
+      resetWhatsAppRuntimeState();
+
+      const retryCount = options._retryCount || 0;
+      const maxRetries = 2;
+      if (retryCount < maxRetries) {
+        lastWhatsAppEvent = "retrying";
+        emitLog(
+          "error",
+          `Koneksi WhatsApp gagal (${error.message}). Mencoba lagi otomatis... (${retryCount + 1}/${maxRetries})`
+        );
+        await sleep(5000);
+        return initWhatsAppClient({ ...options, sessionId: requestedSessionId, _retryCount: retryCount + 1 });
+      }
+
+      lastWhatsAppEvent = "error";
+      emitLog("error", `Gagal menghubungkan WhatsApp setelah beberapa percobaan: ${error.message}`);
+      throw error;
     }
-    clearWhatsAppWebCache();
-    resetWhatsAppRuntimeState();
-    lastWhatsAppEvent = "error";
-    throw error;
-  }
   }
 
   return waClient;
@@ -2262,30 +2660,50 @@ app.get("/api/gsheet", (req, res) => {
 
   res.json({
     success: true,
-    ...config,
+    ...toPublicGSheetConfig(config),
   });
+});
+
+// Lets the UI open the actual spreadsheet without ever putting the raw URL
+// in a JSON response — the browser navigates here directly and gets
+// redirected server-side.
+app.get("/api/gsheet/open", (req, res) => {
+  const config = getGSheetConfig();
+  if (!config.url) {
+    return res.status(404).json({ success: false, message: "URL Google Sheet belum disimpan" });
+  }
+  res.locals.allowSensitiveResponse = true;
+  return res.json({ success: true, url: config.url });
 });
 
 app.post("/api/gsheet", (req, res) => {
   const { url, selectedSheet = "", autoSync = false } = req.body;
+  const current = getGSheetConfig();
+  // url is optional here — callers that only want to change selectedSheet/
+  // autoSync (e.g. toggling auto-sync) omit it, and the previously saved
+  // URL is kept as-is rather than being wiped out.
+  const urlProvided = typeof url === "string" && url.trim() !== "";
+  const nextUrl = urlProvided ? url.trim() : current.url;
 
-  if (!url || !url.trim()) {
+  if (!nextUrl) {
     return res.status(400).json({
       success: false,
       message: "URL Google Sheets tidak boleh kosong",
     });
   }
 
-  const spreadsheetId = extractSpreadsheetId(url);
-  if (!spreadsheetId) {
-    return res.status(400).json({
-      success: false,
-      message: "URL Google Sheet tidak valid",
-    });
+  if (urlProvided) {
+    const spreadsheetId = extractSpreadsheetId(nextUrl);
+    if (!spreadsheetId) {
+      return res.status(400).json({
+        success: false,
+        message: "URL Google Sheet tidak valid",
+      });
+    }
   }
 
   const saved = saveGSheetConfig({
-    url: String(url).trim(),
+    url: nextUrl,
     selectedSheet: String(selectedSheet || "").trim(),
     autoSync: !!autoSync,
   });
@@ -2293,7 +2711,7 @@ app.post("/api/gsheet", (req, res) => {
   return res.json({
     success: true,
     message: "URL Google Sheets berhasil disimpan",
-    config: saved,
+    config: toPublicGSheetConfig(saved),
   });
 });
 
@@ -2315,7 +2733,7 @@ app.get("/api/gsheet/sheets", async (req, res) => {
       sheets: sheetNames,
       selectedSheet: config.selectedSheet || (sheetNames[0] || ""),
       autoSync: config.autoSync,
-      url: config.url,
+      url: maskGSheetUrlForClient(config.url),
     });
   } catch (error) {
     return res.status(500).json({
@@ -2349,7 +2767,7 @@ app.get("/api/gsheet/preview", async (req, res) => {
 
     return res.json({
       success: true,
-      url: config.url,
+      url: maskGSheetUrlForClient(config.url),
       autoSync: config.autoSync,
       lastSyncAt: saved.lastSyncAt || config.lastSyncAt || null,
       ...preview,
@@ -2398,7 +2816,7 @@ app.post("/api/gsheet/select-sheet", async (req, res) => {
     return res.json({
       success: true,
       message: "Sheet berhasil dipilih",
-      config: saved,
+      config: toPublicGSheetConfig(saved),
       sheets: sheetNames,
     });
   } catch (error) {
@@ -2430,7 +2848,7 @@ app.post("/api/gsheet/sync", async (req, res) => {
       sheets: result.sheetNames,
       autoSync: result.config.autoSync,
       lastSyncAt: result.config.lastSyncAt,
-      url: result.config.url,
+      url: maskGSheetUrlForClient(result.config.url),
     });
   } catch (error) {
     emitLog("error", `Sync Google Sheet gagal: ${error.message}`);
@@ -2466,7 +2884,7 @@ app.post("/api/load-customers", async (req, res) => {
       sheets: result.sheetNames,
       autoSync: result.config.autoSync,
       lastSyncAt: result.config.lastSyncAt,
-      url: result.config.url,
+      url: maskGSheetUrlForClient(result.config.url),
     });
   } catch (error) {
     return res.status(500).json({
@@ -2823,6 +3241,16 @@ app.post("/api/pdf/generate-per-pt", async (req, res) => {
     setImmediate(async () => {
       try {
         await generatePdfPerPtJob({ rows: selectedRows, filter });
+        savePdfProgress({
+          running: false,
+          current: 0,
+          total: 0,
+          ptName: "",
+          status: "",
+          step: 0,
+          complete: true,
+          error: "",
+        });
         io.emit("pdf-done", { success: true });
       } catch (error) {
         if (error?.code === "PDF_CANCELLED") {
@@ -2954,16 +3382,40 @@ app.post("/api/pdf/send-via-wa", async (req, res) => {
 
 app.get("/api/pdf/drive-config", (req, res) => {
   const config = getDriveConfig();
-  return res.json({ success: true, ...config });
+  return res.json({ success: true, ...toPublicDriveConfig(config) });
 });
 
 app.post("/api/pdf/drive-config", (req, res) => {
   const { folderId, enabled, scriptUrl } = req.body;
-  saveDriveConfig({
-    folderId: String(folderId || "").trim(),
+  const current = getDriveConfig();
+  const next = {
     enabled: !!enabled,
-    scriptUrl: String(scriptUrl || "").trim(),
-  });
+    scriptUrl: current.scriptUrl || "",
+    folderId: current.folderId || "",
+  };
+
+  const nextScriptUrl = String(scriptUrl || "").trim();
+  const nextFolderId = String(folderId || "").trim();
+
+  if (nextScriptUrl) {
+    if (!isValidAppsScriptUrl(nextScriptUrl)) {
+      return res.status(400).json({ success: false, message: "Apps Script URL tidak valid" });
+    }
+    next.scriptUrl = nextScriptUrl;
+  }
+
+  if (nextFolderId) {
+    if (!isValidDriveFolderId(nextFolderId)) {
+      return res.status(400).json({ success: false, message: "Folder ID Google Drive tidak valid" });
+    }
+    next.folderId = nextFolderId;
+  }
+
+  if (next.enabled && (!next.scriptUrl || !next.folderId)) {
+    return res.status(400).json({ success: false, message: "Lengkapi Apps Script URL dan Folder ID sebelum mengaktifkan Google Drive" });
+  }
+
+  saveDriveConfig(next);
   return res.json({ success: true, message: "Konfigurasi Google Drive disimpan" });
 });
 
@@ -3009,11 +3461,18 @@ app.post("/api/upload-excel", upload.single("file"), async (req, res) => {
 app.post("/api/init-whatsapp", async (req, res) => {
   try {
     const requestedSessionId = normalizeSessionId(req.body?.sessionId || "");
-    const createNew = !!req.body?.createNew || !requestedSessionId;
+    const explicitCreateNew = !!req.body?.createNew;
+    // Only fall back to "create a brand new account" when the caller
+    // explicitly asked for one. An empty sessionId otherwise (e.g. a
+    // frontend request that fired before it finished loading which
+    // session is active) should reconnect to the existing/preferred
+    // session instead of silently spawning a new WhatsApp account.
+    const resolvedExistingSessionId = explicitCreateNew ? "" : resolveSessionId(requestedSessionId);
+    const createNew = explicitCreateNew || !resolvedExistingSessionId;
     const requestedLabel = String(req.body?.label || "").trim();
     const targetSessionId = createNew
       ? generateWhatsAppSessionId(requestedLabel || "akun-wa")
-      : requestedSessionId;
+      : resolvedExistingSessionId;
 
     setActiveWhatsAppSession(
       targetSessionId,
@@ -3176,23 +3635,35 @@ app.post("/api/open-whatsapp-browser", async (req, res) => {
     let browserWindowReady = false;
     let lastOpenError = null;
 
-    for (const candidateBrowser of browserCandidates) {
-      try {
-        await initWhatsAppClient({
-          sessionId: requestedSessionId,
-          label: sessionMeta.label || requestedSessionId,
-          visible: true,
-          browser: candidateBrowser,
-          forceReopen: true,
-        });
+    // If the visible browser for this exact session is already up and
+    // ready, just bring it to front instead of tearing the whole
+    // WhatsApp client down and reconnecting from scratch on every click.
+    const alreadyVisibleAndReady =
+      isWhatsAppReady && currentClientSessionId === requestedSessionId && currentClientVisible === true;
+    if (alreadyVisibleAndReady) {
+      browserWindowReady = await focusWhatsAppBrowserWindow(5000);
+      if (browserWindowReady) openedBrowserTarget = currentClientBrowser;
+    }
 
-        browserWindowReady = await focusWhatsAppBrowserWindow(12000);
-        if (browserWindowReady) {
-          openedBrowserTarget = candidateBrowser;
-          break;
+    if (!browserWindowReady) {
+      for (const candidateBrowser of browserCandidates) {
+        try {
+          await initWhatsAppClient({
+            sessionId: requestedSessionId,
+            label: sessionMeta.label || requestedSessionId,
+            visible: true,
+            browser: candidateBrowser,
+            forceReopen: true,
+          });
+
+          browserWindowReady = await focusWhatsAppBrowserWindow(12000);
+          if (browserWindowReady) {
+            openedBrowserTarget = candidateBrowser;
+            break;
+          }
+        } catch (error) {
+          lastOpenError = error;
         }
-      } catch (error) {
-        lastOpenError = error;
       }
     }
 
@@ -3513,16 +3984,9 @@ app.get("/api/chats", async (req, res) => {
   try {
     await ensureWhatsAppStable();
     const waChats = await waClient.getChats();
-    const list = waChats
-      .sort((a, b) => {
-        const aTime = a?.lastMessage?.timestamp || 0;
-        const bTime = b?.lastMessage?.timestamp || 0;
-        return bTime - aTime;
-      })
-      .map((c) => {
+    waChats.forEach((c) => {
       const lastMsg = c.lastMessage;
-      return {
-        id: c.id._serialized,
+      upsertChatsCacheEntry(c.id._serialized, {
         name: c.name || c.id.user,
         phone: c.id.user,
         isGroup: c.isGroup,
@@ -3534,11 +3998,16 @@ app.get("/api/chats", async (req, res) => {
           timestamp: lastMsg.timestamp ? lastMsg.timestamp * 1000 : null,
           type: lastMsg.type,
         } : null,
-      };
       });
+    });
 
-    res.json({ success: true, chats: list, source: "wa" });
+    res.json({ success: true, chats: sortedChatsCacheList(), source: "wa" });
   } catch (error) {
+    // WA Web hiccup (still syncing / evaluate failure) — fall back to whatever
+    // we've cached so far instead of leaving the UI blank.
+    if (chatsCache.size) {
+      return res.json({ success: true, chats: sortedChatsCacheList(), source: "cache", note: error.message });
+    }
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -3762,7 +4231,7 @@ app.get("/api/messages/:serializedId/media", async (req, res) => {
     const cached = mediaCache.get(serializedId);
     if (cached && Date.now() < cached.expiry) {
       res.setHeader("Content-Type", cached.mimetype);
-      res.setHeader("Cache-Control", "public, max-age=1800");
+      res.setHeader("Cache-Control", "private, no-store");
       if (cached.filename) res.setHeader("Content-Disposition", `${wantsDownload ? "attachment" : "inline"}; filename="${cached.filename}"`);
       return res.send(Buffer.from(cached.data, "base64"));
     }
@@ -3779,7 +4248,7 @@ app.get("/api/messages/:serializedId/media", async (req, res) => {
     });
     const buf = Buffer.from(media.data, "base64");
     res.setHeader("Content-Type", media.mimetype);
-    res.setHeader("Cache-Control", "public, max-age=1800");
+    res.setHeader("Cache-Control", "private, no-store");
     if (media.filename) res.setHeader("Content-Disposition", `${wantsDownload ? "attachment" : "inline"}; filename="${media.filename}"`);
     res.send(buf);
   } catch (err) {
@@ -3820,6 +4289,27 @@ app.get("*", (req, res, next) => {
   res.sendFile(path.join(FRONTEND_DIST_DIR, "index.html"));
 });
 
+app.use("/api", (req, res) => {
+  res.status(404).json({ success: false, message: "Endpoint tidak ditemukan" });
+});
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+
+  const statusCode = error?.statusCode || error?.status || (error?.code === "LIMIT_FILE_SIZE" ? 413 : 500);
+  const message = statusCode === 413
+    ? "Ukuran file terlalu besar"
+    : statusCode >= 500
+      ? "Terjadi kesalahan server. Cek log backend untuk detail."
+      : (error?.message || "Request tidak valid");
+
+  if (statusCode >= 500) {
+    console.error("Unhandled request error:", error);
+  }
+
+  res.status(statusCode).json({ success: false, message });
+});
+
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
@@ -3850,7 +4340,10 @@ io.on("connection", (socket) => {
 server.listen(PORT, "0.0.0.0", () => {
   activeSessionId = getPreferredWhatsAppSessionId();
   clearWhatsAppWebCache();
-  console.log(`Backend running on http://192.168.1.254:${PORT}`);
+  console.log(`Backend running on http://192.168.21.6:${PORT}`);
+  if (!API_KEY) {
+    console.warn("Security warning: API_KEY belum diset. Endpoint terlindungi CORS/rate-limit, tetapi belum punya autentikasi API penuh.");
+  }
 
   if (activeSessionId) {
     initWhatsAppClient({ sessionId: activeSessionId }).catch((error) => {
