@@ -12,7 +12,7 @@ const qrcode = require("qrcode-terminal");
 const puppeteer = require("puppeteer");
 const { google } = require("googleapis");
 const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
-const { execSync } = require("child_process");
+const { execSync, spawn } = require("child_process");
 
 dotenv.config();
 
@@ -543,6 +543,32 @@ function resolveBrowserExecutablePath(target = "auto") {
           : [...chromePaths, ...edgePaths];
 
   return candidates.find((candidatePath) => fs.existsSync(candidatePath)) || null;
+}
+
+function openExternalWhatsAppWeb(target = "auto") {
+  const executablePath = resolveBrowserExecutablePath(target) || resolveBrowserExecutablePath("auto");
+  if (!executablePath) {
+    return { opened: false, message: "Chrome atau Edge tidak ditemukan di server" };
+  }
+
+  try {
+    const child = spawn(
+      executablePath,
+      ["--new-window", "https://web.whatsapp.com"],
+      {
+        detached: true,
+        stdio: "ignore",
+        windowsHide: false,
+      }
+    );
+    child.unref();
+    return { opened: true, executablePath };
+  } catch (error) {
+    return {
+      opened: false,
+      message: error.message || "Gagal membuka Chrome/Edge di server",
+    };
+  }
 }
 
 function getWhatsAppSessionsConfig() {
@@ -3657,6 +3683,8 @@ app.post("/api/open-whatsapp-browser", async (req, res) => {
 
     let openedBrowserTarget = browser;
     let browserWindowReady = false;
+    let externalBrowserOpened = false;
+    let externalBrowserMessage = "";
     let lastOpenError = null;
 
     // If the visible browser for this exact session is already up and
@@ -3691,12 +3719,17 @@ app.post("/api/open-whatsapp-browser", async (req, res) => {
       }
     }
 
+    const externalBrowserResult = openExternalWhatsAppWeb(openedBrowserTarget);
+    externalBrowserOpened = externalBrowserResult.opened;
+    externalBrowserMessage = externalBrowserResult.message || "";
+
     await waitForWhatsAppState(4000);
 
-    if (!browserWindowReady) {
+    if (!browserWindowReady && !externalBrowserOpened) {
       return res.status(500).json({
         success: false,
         message:
+          externalBrowserMessage ||
           lastOpenError?.message ||
           "Browser WhatsApp gagal dimunculkan. Coba pastikan Chrome atau Edge terpasang dan backend dijalankan dari user desktop aktif.",
       });
@@ -3706,11 +3739,12 @@ app.post("/api/open-whatsapp-browser", async (req, res) => {
       buildWhatsAppStatusResponse({
         activeSessionId: requestedSessionId,
         message: isWhatsAppReady
-          ? "WhatsApp dibuka di browser aktif"
-          : "Browser WhatsApp dibuka. Jika perlu, lanjutkan scan QR di window browser.",
+          ? "WhatsApp dibuka di Chrome server"
+          : "Chrome server dibuka ke WhatsApp Web. Jika perlu, lanjutkan scan QR di window browser.",
         meta: {
           browserMode: "visible",
           browserTarget: openedBrowserTarget,
+          externalBrowserOpened,
         },
       })
     );
