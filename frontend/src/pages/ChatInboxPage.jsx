@@ -671,8 +671,9 @@ export default function ChatInboxPage() {
   const applyWhatsappState = (data = {}) => {
     const sessions = normalizeSessions(data?.sessions);
     const activeSessionId = data?.activeSessionId || sessions.find((s) => s.isActive)?.id || sessions[0]?.id || "";
-    setWhatsappReady(!!data?.whatsappReady);
-    setWaInitializing(!!data?.meta?.initializing && !data?.whatsappReady);
+    const inboxUsable = !!data?.whatsappReady || (!!data?.account?.number && data?.meta?.event === "authenticated");
+    setWhatsappReady(inboxUsable);
+    setWaInitializing(!!data?.meta?.initializing && !inboxUsable);
     setWaQr(data?.qr || "");
     setWaQrAt(data?.meta?.lastQrAt || null);
     setWaSessions(sessions);

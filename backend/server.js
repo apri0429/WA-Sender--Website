@@ -2438,6 +2438,8 @@ async function initWhatsAppClient(options = {}) {
     waClient.on("authenticated", () => {
       clearInitWatchdog();
       isWhatsAppInitializing = true;
+      lastQrString = null;
+      lastQrAt = null;
       lastWhatsAppEvent = "authenticated";
       emitLog("success", "WhatsApp berhasil diautentikasi");
       io.emit("wa-authenticated", {
@@ -2454,17 +2456,39 @@ async function initWhatsAppClient(options = {}) {
       const stuckClient = waClient;
       readyWatchdogTimer = setTimeout(() => {
         if (waClient !== stuckClient || isWhatsAppReady) return;
-        emitLog("error", "WhatsApp macet di status 'authenticated', menyambungkan ulang otomatis...");
-        destroyWhatsAppClient()
-          .catch((e) => console.error("Destroy after ready-watchdog timeout:", e.message))
-          .finally(() => {
-            resetWhatsAppRuntimeState();
-            initWhatsAppClient({ sessionId: requestedSessionId, label: requestedLabel }).catch((error) => {
-              lastWhatsAppEvent = "error";
-              emitLog("error", `Gagal menyambungkan ulang WhatsApp: ${error.message}`);
+        readyWatchdogTimer = null;
+        const readyRetryCount = options._readyRetryCount || 0;
+        const maxReadyRetries = 2;
+
+        if (readyRetryCount < maxReadyRetries) {
+          emitLog(
+            "warning",
+            `WhatsApp sudah diautentikasi tapi belum siap. Mencoba sync ulang otomatis... (${readyRetryCount + 1}/${maxReadyRetries})`
+          );
+          destroyWhatsAppClient()
+            .catch((e) => console.error("Destroy after authenticated-watchdog timeout:", e.message))
+            .finally(() => {
+              resetWhatsAppRuntimeState();
+              initWhatsAppClient({
+                ...options,
+                sessionId: requestedSessionId,
+                label: requestedLabel,
+                _readyRetryCount: readyRetryCount + 1,
+              }).catch((error) => {
+                lastWhatsAppEvent = "error";
+                emitLog("error", `Gagal sync ulang WhatsApp: ${error.message}`);
+              });
             });
-          });
-      }, 45000);
+          return;
+        }
+
+        isWhatsAppInitializing = false;
+        lastWhatsAppEvent = "authenticated_stuck";
+        emitLog(
+          "warning",
+          "WhatsApp sudah diautentikasi, tapi sinkronisasi belum selesai. Coba buka WhatsApp Web server lalu tunggu halaman chat selesai dimuat."
+        );
+      }, 90000);
     });
 
     waClient.on("auth_failure", (msg) => {
@@ -2574,6 +2598,106 @@ async function ensureWhatsAppStable() {
   }
 
   return true;
+}
+
+async function ensureWhatsAppPageAvailable() {
+  if (!waClient) {
+    await initWhatsAppClient();
+  }
+
+  if (!waClient?.pupPage) {
+    throw new Error("Browser WhatsApp belum siap");
+  }
+
+  return true;
+}
+
+async function getWhatsAppChatSummariesFallback() {
+  if (!waClient?.pupPage) return [];
+
+  return waClient.pupPage.evaluate(() => {
+    const collections = window.require?.("WAWebCollections");
+    const chats = collections?.Chat?.getModelsArray?.() || [];
+
+    return chats
+      .map((chat) => {
+        const id = chat?.id?._serialized || "";
+        if (!id) return null;
+
+        const msgModels = chat?.msgs?.getModelsArray?.() || chat?.msgs?.models || [];
+        const lastMsg =
+          chat?.lastReceivedKey?._serialized && collections?.Msg?.get
+            ? collections.Msg.get(chat.lastReceivedKey._serialized)
+            : msgModels[msgModels.length - 1] || null;
+
+        return {
+          id,
+          name: chat?.formattedTitle || chat?.name || chat?.contact?.formattedName || chat?.id?.user || "Chat",
+          phone: chat?.id?.user || "",
+          isGroup: id.endsWith("@g.us") || !!chat?.groupMetadata,
+          unread: chat?.unreadCount || 0,
+          lastMessage: lastMsg
+            ? {
+                id: lastMsg?.id?.id || lastMsg?.id?._serialized || "",
+                from: lastMsg?.id?.fromMe || lastMsg?.fromMe ? "me" : "them",
+                body: lastMsg?.body || lastMsg?.caption || "",
+                timestamp: lastMsg?.t ? lastMsg.t * 1000 : lastMsg?.timestamp ? lastMsg.timestamp * 1000 : null,
+                type: lastMsg?.type || "chat",
+              }
+            : null,
+        };
+      })
+      .filter(Boolean);
+  });
+}
+
+async function getWhatsAppMessagesFallback(chatId, { wantsAll = false, limit = CHAT_MESSAGE_LIMIT } = {}) {
+  if (!waClient?.pupPage) return [];
+
+  return waClient.pupPage.evaluate(
+    ({ targetChatId, wantsAllMessages, messageLimit }) => {
+      const collections = window.require?.("WAWebCollections");
+      const chat = collections?.Chat?.get?.(targetChatId);
+      if (!chat) return [];
+
+      const msgFilter = (message) => !message?.isNotification;
+      const msgModels = (chat?.msgs?.getModelsArray?.() || chat?.msgs?.models || []).filter(msgFilter);
+      const selected = wantsAllMessages ? msgModels : msgModels.slice(-messageLimit);
+
+      return selected
+        .sort((a, b) => ((a?.t || a?.timestamp || 0) > (b?.t || b?.timestamp || 0) ? 1 : -1))
+        .map((msg) => {
+          const fromMe = !!(msg?.id?.fromMe || msg?.fromMe);
+          const quoted = msg?.quotedMsg || msg?._quotedMsg || null;
+          const quotedFromMe = !!(quoted?.id?.fromMe || quoted?.fromMe);
+          const type = msg?.type || "chat";
+          const timestamp = msg?.t ? msg.t * 1000 : msg?.timestamp ? msg.timestamp * 1000 : Date.now();
+          const mediaTypes = ["image", "video", "audio", "ptt", "document", "sticker"];
+
+          return {
+            id: msg?.id?.id || msg?.id?._serialized || String(timestamp),
+            serializedId: msg?.id?._serialized || null,
+            from: fromMe ? "me" : "them",
+            body: msg?.body || msg?.caption || "",
+            timestamp,
+            type,
+            hasMedia: !!(msg?.hasMedia || msg?.mediaData || msg?.directPath || mediaTypes.includes(type)),
+            filename: msg?.filename || msg?.mediaData?.filename || null,
+            mimetype: msg?.mimetype || msg?.mediaData?.mimetype || null,
+            ack: typeof msg?.ack === "number" ? msg.ack : null,
+            quotedMsg: quoted
+              ? {
+                  body: quoted?.body || quoted?.caption || "",
+                  type: quoted?.type || "chat",
+                  from: quotedFromMe ? "me" : "them",
+                  authorName: quoted?.notifyName || "",
+                }
+              : null,
+          };
+        });
+    },
+    { targetChatId: chatId, wantsAllMessages: wantsAll, messageLimit: limit || CHAT_MESSAGE_LIMIT }
+  );
 }
 
 async function sendSingleMessage(customer) {
@@ -4040,33 +4164,57 @@ app.post("/api/send-messages", async (req, res) => {
 
 app.get("/api/chats", async (req, res) => {
   try {
-    await ensureWhatsAppStable();
-    const waChats = await waClient.getChats();
+    await ensureWhatsAppPageAvailable();
+    let waChats;
+    let source = "wa";
+
+    try {
+      waChats = await waClient.getChats();
+    } catch (error) {
+      console.warn(`getChats() gagal, memakai fallback: ${error.message}`);
+      waChats = await getWhatsAppChatSummariesFallback();
+      source = "wa-fallback";
+    }
+
     waChats.forEach((c) => {
       const lastMsg = c.lastMessage;
-      upsertChatsCacheEntry(c.id._serialized, {
-        name: c.name || c.id.user,
-        phone: c.id.user,
+      const chatId = c.id?._serialized || c.id;
+      const phone = c.phone || c.id?.user || "";
+      if (!chatId) return;
+
+      upsertChatsCacheEntry(chatId, {
+        name: c.name || c.formattedTitle || phone || "Chat",
+        phone,
         isGroup: c.isGroup,
         unread: c.unreadCount || 0,
         lastMessage: lastMsg ? {
-          id: lastMsg.id?.id,
-          from: lastMsg.fromMe ? "me" : "them",
+          id: lastMsg.id?.id || lastMsg.id || "",
+          from: lastMsg.from || (lastMsg.fromMe ? "me" : "them"),
           body: lastMsg.body || "",
-          timestamp: lastMsg.timestamp ? lastMsg.timestamp * 1000 : null,
-          type: lastMsg.type,
+          timestamp: lastMsg.timestamp
+            ? lastMsg.timestamp > 1000000000000
+              ? lastMsg.timestamp
+              : lastMsg.timestamp * 1000
+            : null,
+          type: lastMsg.type || "chat",
         } : null,
       });
     });
 
-    res.json({ success: true, chats: sortedChatsCacheList(), source: "wa" });
+    res.json({ success: true, chats: sortedChatsCacheList(), source });
   } catch (error) {
     // WA Web hiccup (still syncing / evaluate failure) — fall back to whatever
     // we've cached so far instead of leaving the UI blank.
     if (chatsCache.size) {
       return res.json({ success: true, chats: sortedChatsCacheList(), source: "cache", note: error.message });
     }
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Gagal memuat daftar chat WhatsApp:", error.message);
+    res.json({
+      success: true,
+      chats: [],
+      source: "empty",
+      note: error.message || "WhatsApp belum selesai sinkronisasi chat",
+    });
   }
 });
 
@@ -4078,7 +4226,7 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
   const limit = wantsAll ? null : Math.min(Math.max(requestedLimit, 100), CHAT_MESSAGE_LIMIT);
 
   try {
-    await ensureWhatsAppStable();
+    await ensureWhatsAppPageAvailable();
     const chat = await waClient.getChatById(chatId);
 
     if (wantsRefresh) {
@@ -4184,6 +4332,36 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
       limit: stored.messages.length,
     });
   } catch (error) {
+    try {
+      await ensureWhatsAppPageAvailable();
+      const fallbackMessages = await getWhatsAppMessagesFallback(chatId, { wantsAll, limit });
+      if (fallbackMessages.length) {
+        const cachedChat = chatsCache.get(chatId) || {};
+        const name = cachedChat.name || chatId.replace("@c.us", "").replace("@g.us", "").replace("@lid", "");
+        const phone = cachedChat.phone || chatId.replace("@c.us", "").replace("@g.us", "").replace("@lid", "");
+        if (!chatHistory.has(chatId)) {
+          chatHistory.set(chatId, { id: chatId, name, phone, unread: 0, messages: [] });
+        }
+
+        const stored = chatHistory.get(chatId);
+        stored.name = name;
+        stored.phone = phone;
+        stored.unread = 0;
+        if (wantsRefresh) stored.messages = [];
+        mergeStoredMessages(stored, fallbackMessages);
+
+        return res.json({
+          success: true,
+          messages: wantsAll ? stored.messages : stored.messages.slice(-limit),
+          source: "wa-fallback",
+          note: "Riwayat dimuat lewat fallback WhatsApp Web",
+          limit: stored.messages.length,
+        });
+      }
+    } catch (fallbackError) {
+      console.error(`Fallback pesan gagal untuk ${chatId}: ${fallbackError.message}`);
+    }
+
     // Final fallback: serve cached messages rather than showing an error
     if (chatHistory.has(chatId)) {
       const stored = chatHistory.get(chatId);
@@ -4195,9 +4373,12 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
         limit: stored.messages.length,
       });
     }
-    res.status(500).json({
-      success: false,
-      message: `Gagal mengambil history chat dari WhatsApp Web: ${error.message}`,
+    res.json({
+      success: true,
+      messages: [],
+      source: "empty",
+      note: `Belum ada pesan yang tersinkron untuk chat ini: ${error.message}`,
+      limit: 0,
     });
   }
 });
