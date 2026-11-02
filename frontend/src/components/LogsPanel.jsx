@@ -1,7 +1,7 @@
 import ChecklistRoundedIcon from "@mui/icons-material/ChecklistRounded";
 
-const F = "'Manrope', 'Segoe UI', sans-serif";
-const FM = "'IBM Plex Mono', monospace";
+const F = "var(--font-sans)";
+const FM = "var(--font-mono)";
 
 const TYPE_DOT = {
   success: "#22c55e",
@@ -33,11 +33,11 @@ export default function LogsPanel({ logs = [] }) {
   if (normalized.length === 0) {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 16px", gap: 10, borderRadius: 12, border: "1px dashed #d1d9e6", background: "#f8fafc" }}>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: "#eaeff7", border: "1px solid #b3c1d8", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <ChecklistRoundedIcon style={{ fontSize: 22, color: "#233971", opacity: 0.45 }} />
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: "#eef2f7", border: "1px solid #b9c8dc", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <ChecklistRoundedIcon style={{ fontSize: 22, color: "#24476e", opacity: 0.45 }} />
         </div>
         <div style={{ textAlign: "center" }}>
-          <p style={{ fontFamily: F, fontSize: 13, fontWeight: 600, color: "#163a6b", margin: "0 0 2px" }}>Belum ada aktivitas</p>
+          <p style={{ fontFamily: F, fontSize: 13, fontWeight: 600, color: "var(--c-ink)", margin: "0 0 2px" }}>Belum ada aktivitas</p>
           <p style={{ fontFamily: F, fontSize: 12, color: "#9ca3af", margin: 0 }}>Log akan muncul secara realtime</p>
         </div>
       </div>

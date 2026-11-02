@@ -1,64 +1,824 @@
 {
   "rows": [
     {
-      "noInvoice": "SI251212106",
-      "tanggalInvoice": "2025-12-30T16:59:56.000Z",
+      "noInvoice": "SI260705869",
+      "tanggalInvoice": "2026-07-01T16:59:56.000Z",
       "termin": "3 Bulan",
-      "customer": "MATSUM TJIAWI",
-      "tagihan": 925000,
-      "tempo": "2026-03-30T16:59:56.000Z",
-      "penagih": "Shoona Kabila Mahaaba",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 23189739,
+      "tempo": "2026-10-01T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
       "sourceRow": 2
     },
     {
-      "noInvoice": "SI260100315",
-      "tanggalInvoice": "2026-01-08T16:59:56.000Z",
+      "noInvoice": "SI260705873",
+      "tanggalInvoice": "2026-07-01T16:59:56.000Z",
       "termin": "3 Bulan",
-      "customer": "MATSUM TJIAWI",
-      "tagihan": 3835000,
-      "tempo": "2026-04-08T16:59:56.000Z",
-      "penagih": "Shoona Kabila Mahaaba",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 11323860,
+      "tempo": "2026-10-01T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
       "sourceRow": 3
     },
     {
-      "noInvoice": "SI260302689",
-      "tanggalInvoice": "2026-03-30T16:59:56.000Z",
+      "noInvoice": "SI260705875",
+      "tanggalInvoice": "2026-07-01T16:59:56.000Z",
       "termin": "3 Bulan",
-      "customer": "PUTRA FANGHIN SEJAHTERA, CV",
-      "tagihan": 1238000,
-      "tempo": "2026-06-29T16:59:56.000Z",
-      "penagih": "Shoona Kabila Mahaaba",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 14492076,
+      "tempo": "2026-10-01T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
       "sourceRow": 4
     },
     {
-      "noInvoice": "SI260402777",
-      "tanggalInvoice": "2026-04-01T16:59:56.000Z",
+      "noInvoice": "SI260705942",
+      "tanggalInvoice": "2026-07-02T16:59:56.000Z",
       "termin": "3 Bulan",
-      "customer": "KARYA MAJU TEKNINDO, PT",
-      "tagihan": 17826986,
-      "tempo": "2026-07-01T16:59:56.000Z",
-      "penagih": "Shoona Kabila Mahaaba",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 31526530,
+      "tempo": "2026-10-02T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
       "sourceRow": 5
     },
     {
-      "noInvoice": "SI260402778",
-      "tanggalInvoice": "2026-04-01T16:59:56.000Z",
+      "noInvoice": "SI260705954",
+      "tanggalInvoice": "2026-07-02T16:59:56.000Z",
       "termin": "3 Bulan",
-      "customer": "KARYA MAJU TEKNINDO, PT",
-      "tagihan": 16272025,
-      "tempo": "2026-07-01T16:59:56.000Z",
-      "penagih": "Shoona Kabila Mahaaba",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 8138817,
+      "tempo": "2026-10-02T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
       "sourceRow": 6
     },
     {
-      "noInvoice": "SI260402779",
-      "tanggalInvoice": "2026-04-01T16:59:56.000Z",
+      "noInvoice": "SI260705905",
+      "tanggalInvoice": "2026-07-03T16:59:56.000Z",
       "termin": "3 Bulan",
-      "customer": "RICARDO JULIVER PARDOSI",
-      "tagihan": 2550000,
-      "tempo": "2026-07-01T16:59:56.000Z",
-      "penagih": "Shoona Kabila Mahaaba",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 23289200,
+      "tempo": "2026-10-03T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
       "sourceRow": 7
+    },
+    {
+      "noInvoice": "SI260705986",
+      "tanggalInvoice": "2026-07-05T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 3120500,
+      "tempo": "2026-10-05T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 8
+    },
+    {
+      "noInvoice": "SI260705988",
+      "tanggalInvoice": "2026-07-05T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 411195,
+      "tempo": "2026-10-05T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 9
+    },
+    {
+      "noInvoice": "SI260705992",
+      "tanggalInvoice": "2026-07-05T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 6571536,
+      "tempo": "2026-10-05T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 10
+    },
+    {
+      "noInvoice": "SI260705998",
+      "tanggalInvoice": "2026-07-05T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 17545584,
+      "tempo": "2026-10-05T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 11
+    },
+    {
+      "noInvoice": "SI260705999",
+      "tanggalInvoice": "2026-07-05T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 5230116,
+      "tempo": "2026-10-05T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 12
+    },
+    {
+      "noInvoice": "SI260706002",
+      "tanggalInvoice": "2026-07-05T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 5507722,
+      "tempo": "2026-10-05T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 13
+    },
+    {
+      "noInvoice": "SI260706003",
+      "tanggalInvoice": "2026-07-05T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2481864,
+      "tempo": "2026-10-05T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 14
+    },
+    {
+      "noInvoice": "SI260706028",
+      "tanggalInvoice": "2026-07-06T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 61157280,
+      "tempo": "2026-10-06T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 15
+    },
+    {
+      "noInvoice": "SI260706033",
+      "tanggalInvoice": "2026-07-06T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1749060,
+      "tempo": "2026-10-06T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 16
+    },
+    {
+      "noInvoice": "SI260706083",
+      "tanggalInvoice": "2026-07-07T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 18991600,
+      "tempo": "2026-10-07T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 17
+    },
+    {
+      "noInvoice": "SI260706102",
+      "tanggalInvoice": "2026-07-07T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1824900,
+      "tempo": "2026-10-07T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 18
+    },
+    {
+      "noInvoice": "SI260706103",
+      "tanggalInvoice": "2026-07-07T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 987500,
+      "tempo": "2026-10-07T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 19
+    },
+    {
+      "noInvoice": "SI260706104",
+      "tanggalInvoice": "2026-07-07T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 21762604,
+      "tempo": "2026-10-07T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 20
+    },
+    {
+      "noInvoice": "SI260706106",
+      "tanggalInvoice": "2026-07-07T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 3871000,
+      "tempo": "2026-10-07T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 21
+    },
+    {
+      "noInvoice": "SI260706239",
+      "tanggalInvoice": "2026-07-07T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "ISTANA JAYA SEJAHTERA,CV",
+      "tagihan": 2125100,
+      "tempo": "2026-10-07T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 22
+    },
+    {
+      "noInvoice": "SI260706149",
+      "tanggalInvoice": "2026-07-08T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 1888100,
+      "tempo": "2026-10-08T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 23
+    },
+    {
+      "noInvoice": "SI260706163",
+      "tanggalInvoice": "2026-07-08T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2100847,
+      "tempo": "2026-10-08T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 24
+    },
+    {
+      "noInvoice": "SI260706164",
+      "tanggalInvoice": "2026-07-08T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 663600,
+      "tempo": "2026-10-08T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 25
+    },
+    {
+      "noInvoice": "SI260706207",
+      "tanggalInvoice": "2026-07-09T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 49070850,
+      "tempo": "2026-10-09T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 26
+    },
+    {
+      "noInvoice": "SI260706212",
+      "tanggalInvoice": "2026-07-09T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 13764960,
+      "tempo": "2026-10-09T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 27
+    },
+    {
+      "noInvoice": "SI260706225",
+      "tanggalInvoice": "2026-07-09T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 9448100,
+      "tempo": "2026-10-09T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 28
+    },
+    {
+      "noInvoice": "SI260706253",
+      "tanggalInvoice": "2026-07-10T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 3310100,
+      "tempo": "2026-10-10T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 29
+    },
+    {
+      "noInvoice": "SI260706254",
+      "tanggalInvoice": "2026-07-10T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2125100,
+      "tempo": "2026-10-10T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 30
+    },
+    {
+      "noInvoice": "SI260706259",
+      "tanggalInvoice": "2026-07-10T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 967355,
+      "tempo": "2026-10-10T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 31
+    },
+    {
+      "noInvoice": "SI260706290",
+      "tanggalInvoice": "2026-07-12T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1879410,
+      "tempo": "2026-10-12T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 32
+    },
+    {
+      "noInvoice": "SI260706317",
+      "tanggalInvoice": "2026-07-13T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "CAHAYA MATERIAL INDONESIA, CV",
+      "tagihan": 10134120,
+      "tempo": "2026-10-13T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 33
+    },
+    {
+      "noInvoice": "SI260706332",
+      "tanggalInvoice": "2026-07-13T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 663600,
+      "tempo": "2026-10-13T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 34
+    },
+    {
+      "noInvoice": "SI260706371",
+      "tanggalInvoice": "2026-07-14T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 26276140,
+      "tempo": "2026-10-14T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 35
+    },
+    {
+      "noInvoice": "SI260706376",
+      "tanggalInvoice": "2026-07-14T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 16770910,
+      "tempo": "2026-10-14T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 36
+    },
+    {
+      "noInvoice": "SI260706429",
+      "tanggalInvoice": "2026-07-15T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1749060,
+      "tempo": "2026-10-15T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 37
+    },
+    {
+      "noInvoice": "SI260706430",
+      "tanggalInvoice": "2026-07-15T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 3945087,
+      "tempo": "2026-10-15T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 38
+    },
+    {
+      "noInvoice": "SI260706445",
+      "tanggalInvoice": "2026-07-15T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 4642040,
+      "tempo": "2026-10-15T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 39
+    },
+    {
+      "noInvoice": "SI260706446",
+      "tanggalInvoice": "2026-07-15T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 6794316,
+      "tempo": "2026-10-15T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 40
+    },
+    {
+      "noInvoice": "SI260706489",
+      "tanggalInvoice": "2026-07-16T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 7698708,
+      "tempo": "2026-10-16T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 41
+    },
+    {
+      "noInvoice": "SI260706508",
+      "tanggalInvoice": "2026-07-17T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 6568218,
+      "tempo": "2026-10-17T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 42
+    },
+    {
+      "noInvoice": "SI260706511",
+      "tanggalInvoice": "2026-07-17T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2841630,
+      "tempo": "2026-10-17T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 43
+    },
+    {
+      "noInvoice": "SI260706543",
+      "tanggalInvoice": "2026-07-19T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 4937500,
+      "tempo": "2026-10-19T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 44
+    },
+    {
+      "noInvoice": "SI260706599",
+      "tanggalInvoice": "2026-07-20T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1696920,
+      "tempo": "2026-10-20T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 45
+    },
+    {
+      "noInvoice": "SI260706600",
+      "tanggalInvoice": "2026-07-20T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2481864,
+      "tempo": "2026-10-20T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 46
+    },
+    {
+      "noInvoice": "SI260706683",
+      "tanggalInvoice": "2026-07-22T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 1499000,
+      "tempo": "2026-10-22T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 47
+    },
+    {
+      "noInvoice": "SI260706733",
+      "tanggalInvoice": "2026-07-23T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 56548200,
+      "tempo": "2026-10-23T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 48
+    },
+    {
+      "noInvoice": "SI260706736",
+      "tanggalInvoice": "2026-07-23T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1595010,
+      "tempo": "2026-10-23T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 49
+    },
+    {
+      "noInvoice": "SI260706749",
+      "tanggalInvoice": "2026-07-23T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1975000,
+      "tempo": "2026-10-23T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 50
+    },
+    {
+      "noInvoice": "SI260706753",
+      "tanggalInvoice": "2026-07-23T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 2669410,
+      "tempo": "2026-10-23T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 51
+    },
+    {
+      "noInvoice": "SI260706754",
+      "tanggalInvoice": "2026-07-23T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 2131420,
+      "tempo": "2026-10-23T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 52
+    },
+    {
+      "noInvoice": "SI260706766",
+      "tanggalInvoice": "2026-07-24T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 4408200,
+      "tempo": "2026-10-24T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 53
+    },
+    {
+      "noInvoice": "SI260706767",
+      "tanggalInvoice": "2026-07-24T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 7374124,
+      "tempo": "2026-10-24T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 54
+    },
+    {
+      "noInvoice": "SI260706784",
+      "tanggalInvoice": "2026-07-24T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2353410,
+      "tempo": "2026-10-24T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 55
+    },
+    {
+      "noInvoice": "SI260706785",
+      "tanggalInvoice": "2026-07-24T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1634510,
+      "tempo": "2026-10-24T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 56
+    },
+    {
+      "noInvoice": "SI260706786",
+      "tanggalInvoice": "2026-07-24T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1816210,
+      "tempo": "2026-10-24T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 57
+    },
+    {
+      "noInvoice": "SI260706810",
+      "tanggalInvoice": "2026-07-26T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "CAHAYA LAS INDONESIA, PT",
+      "tagihan": 16969200,
+      "tempo": "2026-10-26T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 58
+    },
+    {
+      "noInvoice": "SI260706869",
+      "tanggalInvoice": "2026-07-27T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 5941432,
+      "tempo": "2026-10-27T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 59
+    },
+    {
+      "noInvoice": "SI260706871",
+      "tanggalInvoice": "2026-07-27T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 874530,
+      "tempo": "2026-10-27T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 60
+    },
+    {
+      "noInvoice": "SI260706887",
+      "tanggalInvoice": "2026-07-27T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 874530,
+      "tempo": "2026-10-27T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 61
+    },
+    {
+      "noInvoice": "SI260706888",
+      "tanggalInvoice": "2026-07-27T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 20346450,
+      "tempo": "2026-10-27T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 62
+    },
+    {
+      "noInvoice": "SI260706901",
+      "tanggalInvoice": "2026-07-28T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "SINAR LOGAM BANGUN SEJATI, PT",
+      "tagihan": 16566300,
+      "tempo": "2026-10-28T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 63
+    },
+    {
+      "noInvoice": "SI260706902",
+      "tanggalInvoice": "2026-07-28T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "SINAR LOGAM BANGUN SEJATI, PT",
+      "tagihan": 5522100,
+      "tempo": "2026-10-28T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 64
+    },
+    {
+      "noInvoice": "SI260706908",
+      "tanggalInvoice": "2026-07-28T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 6612300,
+      "tempo": "2026-10-28T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 65
+    },
+    {
+      "noInvoice": "SI260706924",
+      "tanggalInvoice": "2026-07-28T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 3145464,
+      "tempo": "2026-10-28T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 66
+    },
+    {
+      "noInvoice": "SI260706925",
+      "tanggalInvoice": "2026-07-28T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 4937500,
+      "tempo": "2026-10-28T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 67
+    },
+    {
+      "noInvoice": "SI260706929",
+      "tanggalInvoice": "2026-07-28T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2481864,
+      "tempo": "2026-10-28T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 68
+    },
+    {
+      "noInvoice": "SI260706963",
+      "tanggalInvoice": "2026-07-29T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "JAFIAN WELDING INDONESIA, PT",
+      "tagihan": 34365000,
+      "tempo": "2026-10-29T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 69
+    },
+    {
+      "noInvoice": "SI260706966",
+      "tanggalInvoice": "2026-07-29T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 9075994,
+      "tempo": "2026-10-29T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 70
+    },
+    {
+      "noInvoice": "SI260706975",
+      "tanggalInvoice": "2026-07-29T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 10695355,
+      "tempo": "2026-10-29T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 71
+    },
+    {
+      "noInvoice": "SI260706976",
+      "tanggalInvoice": "2026-07-29T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 10858550,
+      "tempo": "2026-10-29T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 72
+    },
+    {
+      "noInvoice": "SI260706977",
+      "tanggalInvoice": "2026-07-29T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 23633250,
+      "tempo": "2026-10-29T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 73
+    },
+    {
+      "noInvoice": "SI260706978",
+      "tanggalInvoice": "2026-07-29T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 5312750,
+      "tempo": "2026-10-29T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 74
+    },
+    {
+      "noInvoice": "SI260706979",
+      "tanggalInvoice": "2026-07-29T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "ANEKA HUTAMA PERSADA, PT",
+      "tagihan": 4730400,
+      "tempo": "2026-10-29T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 75
+    },
+    {
+      "noInvoice": "SI260706991",
+      "tanggalInvoice": "2026-07-29T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2238939,
+      "tempo": "2026-10-29T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 76
+    },
+    {
+      "noInvoice": "SI260706993",
+      "tanggalInvoice": "2026-07-29T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2320230,
+      "tempo": "2026-10-29T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 77
+    },
+    {
+      "noInvoice": "SI260706994",
+      "tanggalInvoice": "2026-07-29T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 2843210,
+      "tempo": "2026-10-29T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 78
+    },
+    {
+      "noInvoice": "SI260707028",
+      "tanggalInvoice": "2026-07-30T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 3943127,
+      "tempo": "2026-10-30T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 79
+    },
+    {
+      "noInvoice": "SI260707029",
+      "tanggalInvoice": "2026-07-30T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 6903415,
+      "tempo": "2026-10-30T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 80
+    },
+    {
+      "noInvoice": "SI260707033",
+      "tanggalInvoice": "2026-07-30T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 42240510,
+      "tempo": "2026-10-30T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 81
+    },
+    {
+      "noInvoice": "SI260707034",
+      "tanggalInvoice": "2026-07-30T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2125100,
+      "tempo": "2026-10-30T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 82
+    },
+    {
+      "noInvoice": "SI260707056",
+      "tanggalInvoice": "2026-07-30T16:59:56.000Z",
+      "termin": "3 Bulan",
+      "customer": "INDOTOOL SUKSES MAKMUR, PT",
+      "tagihan": 1705500,
+      "tempo": "2026-10-30T16:59:56.000Z",
+      "penagih": "Rina Rahayu",
+      "sourceRow": 83
     }
   ],
   "masterData": {
@@ -219,8 +979,8 @@
     },
     "cv semangat maju": {
       "nama": "SEMANGAT MAJU, CV",
-      "phone": "KOSONG",
-      "wilayah": "KOSONG"
+      "phone": "6281316398772",
+      "wilayah": "Dalam Kota"
     },
     "pt andal jaya perkasa": {
       "nama": "ANDAL JAYA PERKASA, PT",
@@ -302,9 +1062,9 @@
       "phone": "KOSONG",
       "wilayah": "KOSONG"
     },
-    "cv jaya teknik": {
-      "nama": "JAYA TEKNIK, CV",
-      "phone": "6281239122828",
+    "cv muncul jaya teknik": {
+      "nama": "MUNCUL JAYA TEKNIK, CV",
+      "phone": "628562238285",
       "wilayah": "Luar Kota"
     },
     "cv rajawali marketing": {
@@ -340,7 +1100,7 @@
     "pt indotool sukses makmur": {
       "nama": "INDOTOOL SUKSES MAKMUR, PT",
       "phone": "KOSONG",
-      "wilayah": "KOSONG"
+      "wilayah": "Dalam Kota"
     },
     "pt anekatama makmur abadi": {
       "nama": "ANEKATAMA MAKMUR ABADI, PT",
@@ -384,7 +1144,7 @@
     },
     "cv cv bhina karya persada": {
       "nama": "CV. BHINA KARYA PERSADA, CV",
-      "phone": "6281260512333",
+      "phone": "6281190057232",
       "wilayah": "Luar Kota"
     },
     "pt cahaya surga teknik indonesia": {
@@ -429,7 +1189,7 @@
     },
     "tjitrosantoso sion": {
       "nama": "TJITROSANTOSO SION",
-      "phone": "6285218180181",
+      "phone": "6285151233759",
       "wilayah": "Luar Kota"
     },
     "pt aneka hutama persada": {
@@ -569,7 +1329,7 @@
     },
     "tanijar": {
       "nama": "TANIJAR",
-      "phone": "6285370353447",
+      "phone": "6281263935587",
       "wilayah": "Luar Kota"
     },
     "pt global solution project": {
@@ -629,7 +1389,7 @@
     },
     "pt yunika trijaya sentosa": {
       "nama": "YUNIKA TRIJAYA SENTOSA, PT",
-      "phone": "6281916005146",
+      "phone": "6282140023220",
       "wilayah": "Luar Kota"
     },
     "pt pundi mas aryota": {
@@ -705,72 +1465,62 @@
     "pt indo prima perkakas": {
       "nama": "INDO PRIMA PERKAKAS, PT",
       "phone": "6281378870688",
-      "wilayah": "KOSONG"
+      "wilayah": "Luar Kota"
     },
     "bonari": {
       "nama": "BONARI",
       "phone": "6281268229000",
-      "wilayah": "KOSONG"
+      "wilayah": "Luar Kota"
     },
     "indo perkakas": {
       "nama": "INDO PERKAKAS",
       "phone": "628117621999",
-      "wilayah": "KOSONG"
+      "wilayah": "Luar Kota"
     },
     "dunia tehnik": {
       "nama": "DUNIA TEHNIK",
       "phone": "6285275615008",
-      "wilayah": "KOSONG"
-    },
-    "pang donny wijaya": {
-      "nama": "PANG DONNY WIJAYA",
-      "phone": "KOSONG",
-      "wilayah": "KOSONG"
-    },
-    "pt maju bersama jayakarta": {
-      "nama": "MAJU BERSAMA JAYAKARTA, PT",
-      "phone": "KOSONG",
-      "wilayah": "KOSONG"
+      "wilayah": "Luar Kota"
     },
     "tan tjie kiong": {
       "nama": "TAN TJIE KIONG",
       "phone": "628126018187",
-      "wilayah": "KOSONG"
+      "wilayah": "Luar Kota"
     },
     "pan tji hwa": {
       "nama": "PAN TJI HWA",
       "phone": "6281361382009",
-      "wilayah": "KOSONG"
+      "wilayah": "Luar Kota"
     },
     "cv glorindo teknik sejahtera": {
       "nama": "GLORINDO TEKNIK SEJAHTERA, CV",
-      "phone": "KOSONG",
-      "wilayah": "KOSONG"
+      "phone": "6281277732279",
+      "wilayah": "Luar Kota"
     },
     "cv bintang prima sentosa": {
       "nama": "BINTANG PRIMA SENTOSA, CV",
       "phone": "628127584811",
-      "wilayah": "KOSONG"
+      "wilayah": "Luar Kota"
     },
     "frans haryanto": {
       "nama": "FRANS HARYANTO",
       "phone": "KOSONG",
-      "wilayah": "KOSONG"
+      "wilayah": "Luar Kota"
     },
     "cv arya teknik": {
       "nama": "ARYA TEKNIK, CV",
       "phone": "6285362627338",
-      "wilayah": "KOSONG"
+      "wilayah": "Luar Kota"
     },
     "pt aryateknik makmursentosa": {
       "nama": "ARYATEKNIK MAKMURSENTOSA, PT",
       "phone": "6285362627338",
-      "wilayah": "KOSONG"
+      "wilayah": "Luar Kota"
     },
     "kinari widjaja": {
       "nama": "KINARI WIDJAJA",
       "phone": "628126052657",
-      "wilayah": "KOSONG"
+      "wilayah": "Luar Kota"
     },
     "pt glistagen": {
       "nama": "GLISTAGEN, PT",
@@ -934,8 +1684,8 @@
     },
     "matsum tjiawi": {
       "nama": "MATSUM TJIAWI",
-      "phone": "6281283636605",
-      "wilayah": "KOSONG"
+      "phone": "628116060825",
+      "wilayah": "Luar Kota"
     },
     "cv aji nusa jaya": {
       "nama": "AJI NUSA JAYA, CV",
@@ -962,10 +1712,670 @@
       "phone": "KOSONG",
       "wilayah": "Luar Kota"
     },
-    "total perkakas sejahtera": {
-      "nama": "TOTAL PERKAKAS SEJAHTERA",
-      "phone": "6281283636605",
+    "jadi jaya": {
+      "nama": "JADI JAYA",
+      "phone": "6281361595022",
       "wilayah": "Luar Kota"
+    },
+    "jovin leomanto": {
+      "nama": "JOVIN LEOMANTO",
+      "phone": "6287868243288",
+      "wilayah": "Luar Kota"
+    },
+    "tan liang tjun alias michun wijaya": {
+      "nama": "TAN LIANG TJUN ALIAS MICHUN WIJAYA",
+      "phone": "628126044157",
+      "wilayah": "Luar Kota"
+    },
+    "lutfi": {
+      "nama": "LUTFI",
+      "phone": "6287753509293",
+      "wilayah": "Dalam Kota"
+    },
+    "muria": {
+      "nama": "MURIA",
+      "phone": "6281275198888",
+      "wilayah": "Luar Kota"
+    },
+    "pt kemilau inti mekanindo": {
+      "nama": "KEMILAU INTI MEKANINDO, PT",
+      "phone": "6282386784136",
+      "wilayah": "Luar Kota"
+    },
+    "cv makmur abadi": {
+      "nama": "MAKMUR ABADI, CV",
+      "phone": "6285100230370",
+      "wilayah": "Luar Kota"
+    },
+    "pt mega jaya teknik mandiri": {
+      "nama": "MEGA JAYA TEKNIK MANDIRI, PT",
+      "phone": "6281375356208",
+      "wilayah": "Luar Kota"
+    },
+    "bali diesel": {
+      "nama": "BALI DIESEL",
+      "phone": "6281287080389",
+      "wilayah": "Luar Kota"
+    },
+    "cv mayar": {
+      "nama": "MAYAR, CV",
+      "phone": "6285169770057",
+      "wilayah": "Luar Kota"
+    },
+    "pt nikymura prima jaya": {
+      "nama": "NIKYMURA PRIMA JAYA, PT",
+      "phone": "62818572662",
+      "wilayah": "Luar Kota"
+    },
+    "laut jaya": {
+      "nama": "LAUT JAYA",
+      "phone": "KOSONG",
+      "wilayah": "Dalam Kota"
+    },
+    "cv jaya teknik": {
+      "nama": "JAYA TEKNIK, CV",
+      "phone": "6281239122828",
+      "wilayah": "Luar Kota"
+    },
+    "cv sarana teknik berkah": {
+      "nama": "SARANA TEKNIK BERKAH, CV",
+      "phone": "62811500951",
+      "wilayah": "Luar Kota"
+    },
+    "maju jaya (mdn)": {
+      "nama": "MAJU JAYA (MDN)",
+      "phone": "6282166003838",
+      "wilayah": "Luar Kota"
+    },
+    "sumber jaya (sby)": {
+      "nama": "SUMBER JAYA (SBY)",
+      "phone": "6289509588686",
+      "wilayah": "Luar Kota"
+    },
+    "sumber teknik (sol)": {
+      "nama": "SUMBER TEKNIK (SOL)",
+      "phone": "628122972876",
+      "wilayah": "Luar Kota"
+    },
+    "pt karya manggala sejahtera": {
+      "nama": "KARYA MANGGALA SEJAHTERA, PT",
+      "phone": "6281313988388",
+      "wilayah": "Luar Kota"
+    },
+    "naga sakti": {
+      "nama": "NAGA SAKTI",
+      "phone": "6283838891988",
+      "wilayah": "Luar Kota"
+    },
+    "cv lasindo metal utama": {
+      "nama": "LASINDO METAL UTAMA, CV",
+      "phone": "6282220369069",
+      "wilayah": "Luar Kota"
+    },
+    "pt ray jaya sakti": {
+      "nama": "RAY JAYA SAKTI, PT",
+      "phone": "6287888121990",
+      "wilayah": "Dalam Kota"
+    },
+    "sumber mega victoriapt": {
+      "nama": "SUMBER MEGA VICTORIA,PT",
+      "phone": "6281365963313",
+      "wilayah": "Luar Kota"
+    },
+    "kho kie seng": {
+      "nama": "KHO KIE SENG",
+      "phone": "6281370766669",
+      "wilayah": "Luar Kota"
+    },
+    "pt sinar teknik sejahtera": {
+      "nama": "SINAR TEKNIK SEJAHTERA, PT",
+      "phone": "62811761092",
+      "wilayah": "Luar Kota"
+    },
+    "pt virgo sejahtera abadi": {
+      "nama": "VIRGO SEJAHTERA ABADI, PT",
+      "phone": "62811640062",
+      "wilayah": "Luar Kota"
+    },
+    "pt maju bersama jayakarta": {
+      "nama": "MAJU BERSAMA JAYAKARTA, PT",
+      "phone": "6281253002049",
+      "wilayah": "Luar Kota"
+    },
+    "pang donny wijaya": {
+      "nama": "PANG DONNY WIJAYA",
+      "phone": "6281253002049",
+      "wilayah": "Luar Kota"
+    },
+    "berry kusuma": {
+      "nama": "BERRY KUSUMA",
+      "phone": "628121991990",
+      "wilayah": "Luar Kota"
+    },
+    "sutiono umar": {
+      "nama": "SUTIONO UMAR",
+      "phone": "6281228887743",
+      "wilayah": "Luar Kota"
+    },
+    "pt adhi chandra jaya": {
+      "nama": "PT.  ADHI CHANDRA JAYA",
+      "phone": "6282112266143",
+      "wilayah": "Luar Kota"
+    },
+    "pt agel langgeng": {
+      "nama": "PT.  AGEL LANGGENG",
+      "phone": "6281317445577",
+      "wilayah": "Dalam Kota"
+    },
+    "pt agro gading sejahtera": {
+      "nama": "PT. AGRO GADING SEJAHTERA",
+      "phone": "6281181114303",
+      "wilayah": "Dalam Kota"
+    },
+    "pt albaraka takaful sejahtera": {
+      "nama": "PT. ALBARAKA TAKAFUL SEJAHTERA",
+      "phone": "6285210615622",
+      "wilayah": "Luar Kota"
+    },
+    "pt andalan sinergi industri": {
+      "nama": "PT. ANDALAN SINERGI INDUSTRI",
+      "phone": "6285117828089",
+      "wilayah": "Luar Kota"
+    },
+    "arby endarto": {
+      "nama": "ARBY ENDARTO",
+      "phone": "6285710612962",
+      "wilayah": "Luar Kota"
+    },
+    "pt arjuna utama sawit": {
+      "nama": "PT. ARJUNA UTAMA SAWIT",
+      "phone": "6281348348291",
+      "wilayah": "Luar Kota"
+    },
+    "pt artaprima sarana sukses": {
+      "nama": "PT. ARTAPRIMA SARANA SUKSES",
+      "phone": "6282218282323",
+      "wilayah": "Luar Kota"
+    },
+    "pt ayodya dialog semesta": {
+      "nama": "PT. AYODYA DIALOG SEMESTA",
+      "phone": "6285603323058",
+      "wilayah": "Luar Kota"
+    },
+    "pt bangunjaya alam permai": {
+      "nama": "PT. BANGUNJAYA ALAM PERMAI",
+      "phone": "628179998783",
+      "wilayah": "Dalam Kota"
+    },
+    "pt benang merapi perkasa": {
+      "nama": "PT. BENANG MERAPI PERKASA",
+      "phone": "6281369112281",
+      "wilayah": "Luar Kota"
+    },
+    "pt berkah alam fajarmas": {
+      "nama": "PT. BERKAH ALAM FAJARMAS",
+      "phone": "628179998783",
+      "wilayah": "Dalam Kota"
+    },
+    "cvberkah qualitindo tehnik": {
+      "nama": "CV.BERKAH QUALITINDO TEHNIK",
+      "phone": "6285810191626",
+      "wilayah": "Luar Kota"
+    },
+    "pt bestoolindo": {
+      "nama": "PT. BESTOOLINDO",
+      "phone": "6281382366242",
+      "wilayah": "Luar Kota"
+    },
+    "pt bumi mandiri resources": {
+      "nama": "PT. BUMI MANDIRI RESOURCES",
+      "phone": "6285774098834",
+      "wilayah": "Luar Kota"
+    },
+    "pt daekindo jaya perkasa": {
+      "nama": "PT. DAEKINDO JAYA PERKASA",
+      "phone": "628126631308",
+      "wilayah": "Luar Kota"
+    },
+    "pt dok dan perkapalan gandasari indonesia": {
+      "nama": "PT. DOK DAN PERKAPALAN GANDASARI INDONESIA",
+      "phone": "6283821081091",
+      "wilayah": "Luar Kota"
+    },
+    "pt dua kuda indonesia": {
+      "nama": "PT. DUA KUDA INDONESIA",
+      "phone": "6281282087605",
+      "wilayah": "Luar Kota"
+    },
+    "pt epiterma mas konstruksi": {
+      "nama": "PT. EPITERMA MAS KONSTRUKSI",
+      "phone": "6287748307146",
+      "wilayah": "Dalam Kota"
+    },
+    "pt geptronika sentosa utama": {
+      "nama": "PT. GEPTRONIKA SENTOSA UTAMA",
+      "phone": "6287771790865",
+      "wilayah": "Luar Kota"
+    },
+    "pt global teknik agronusa": {
+      "nama": "PT. GLOBAL TEKNIK AGRONUSA",
+      "phone": "6281312249157",
+      "wilayah": "Luar Kota"
+    },
+    "pt hamparan masawit bangun persada": {
+      "nama": "PT. HAMPARAN MASAWIT BANGUN PERSADA",
+      "phone": "628179998783",
+      "wilayah": "Dalam Kota"
+    },
+    "pt inti beton": {
+      "nama": "PT. INTI BETON",
+      "phone": "628986667203",
+      "wilayah": "Luar Kota"
+    },
+    "pt intim mining sentosa": {
+      "nama": "PT. INTIM MINING SENTOSA",
+      "phone": "628151872178",
+      "wilayah": "Luar Kota"
+    },
+    "ir ridwan tanzil": {
+      "nama": "IR. RIDWAN TANZIL",
+      "phone": "6281219122222",
+      "wilayah": "Luar Kota"
+    },
+    "cv jati mandiri": {
+      "nama": "CV. JATI MANDIRI",
+      "phone": "6281111149488",
+      "wilayah": "Luar Kota"
+    },
+    "pt javatec trimitra utama": {
+      "nama": "PT. JAVATEC TRIMITRA UTAMA",
+      "phone": "6281311234587",
+      "wilayah": "Luar Kota"
+    },
+    "pt jaya ananda sentosa": {
+      "nama": "PT. JAYA ANANDA SENTOSA",
+      "phone": "6281290843188",
+      "wilayah": "Luar Kota"
+    },
+    "pt jaya sakti mandiri unggul": {
+      "nama": "PT. JAYA SAKTI MANDIRI UNGGUL",
+      "phone": "6285283932750",
+      "wilayah": "Luar Kota"
+    },
+    "pt karya cipta sinergy": {
+      "nama": "PT. KARYA CIPTA SINERGY",
+      "phone": "6281399888509",
+      "wilayah": "Luar Kota"
+    },
+    "pt karya luhur sejati": {
+      "nama": "PT. KARYA LUHUR SEJATI",
+      "phone": "628179998783",
+      "wilayah": "Dalam Kota"
+    },
+    "pt karyaindo ciptanusa": {
+      "nama": "PT. KARYAINDO CIPTANUSA",
+      "phone": "6281543320329",
+      "wilayah": "Luar Kota"
+    },
+    "ptkita makmur bahagia": {
+      "nama": "PT.KITA MAKMUR BAHAGIA",
+      "phone": "6281314202403",
+      "wilayah": "Luar Kota"
+    },
+    "pt kwarsa indahmurni": {
+      "nama": "PT. KWARSA INDAHMURNI",
+      "phone": "6287771622515",
+      "wilayah": "Luar Kota"
+    },
+    "cv maju perdana": {
+      "nama": "CV. MAJU PERDANA",
+      "phone": "6281294636226",
+      "wilayah": "Luar Kota"
+    },
+    "pt makmur abadi valve": {
+      "nama": "PT. MAKMUR ABADI VALVE",
+      "phone": "6281312249157",
+      "wilayah": "Luar Kota"
+    },
+    "mars global pratama": {
+      "nama": "MARS GLOBAL PRATAMA",
+      "phone": "6283862758538",
+      "wilayah": "Luar Kota"
+    },
+    "pt matra engineering & construction": {
+      "nama": "PT. MATRA ENGINEERING & CONSTRUCTION",
+      "phone": "6282139938193",
+      "wilayah": "Luar Kota"
+    },
+    "pt mitra baru mandiri": {
+      "nama": "PT. MITRA BARU MANDIRI",
+      "phone": "6282125121456",
+      "wilayah": "Luar Kota"
+    },
+    "pt miwa indo tekstil": {
+      "nama": "PT. MIWA INDO TEKSTIL",
+      "phone": "6285921904611",
+      "wilayah": "Luar Kota"
+    },
+    "pt naga sakti samudra": {
+      "nama": "PT. NAGA SAKTI SAMUDRA",
+      "phone": "6282284194883",
+      "wilayah": "Luar Kota"
+    },
+    "novianto": {
+      "nama": "NOVIANTO",
+      "phone": "6285921576622",
+      "wilayah": "Luar Kota"
+    },
+    "nurmillah shoumi": {
+      "nama": "NURMILLAH SHOUMI",
+      "phone": "6281299170127",
+      "wilayah": "Luar Kota"
+    },
+    "pt panarub industry": {
+      "nama": "PT. PANARUB INDUSTRY",
+      "phone": "6281281659696",
+      "wilayah": "Dalam Kota"
+    },
+    "cv pelita abadi teknik": {
+      "nama": "CV. PELITA ABADI TEKNIK",
+      "phone": "6285342841339",
+      "wilayah": "Luar Kota"
+    },
+    "perseroan terbatas - badan dunia express transindo": {
+      "nama": "PERSEROAN TERBATAS - BADAN DUNIA EXPRESS TRANSINDO",
+      "phone": "6287804337672",
+      "wilayah": "Luar Kota"
+    },
+    "perseroan terbatas - badan puninar fueller": {
+      "nama": "PERSEROAN TERBATAS - BADAN PUNINAR FUELLER",
+      "phone": "6287877408216",
+      "wilayah": "Luar Kota"
+    },
+    "perseroan terbatas - badan waterindo technologies partners": {
+      "nama": "PERSEROAN TERBATAS - BADAN WATERINDO TECHNOLOGIES PARTNERS",
+      "phone": "622122469702",
+      "wilayah": "Luar Kota"
+    },
+    "perseroan terbatas badan multi land": {
+      "nama": "PERSEROAN TERBATAS BADAN MULTI LAND",
+      "phone": "6287877408216",
+      "wilayah": "Luar Kota"
+    },
+    "perseroan terbatas badan superkrane mitra utama tbk": {
+      "nama": "PERSEROAN TERBATAS BADAN SUPERKRANE MITRA UTAMA TBK",
+      "phone": "6287789249412",
+      "wilayah": "Luar Kota"
+    },
+    "perseroan terbatas mygrowtek jaya imajin": {
+      "nama": "PERSEROAN TERBATAS MYGROWTEK JAYA IMAJIN",
+      "phone": "628159990615",
+      "wilayah": "Luar Kota"
+    },
+    "perseroan terbatas-badan aira sukses international": {
+      "nama": "PERSEROAN TERBATAS-BADAN AIRA SUKSES INTERNATIONAL",
+      "phone": "6281315070152",
+      "wilayah": "Luar Kota"
+    },
+    "pt persindo budidaya": {
+      "nama": "PT. PERSINDO BUDIDAYA",
+      "phone": "(081)7717147",
+      "wilayah": "Luar Kota"
+    },
+    "pt philang berkah bersama": {
+      "nama": "PT. PHILANG BERKAH BERSAMA",
+      "phone": "6285117614605",
+      "wilayah": "Luar Kota"
+    },
+    "pt prestress construction indonesia": {
+      "nama": "PT. PRESTRESS CONSTRUCTION INDONESIA",
+      "phone": "6281932456765",
+      "wilayah": "Luar Kota"
+    },
+    "pt shanum makmur kejora": {
+      "nama": "PT. SHANUM MAKMUR KEJORA",
+      "phone": "6289633419216",
+      "wilayah": "Luar Kota"
+    },
+    "sumbermas unggul nastari": {
+      "nama": "SUMBERMAS UNGGUL NASTARI",
+      "phone": "6281297539140",
+      "wilayah": "Luar Kota"
+    },
+    "cv sun sai indonesia": {
+      "nama": "CV. SUN SAI INDONESIA",
+      "phone": "6282260691980",
+      "wilayah": "Luar Kota"
+    },
+    "pt suryamas cipta perkasa": {
+      "nama": "PT. SURYAMAS CIPTA PERKASA",
+      "phone": "628179998783",
+      "wilayah": "Dalam Kota"
+    },
+    "pt taka precision manufacturing indonesia": {
+      "nama": "PT. TAKA PRECISION MANUFACTURING INDONESIA",
+      "phone": "628562220641",
+      "wilayah": "Luar Kota"
+    },
+    "ateng": {
+      "nama": "ATENG",
+      "phone": "6281809589222",
+      "wilayah": "Luar Kota"
+    },
+    "joe dicky/samlong": {
+      "nama": "JOE DICKY/SAMLONG",
+      "phone": "6287887090569",
+      "wilayah": "Luar Kota"
+    },
+    "samsul hidayat": {
+      "nama": "SAMSUL HIDAYAT",
+      "phone": "6282298916351",
+      "wilayah": "Luar Kota"
+    },
+    "nana suryana": {
+      "nama": "NANA SURYANA",
+      "phone": "6281295279905",
+      "wilayah": "Luar Kota"
+    },
+    "agus sut jipto": {
+      "nama": "AGUS SUT JIPTO",
+      "phone": "6287819931999",
+      "wilayah": "Luar Kota"
+    },
+    "teuku hakim al furqan": {
+      "nama": "TEUKU HAKIM AL FURQAN",
+      "phone": "6285260656038",
+      "wilayah": "Luar Kota"
+    },
+    "rio handriawan": {
+      "nama": "RIO HANDRIAWAN",
+      "phone": "6281905558399",
+      "wilayah": "Luar Kota"
+    },
+    "pt trans dana profitri": {
+      "nama": "PT. TRANS DANA PROFITRI",
+      "phone": "6287861377350",
+      "wilayah": "Luar Kota"
+    },
+    "pt trikarya prima santosa": {
+      "nama": "PT. TRIKARYA PRIMA SANTOSA",
+      "phone": "6281210469527",
+      "wilayah": "Luar Kota"
+    },
+    "pt tumbakmas inti mulia": {
+      "nama": "PT. TUMBAKMAS INTI MULIA",
+      "phone": "6281293971196",
+      "wilayah": "Dalam Kota"
+    },
+    "pt tunas agro subur kencana": {
+      "nama": "PT. TUNAS AGRO SUBUR KENCANA",
+      "phone": "628179998783",
+      "wilayah": "Dalam Kota"
+    },
+    "unisat-geoservices-dps-tesso": {
+      "nama": "UNISAT-GEOSERVICES-DPS-TESSO",
+      "phone": "6282118835324",
+      "wilayah": "Luar Kota"
+    },
+    "pt wanasawit subur lestari": {
+      "nama": "PT. WANASAWIT SUBUR LESTARI",
+      "phone": "628179998783",
+      "wilayah": "Dalam Kota"
+    },
+    "cv warung perkakas": {
+      "nama": "CV. WARUNG PERKAKAS",
+      "phone": "6285124414980",
+      "wilayah": "Luar Kota"
+    },
+    "pt xajeriko abadi sejahtera": {
+      "nama": "PT. XAJERIKO ABADI SEJAHTERA",
+      "phone": "6285692466603",
+      "wilayah": "Luar Kota"
+    },
+    "pt yuasa shoji indonesia": {
+      "nama": "PT. YUASA SHOJI INDONESIA",
+      "phone": "6285161007208",
+      "wilayah": "Luar Kota"
+    },
+    "pt zona sukses bersaudara": {
+      "nama": "PT. ZONA SUKSES BERSAUDARA",
+      "phone": "6283186782717",
+      "wilayah": "Luar Kota"
+    },
+    "pt kemilau sinar mentari": {
+      "nama": "KEMILAU SINAR MENTARI, PT",
+      "phone": "6281298153479",
+      "wilayah": "Dalam Kota"
+    },
+    "mitsuboshi belting indonesi": {
+      "nama": "MITSUBOSHI BELTING INDONESI",
+      "phone": "6282298835058",
+      "wilayah": "Dalam Kota"
+    },
+    "pt cardox asia fastindo": {
+      "nama": "CARDOX ASIA FASTINDO, PT",
+      "phone": "62811761092",
+      "wilayah": "Luar Kota"
+    },
+    "pt asianagro agungjaya": {
+      "nama": "ASIANAGRO AGUNGJAYA, PT",
+      "phone": "6289698030178",
+      "wilayah": "Luar Kota"
+    },
+    "pt avesta continental pack": {
+      "nama": "AVESTA CONTINENTAL PACK, PT",
+      "phone": "6281291561794",
+      "wilayah": "Dalam Kota"
+    },
+    "pt kartika sinar nusantara": {
+      "nama": "KARTIKA SINAR NUSANTARA, PT",
+      "phone": "6287766396924",
+      "wilayah": "Luar Kota"
+    },
+    "ricardo juliver pardosi": {
+      "nama": "RICARDO JULIVER PARDOSI",
+      "phone": "6282168202817",
+      "wilayah": "Luar Kota"
+    },
+    "pt sari dumai oleo": {
+      "nama": "SARI DUMAI OLEO, PT",
+      "phone": "6289698030178",
+      "wilayah": "Luar Kota"
+    },
+    "pt selco indonesia": {
+      "nama": "SELCO INDONESIA, PT",
+      "phone": "62811598698",
+      "wilayah": "Luar Kota"
+    },
+    "sejati": {
+      "nama": "SEJATI",
+      "phone": "6287882758318",
+      "wilayah": "Dalam Kota"
+    },
+    "mataram": {
+      "nama": "MATARAM",
+      "phone": "6281279220200",
+      "wilayah": "Luar Kota"
+    },
+    "johnny asli": {
+      "nama": "JOHNNY ASLI",
+      "phone": "6281363534707",
+      "wilayah": "Luar Kota"
+    },
+    "cv naga tech": {
+      "nama": "NAGA TECH, CV",
+      "phone": "628123101712",
+      "wilayah": "Luar Kota"
+    },
+    "kasim arifin": {
+      "nama": "KASIM ARIFIN",
+      "phone": "6283807922840",
+      "wilayah": "Dalam Kota"
+    },
+    "cv sumber anugerah berkat": {
+      "nama": "SUMBER ANUGERAH BERKAT, CV",
+      "phone": "6281367226633",
+      "wilayah": "Luar Kota"
+    },
+    "pt karya maju teknindo": {
+      "nama": "KARYA MAJU TEKNINDO, PT",
+      "phone": "6281267014778",
+      "wilayah": "Luar Kota"
+    },
+    "pt elite logam baja": {
+      "nama": "ELITE LOGAM BAJA, PT",
+      "phone": "6281396630760",
+      "wilayah": "Luar Kota"
+    },
+    "cv cahaya rukun makmur": {
+      "nama": "CAHAYA RUKUN MAKMUR, CV",
+      "phone": "62811644041",
+      "wilayah": "Luar Kota"
+    },
+    "pt kline mobaru diamond indonesia": {
+      "nama": "KLINE MOBARU DIAMOND INDONESIA, PT",
+      "phone": "6283899002088",
+      "wilayah": "Dalam Kota"
+    },
+    "rajawali jaya teknik": {
+      "nama": "RAJAWALI JAYA TEKNIK",
+      "phone": "628135344315",
+      "wilayah": "Luar Kota"
+    },
+    "pt cahaya las indonesia": {
+      "nama": "CAHAYA LAS INDONESIA, PT",
+      "phone": "6281232004403",
+      "wilayah": "Luar Kota"
+    },
+    "cv karya kita sentosa": {
+      "nama": "KARYA KITA SENTOSA, CV",
+      "phone": "628123002108",
+      "wilayah": "Luar Kota"
+    },
+    "pt cahaya utama safety indonesia": {
+      "nama": "CAHAYA UTAMA SAFETY INDONESIA, PT",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "pt karya kekar abadi": {
+      "nama": "KARYA KEKAR ABADI, PT",
+      "phone": "6287871213014",
+      "wilayah": "Dalam Kota"
+    },
+    "cv hanna teknik": {
+      "nama": "HANNA TEKNIK, CV",
+      "phone": "625710113535",
+      "wilayah": "Dalam Kota"
+    },
+    "luar kota": {
+      "nama": "Luar Kota",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
+    },
+    "dalam kota": {
+      "nama": "Dalam Kota",
+      "phone": "KOSONG",
+      "wilayah": "KOSONG"
     }
   },
   "periodeData": {
@@ -976,8 +2386,7 @@
     "pt cust00567 faedah teknik": {
       "Juni 2026": 38457990,
       "Mei 2026": 34509804,
-      "April 2026": 36463246,
-      "Maret 2026": 10827740
+      "April 2026": 47290986
     },
     "pt cust00682 yanmarindo perkasa": {
       "Juni 2026": 86603379,
@@ -997,8 +2406,8 @@
     "pt pc-2300587 jaya abadi (hg) : interindo sukses abadi": {
       "Juni 2026": 193721710,
       "Mei 2026": 181646159,
-      "April 2026": 154853024,
-      "Maret 2026": 173774028,
+      "April 2026": 156041974,
+      "Maret 2026": 172585078,
       "Februari 2026": 129199365,
       "Januari 2026": 264013475
     },
@@ -1008,8 +2417,7 @@
     "pt cust00118 glistagen": {
       "Juni 2026": 146749968,
       "Mei 2026": 319852123,
-      "April 2026": 293239020,
-      "Maret 2026": 4470768
+      "April 2026": 297709788
     },
     "pt pc-2200386 putra tunggal daya": {
       "Juni 2026": 2366814824,
@@ -1089,8 +2497,7 @@
     "pt cust00269 indah mitra rahardja": {
       "Juni 2026": 268943017,
       "Mei 2026": 215401874,
-      "April 2026": 288498983,
-      "Maret 2026": 36556065
+      "April 2026": 325055048
     },
     "pt cust00165 golden indo teknik": {
       "Juni 2026": 981115065,
@@ -1192,8 +2599,7 @@
     "pt cust00672 global solution project": {
       "Juni 2026": 198387590,
       "Mei 2026": 90768300,
-      "April 2026": 159009810,
-      "Maret 2026": 16725000
+      "April 2026": 175734810
     },
     "cv cust00946 mitra jaya": {
       "Juni 2026": 91531483
@@ -1301,8 +2707,7 @@
     "pt cust00214 rian jaya darma": {
       "Juni 2026": 34848000,
       "Mei 2026": 69260400,
-      "April 2026": 100608000,
-      "Maret 2026": 34460800
+      "April 2026": 135068800
     },
     "pt cust00196 kharisma wira persada": {
       "Juni 2026": 74124974
@@ -1310,8 +2715,7 @@
     "pt pc-2400791 biondi jaya perkasa pt : pelita niaga indonesia": {
       "Juni 2026": 39480000,
       "Mei 2026": 29889650,
-      "April 2026": 35052300,
-      "Maret 2026": 35496000
+      "April 2026": 70548300
     },
     "pt cust01052 jati jaya nirachi": {
       "Juni 2026": 23643367,
@@ -1338,8 +2742,7 @@
     "pt cust00187 biondi jaya perkasa": {
       "Juni 2026": 27056000,
       "Mei 2026": 103456500,
-      "April 2026": 13828000,
-      "Maret 2026": 8600000
+      "April 2026": 22428000
     },
     "cv pc-2300607 tb lc : mega sejahtera lestari": {
       "Juni 2026": 46807500,
@@ -1368,14 +2771,13 @@
     "cv cust00824 million jaya abadi": {
       "Juni 2026": 25976210,
       "Mei 2026": 36863933,
-      "April 2026": 10203640,
-      "Maret 2026": 5051655
+      "April 2026": 15255295
     },
     "cv cust00285 semangat maju": {
       "Juni 2026": 38373460,
       "Mei 2026": 17087700,
-      "April 2026": 4166460,
-      "Maret 2026": 10129180
+      "April 2026": 5256460,
+      "Maret 2026": 9039180
     },
     "pt pc-2400633 gracia abadi semesta": {
       "Juni 2026": 9927456,
@@ -1422,7 +2824,7 @@
     },
     "cv cust00855 maju jaya hardware": {
       "Juni 2026": 13307400,
-      "Maret 2026": 6187280
+      "April 2026": 6187280
     },
     "tb pc-2200288 acuan jaya": {
       "Juni 2026": 476260,
@@ -1536,8 +2938,7 @@
     "pc-2200278 gracia tehnik": {
       "Juni 2026": 20903831,
       "Mei 2026": 40810990,
-      "April 2026": 14280760,
-      "Maret 2026": 1210500
+      "April 2026": 15491260
     },
     "cv pc-00039 anugrah baru tehnik": {
       "Juni 2026": 22147650
@@ -1693,8 +3094,7 @@
     },
     "pt pc-2601046 biondi jaya perkasa pt : sentral berkat niaga": {
       "Mei 2026": 24856000,
-      "April 2026": 4300000,
-      "Maret 2026": 8600000
+      "April 2026": 12900000
     },
     "cv cust00913 lasindo metal utama": {
       "Mei 2026": 3916000
@@ -1771,8 +3171,7 @@
       "April 2026": 5880600
     },
     "cv pc-2200331 sintesa teknik": {
-      "April 2026": 37287000,
-      "Maret 2026": 7000000
+      "April 2026": 44287000
     },
     "pc-2300508 d3 safety": {
       "April 2026": 10755000
@@ -1808,8 +3207,7 @@
       "April 2026": 345091750
     },
     "pc-2200310 maranatha teknik": {
-      "April 2026": 3833080,
-      "Maret 2026": 2900000
+      "April 2026": 6733080
     },
     "pc-2300454 naga sakti": {
       "April 2026": 1090000
@@ -1843,5 +3241,5 @@
       "Januari 2026": 3835000
     }
   },
-  "savedAt": "2026-07-16T08:49:27.123Z"
+  "savedAt": "2026-11-02T03:13:29.684Z"
 }

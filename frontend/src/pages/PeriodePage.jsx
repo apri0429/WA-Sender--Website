@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { SearchBox, ToolButton, SetupNotice } from "../components/PageTools";
 import {
   Alert,
   Box,
@@ -17,20 +18,21 @@ import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import api from "../services/api";
 import CreateButton from "../components/button/CreateButton";
+import Avatar from "../components/Avatar";
 
-const FONT_SANS = "'Plus Jakarta Sans', 'Inter', sans-serif";
-const FONT_MONO = "'JetBrains Mono', 'Fira Code', monospace";
+const FONT_SANS = "var(--font-sans)";
+const FONT_MONO = "var(--font-mono)";
 
 const T = {
-  brand:       "#233971",
-  brandDark:   "#163a6b",
-  brandLight:  "#eaeff7",
-  brandBorder: "#b3c1d8",
-  ink:         "#163a6b",
+  brand:       "#24476e",
+  brandDark:   "#24476e",
+  brandLight:  "#eef2f7",
+  brandBorder: "#b9c8dc",
+  ink:         "var(--c-ink)",
   text:        "#374151",
   muted:       "#6b7280",
   subtle:      "#9ca3af",
-  line:        "#e5e7eb",
+  line:        "#e3e6eb",
   surface:     "#f9fafb",
   white:       "#ffffff",
 };
@@ -95,10 +97,10 @@ function RowsPerPageDropdown({ value, onChange }) {
         onClick={() => setOpen((v) => !v)}
         style={{
           width: "100%", height: 30, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
-          borderRadius: 999, border: `1.5px solid ${open ? "rgba(233,196,106,0.75)" : "#d4ddf0"}`,
-          background: "linear-gradient(180deg, #f8fafc 0%, #eef1f6 100%)",
+          borderRadius: 3, border: `1px solid ${open ? "#3a6fa6" : "#aebfd8"}`,
+          background: "#fff",
           padding: "0 8px 0 11px", cursor: "pointer", outline: "none",
-          boxShadow: open ? "0 0 0 3px rgba(233,196,106,0.13)" : "0 2px 8px rgba(22,58,107,0.06)",
+          boxShadow: open ? "0 0 0 3px rgba(58, 111, 166,0.14)" : "0 1px 2px rgba(36, 71, 110,0.08)",
           transition: "border-color 0.18s, box-shadow 0.18s",
         }}
       >
@@ -106,7 +108,7 @@ function RowsPerPageDropdown({ value, onChange }) {
         <KeyboardArrowDownRoundedIcon style={{ fontSize: 16, color: T.brand, flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
       </button>
       {open && (
-        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, right: 0, zIndex: 1000, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 12, boxShadow: "0 10px 30px rgba(22,58,107,0.14), 0 2px 8px rgba(22,58,107,0.07)", overflow: "hidden" }}>
+        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, right: 0, zIndex: 1000, background: "#fff", border: "1px solid #c9d4e1", borderRadius: 3, padding: 4, boxShadow: "0 8px 24px rgba(36, 71, 110,0.16)" }}>
           {options.map((opt) => {
             const active = opt === value;
             return (
@@ -114,12 +116,12 @@ function RowsPerPageDropdown({ value, onChange }) {
                 key={opt}
                 type="button"
                 onClick={() => { onChange(opt); setOpen(false); }}
-                style={{ width: "100%", minHeight: 30, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "7px 9px 7px 11px", background: active ? T.brandLight : "transparent", border: "none", borderBottom: opt === options[options.length - 1] ? "none" : `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", transition: "background 0.12s" }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f4f6fa"; }}
-                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "6px 8px", background: active ? "#f0f4f9" : "transparent", border: "none", borderRadius: 6, cursor: "pointer", textAlign: "left", fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? "#24476e" : "#374151", whiteSpace: "nowrap", outline: "none" }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f3f6fb"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = active ? "#f0f4f9" : "transparent"; }}
               >
-                <span style={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: active ? 800 : 600, color: active ? T.brand : T.text }}>{opt}</span>
-                {active && <CheckCircleOutlineRoundedIcon style={{ fontSize: 14, color: T.brand, flexShrink: 0 }} />}
+                <span>{opt}</span>
+                {active && <CheckCircleOutlineRoundedIcon style={{ fontSize: 15, color: "#3a6fa6", flexShrink: 0 }} />}
               </button>
             );
           })}
@@ -155,19 +157,19 @@ function CellDropdown({ rect, value, label, onClose, onChange, onKeyDown }) {
       <div
         style={{
           position: "fixed", top, left, width, zIndex: 8999,
-          borderRadius: 16,
+          borderRadius: 3,
           overflow: "hidden",
           boxShadow: "0 28px 80px rgba(10,18,40,0.28), 0 4px 16px rgba(10,18,40,0.14)",
           animation: "cellDrop 0.15s cubic-bezier(.22,.68,0,1.1) both",
           transformOrigin,
-          border: "1px solid rgba(26,42,87,0.12)",
+          border: "1px solid rgba(36, 71, 110,0.12)",
           background: T.white,
         }}
       >
         <style>{`@keyframes cellDrop { from{opacity:0;transform:scale(0.96) translateY(-4px)} to{opacity:1;transform:scale(1) translateY(0)} }`}</style>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "14px 16px 12px", background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)", borderBottom: "1px solid rgba(26,42,87,0.10)" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "14px 16px 12px", background: "var(--ns-head-gradient)", borderBottom: "1px solid rgba(36, 71, 110,0.10)" }}>
           <div>
-            <p style={{ fontFamily: FONT_MONO, fontSize: 10, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>
+            <p style={{ fontFamily: FONT_MONO, fontSize: 10, fontWeight: 600, color: "rgba(58, 111, 166,0.92)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>
               Edit Data
             </p>
             <h3 style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>
@@ -178,7 +180,7 @@ function CellDropdown({ rect, value, label, onClose, onChange, onKeyDown }) {
             type="button"
             onClick={onClose}
             style={{ width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: 8, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.75)", cursor: "pointer", transition: "background 0.15s, border-color 0.15s" }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; e.currentTarget.style.borderColor = "rgba(233,196,106,0.4)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; e.currentTarget.style.borderColor = "rgba(58, 111, 166,0.4)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; }}
           >
             <CloseRoundedIcon style={{ fontSize: 14 }} />
@@ -191,9 +193,9 @@ function CellDropdown({ rect, value, label, onClose, onChange, onKeyDown }) {
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={onKeyDown}
             onMouseDown={(e) => e.stopPropagation()}
-            style={{ width: "100%", boxSizing: "border-box", height: 38, padding: "0 12px", border: "1.5px solid rgba(26,42,87,0.18)", borderRadius: 10, fontFamily: FONT_SANS, fontSize: 13, fontWeight: 500, color: T.ink, outline: "none", background: T.brandLight, transition: "border-color 0.15s, box-shadow 0.15s" }}
-            onFocus={(e) => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = "0 0 0 3px rgba(35,57,113,0.10)"; }}
-            onBlur={(e) => { e.target.style.borderColor = "rgba(26,42,87,0.18)"; e.target.style.boxShadow = "none"; }}
+            style={{ width: "100%", boxSizing: "border-box", height: 38, padding: "0 12px", border: "1.5px solid rgba(36, 71, 110,0.18)", borderRadius: 3, fontFamily: FONT_SANS, fontSize: 13, fontWeight: 500, color: T.ink, outline: "none", background: T.brandLight, transition: "border-color 0.15s, box-shadow 0.15s" }}
+            onFocus={(e) => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = "0 0 0 3px rgba(36, 71, 110,0.10)"; }}
+            onBlur={(e) => { e.target.style.borderColor = "rgba(36, 71, 110,0.18)"; e.target.style.boxShadow = "none"; }}
           />
           <p style={{ margin: "7px 1px 0", fontFamily: FONT_SANS, fontSize: 10.5, color: T.subtle }}>
             <span style={{ color: T.brand, fontWeight: 700 }}>Enter</span> simpan &nbsp;·&nbsp; <span style={{ fontWeight: 600 }}>Esc</span> batal
@@ -219,7 +221,7 @@ function SkeletonBar({ w, delay = 0 }) {
   return (
     <div style={{
       height: 10, borderRadius: 6, width: w,
-      background: "rgba(26,42,87,0.08)",
+      background: "rgba(36, 71, 110,0.08)",
       animation: `shimmer 1.4s ease-in-out ${delay}s infinite`,
     }} />
   );
@@ -229,7 +231,7 @@ function LoadingTableState() {
   const skelCols = [110, 90, 160, 80, 70, 90];
   return (
     <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", margin: "0 16px", overflow: "hidden" }}>
-      <div style={{ display: "flex", borderBottom: `1.5px solid rgba(26,42,87,0.1)`, background: T.surface, flexShrink: 0 }}>
+      <div style={{ display: "flex", borderBottom: `1.5px solid rgba(36, 71, 110,0.1)`, background: T.surface, flexShrink: 0 }}>
         {skelCols.map((w, ci) => (
           <div key={ci} style={{ padding: "12px 16px", flex: ci === 2 ? 2 : 1, minWidth: w }}>
             <SkeletonBar w={`${[55,48,52,44,38,50][ci]}%`} delay={ci * 0.05} />
@@ -238,7 +240,7 @@ function LoadingTableState() {
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
         {PERIODE_SKELETON_ROWS.map((cols, ri) => (
-          <div key={ri} style={{ display: "flex", borderBottom: `1px solid rgba(26,42,87,0.05)`, background: ri % 2 === 0 ? T.white : T.surface, alignItems: "center" }}>
+          <div key={ri} style={{ display: "flex", borderBottom: `1px solid rgba(36, 71, 110,0.05)`, background: ri % 2 === 0 ? T.white : T.surface, alignItems: "center" }}>
             {skelCols.map((w, ci) => (
               <div key={ci} style={{ padding: "11px 16px", flex: ci === 2 ? 2 : 1, minWidth: w }}>
                 <SkeletonBar w={`${cols[ci % cols.length]}%`} delay={(ri * 0.04 + ci * 0.02)} />
@@ -369,57 +371,30 @@ export default function PeriodePage() {
   const editingHeaderLabel = editingCell ? headers.find(h => h.key === editingCell.colKey)?.label || editingCell.colKey : "";
 
   return (
-    <Box sx={{ fontFamily: FONT_SANS, p: 2, display: "flex", flexDirection: "column", gap: 1.5, height: "calc(100vh - 64px)", boxSizing: "border-box", overflow: "hidden" }}>
-
-      {/* ── Header portal ── */}
-      {headerSlot && createPortal(
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <style>{`.hdr-search::placeholder { color: rgba(255,255,255,0.42); font-weight: 400; }`}</style>
-          <div style={{ position: "relative", display: "flex", alignItems: "center" }}
-            onMouseEnter={e => { const inp = e.currentTarget.querySelector("input"); if (inp !== document.activeElement) { inp.style.borderColor = "rgba(233,196,106,0.55)"; inp.style.background = "rgba(233,196,106,0.1)"; } }}
-            onMouseLeave={e => { const inp = e.currentTarget.querySelector("input"); if (inp !== document.activeElement) { inp.style.borderColor = searchQuery ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)"; inp.style.background = "rgba(255,255,255,0.12)"; } }}
-          >
-            <SearchRoundedIcon style={{ position: "absolute", left: 11, fontSize: 14, color: "rgba(255,255,255,0.55)", pointerEvents: "none" }} />
-            <input type="text" className="hdr-search" placeholder="Search..." value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
-              style={{ height: 34, paddingLeft: 32, paddingRight: searchQuery ? 30 : 14, width: 200, fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 500, color: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", borderRadius: 10, background: "rgba(255,255,255,0.12)", outline: "none", transition: "border-color 0.18s, background 0.18s", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.12)" }}
-              onFocus={e => { e.target.style.borderColor = "rgba(233,196,106,0.8)"; e.target.style.background = "rgba(233,196,106,0.12)"; }}
-              onBlur={e  => { e.target.style.borderColor = searchQuery ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)"; e.target.style.background = "rgba(255,255,255,0.12)"; }}
-            />
-            {searchQuery && (
-              <button onClick={() => { setSearchQuery(""); setPage(0); }} style={{ position: "absolute", right: 8, width: 16, height: 16, borderRadius: "50%", background: "rgba(255,255,255,0.28)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
-                <CloseRoundedIcon style={{ fontSize: 9, color: "#fff" }} />
-              </button>
-            )}
-          </div>
-          {gsheetConfigured ? (
-            <button type="button" onClick={handleOpenGSheet} className="header-icon-button header-icon-button--compact" title="Open Google Sheet">
-              <GoogleSheetsLogo size={18} />
-            </button>
-          ) : (
-            <span className="header-icon-button header-icon-button--compact" style={{ opacity: 0.35, cursor: "default" }}>
-              <GoogleSheetsLogo size={18} />
-            </span>
-          )}
-          <button className="header-icon-button header-icon-button--compact" onClick={handleSync} disabled={syncing || !gsheetUrlRef.current} style={{ opacity: !gsheetUrlRef.current ? 0.4 : 1 }}>
-            {syncing ? <CircularProgress size={15} sx={{ color: "#fff" }} /> : <SyncRoundedIcon style={{ fontSize: 17 }} />}
-          </button>
-        </div>,
-        headerSlot
-      )}
+    <Box className="ns-page" sx={{ fontFamily: FONT_SANS, p: 2, display: "flex", flexDirection: "column", gap: 1.5, flex: 1, minHeight: 0, boxSizing: "border-box", overflow: "hidden" }}>
 
       {/* ── Main Table Card ── */}
-      <section className="dashboard-panel" style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", borderRadius: 28 }}>
+      <section className="dashboard-panel" style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", borderRadius: 3 }}>
 
         <div className="dashboard-panel__header" style={{ padding: "18px 24px 12px", borderBottom: "none", background: T.white, flexShrink: 0, margin: 0 }}>
           <div>
-            <p className="dashboard-panel__eyebrow" style={{ fontFamily: FONT_SANS, marginBottom: 2 }}>Google Sheet</p>
-            <h2 className="dashboard-panel__title" style={{ margin: 0 }}>Sheet PERIODE</h2>
+            <h2 className="dashboard-panel__title" style={{ margin: 0 }}>Periode</h2>
             {rows.length > 0 && (
               <p className="dashboard-panel__description" style={{ margin: "3px 0 0", fontFamily: FONT_MONO }}>
-                {rows.length} rows · {headers.length} columns
+                {rows.length} baris · {headers.length} kolom · hanya baca
               </p>
             )}
+          </div>
+          <div className="dashboard-panel__action" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            {rows.length > 0 && (
+              <SearchBox value={searchQuery} onChange={(v) => { setSearchQuery(v); setPage(0); }} placeholder="Cari periode..." />
+            )}
+            <ToolButton tone="green" icon={<GoogleSheetsLogo size={16} />} onClick={handleOpenGSheet} disabled={!gsheetConfigured}>
+              Buka Sheet
+            </ToolButton>
+            <ToolButton tone="blue" icon={<SyncRoundedIcon />} onClick={handleSync} loading={syncing} disabled={!gsheetConfigured}>
+              {syncing ? "Memuat..." : "Sync"}
+            </ToolButton>
           </div>
         </div>
 
@@ -497,15 +472,13 @@ export default function PeriodePage() {
               </span>
               <span style={{ fontFamily: FONT_MONO, fontSize: 10.5, color: T.muted, letterSpacing: "0.04em" }}>mohon tunggu</span>
             </div>
-            <LinearProgress sx={{ mt: 0.75, height: 3, borderRadius: 999, bgcolor: "rgba(35,57,113,0.1)", "& .MuiLinearProgress-bar": { borderRadius: 999, bgcolor: T.brand } }} />
+            <LinearProgress sx={{ mt: 0.75, height: 3, borderRadius: 999, bgcolor: "rgba(36, 71, 110,0.1)", "& .MuiLinearProgress-bar": { borderRadius: 999, bgcolor: T.brand } }} />
           </div>
         )}
 
-        {!showFullLoadingState && rows.length === 0 && (
+        {!loading && !gsheetConfigured && (
           <div style={{ padding: "0 20px 10px", flexShrink: 0 }}>
-            <Alert severity="info" sx={{ fontFamily: FONT_SANS, fontSize: 12, py: 0.25, borderRadius: "10px" }}>
-              Belum ada data — klik Sync di header untuk memuat data dari sheet PERIODE terlebih dahulu
-            </Alert>
+            <SetupNotice>Google Sheet belum diatur. Masukkan link Google Sheet di Settings untuk mulai menarik data.</SetupNotice>
           </div>
         )}
 
@@ -537,7 +510,7 @@ export default function PeriodePage() {
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
                         <CalendarMonthRoundedIcon style={{ fontSize: 32, color: T.subtle }} />
                         <span style={{ fontFamily: FONT_SANS, fontSize: 13, color: T.muted, fontWeight: 600 }}>Belum ada data periode</span>
-                        <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: T.subtle }}>Klik Sync di header untuk memuat data dari sheet PERIODE</span>
+                        <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: T.subtle }}>Klik Sync untuk menarik data dari sheet PERIODE</span>
                         {gsheetUrlRef.current && (
                           <CreateButton variant="detail" onClick={handleSync} disabled={syncing} style={{ gap: 6, paddingInline: 22, marginTop: 8 }}>
                             {syncing ? <CircularProgress size={13} sx={{ color: T.brand }} /> : <SyncRoundedIcon style={{ fontSize: 15 }} />}
@@ -569,19 +542,19 @@ export default function PeriodePage() {
                                 onClick={(e) => { e.stopPropagation(); handleCellEdit(i, h.key); }}
                                 style={{
                                   display: "inline-flex", alignItems: "center", gap: 5, width: "100%",
-                                  border: `1px solid ${isActive ? "rgba(233,196,106,0.9)" : "transparent"}`,
+                                  border: `1px solid ${isActive ? "rgba(58, 111, 166,0.9)" : "transparent"}`,
                                   borderRadius: 5, padding: "3px 6px",
-                                  background: isActive ? "rgba(233,196,106,0.14)" : "transparent",
+                                  background: isActive ? "rgba(58, 111, 166,0.14)" : "transparent",
                                   cursor: "text", textAlign: "left",
-                                  boxShadow: isActive ? "0 0 0 3px rgba(233,196,106,0.12)" : "none",
+                                  boxShadow: isActive ? "0 0 0 3px rgba(58, 111, 166,0.14)" : "0 1px 2px rgba(36, 71, 110,0.05)",
                                   transition: "border-color 0.12s, background 0.12s, box-shadow 0.12s",
                                 }}
-                                onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "rgba(233,196,106,0.65)"; e.currentTarget.style.background = "rgba(233,196,106,0.08)"; } }}
+                                onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "#8fb0dc"; e.currentTarget.style.background = "#f5f9fe"; } }}
                                 onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.background = "transparent"; } }}
                               >
                                 {hasAvatar ? (
                                   <div style={{ display: "flex", alignItems: "center", gap: 7, overflow: "hidden", width: "100%" }}>
-                                    <span className="users-table__avatar" style={{ width: 30, height: 30, fontFamily: FONT_SANS, fontSize: 9.5, letterSpacing: "0.04em", flexShrink: 0 }}>{getInitials(displayText)}</span>
+                                    <Avatar seed={displayText} initials={getInitials(displayText)} />
                                     <span style={{ fontFamily: FONT_SANS, fontSize: 12, fontWeight: 600, color: isActive ? T.brandDark : T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                       {displayText || <span style={{ color: T.subtle, fontStyle: "italic", fontWeight: 400 }}>—</span>}
                                     </span>
@@ -618,14 +591,14 @@ export default function PeriodePage() {
                           <td colSpan={colSpan}>
                             <div className="users-table__accordion">
                               {accordionCols.length > 0 && (
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: "16px 20px 16px" }}>
+                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14, padding: "18px 24px 20px" }}>
                                   {accordionCols.map((h) => {
                                     const displayText = formatCellValue(row[h.key]);
                                     const isActive = editingCell?.row === i && editingCell?.colKey === h.key;
                                     const isTermin = isTerminColumn(h);
                                     return (
-                                      <div key={h.key} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                                        <span style={{ fontFamily: FONT_SANS, fontSize: 10, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                      <div key={h.key} style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                                        <span style={{ fontFamily: FONT_SANS, fontSize: 11, fontWeight: 700, color: "#5b6f8f", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                                           {h.label}
                                         </span>
                                         <button
@@ -634,21 +607,21 @@ export default function PeriodePage() {
                                           onClick={(e) => { e.stopPropagation(); handleCellEdit(i, h.key); }}
                                           style={{
                                             display: "flex", alignItems: "center", width: "100%",
-                                            border: `1.5px solid ${isActive ? "rgba(233,196,106,0.9)" : T.line}`,
-                                            borderRadius: 8, padding: "7px 11px",
-                                            background: isActive ? "rgba(233,196,106,0.14)" : T.white,
+                                            border: `1.5px solid ${isActive ? "#3a6fa6" : "#c9d4e1"}`,
+                                            borderRadius: 3, padding: "9px 12px", minHeight: 38,
+                                            background: isActive ? "#f0f4f9" : "#fff",
                                             cursor: "text", textAlign: "left",
-                                            boxShadow: isActive ? "0 0 0 3px rgba(233,196,106,0.12)" : "none",
+                                            boxShadow: isActive ? "0 0 0 3px rgba(58, 111, 166,0.14)" : "0 1px 2px rgba(36, 71, 110,0.05)",
                                             transition: "border-color 0.12s, background 0.12s, box-shadow 0.12s",
                                           }}
-                                          onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "rgba(233,196,106,0.65)"; e.currentTarget.style.background = "rgba(233,196,106,0.08)"; } }}
-                                          onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.borderColor = T.line; e.currentTarget.style.background = T.white; } }}
+                                          onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "#8fb0dc"; e.currentTarget.style.background = "#f5f9fe"; } }}
+                                          onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "#c9d4e1"; e.currentTarget.style.background = "#fff"; } }}
                                         >
                                           {isTermin && displayText ? (
                                             <span className={`users-table__status users-table__status--inline ${/3\s*bulan/i.test(displayText) ? "users-table__status--app" : "users-table__status--pending"}`}>{displayText}</span>
                                           ) : (
-                                            <span style={{ fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 500, color: isActive ? T.brandDark : displayText ? T.ink : T.subtle, fontStyle: displayText ? "normal" : "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                              {displayText || "—"}
+                                            <span style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: displayText ? 600 : 400, color: isActive ? T.brandDark : displayText ? T.ink : "#9aa8bd", fontStyle: displayText ? "normal" : "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                              {displayText || "Belum diisi"}
                                             </span>
                                           )}
                                         </button>
@@ -748,7 +721,7 @@ export default function PeriodePage() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 20px", borderTop: `1px solid ${T.line}`, background: T.surface, flexShrink: 0 }}>
             <InfoOutlinedIcon style={{ fontSize: 14, color: T.brandBorder, flexShrink: 0 }} />
             <span style={{ fontFamily: FONT_SANS, fontSize: 11, color: T.muted }}>
-              Data bersifat <span style={{ color: T.brand, fontWeight: 600 }}>read-only</span> — klik <span style={{ color: T.brand, fontWeight: 600 }}>Sync</span> di header untuk memperbarui dari Google Sheet
+              Data bersifat <span style={{ color: T.brand, fontWeight: 600 }}>read-only</span> — klik <span style={{ color: T.brand, fontWeight: 600 }}>Sync</span> untuk memperbarui dari Google Sheet
             </span>
           </div>
         )}
@@ -766,7 +739,7 @@ export default function PeriodePage() {
       )}
 
       <Snackbar open={toast.open} autoHideDuration={3200} onClose={() => setToast((p) => ({ ...p, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: "12px", fontFamily: FONT_SANS, boxShadow: "0 8px 24px rgba(0,0,0,0.14)" }}>
+        <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: "4px", fontFamily: FONT_SANS, boxShadow: "0 8px 24px rgba(0,0,0,0.14)" }}>
           {toast.message}
         </Alert>
       </Snackbar>

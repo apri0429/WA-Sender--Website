@@ -3,14 +3,14 @@ import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
 import PaymentsRoundedIcon from "@mui/icons-material/PaymentsRounded";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 
-const FONT = "'Plus Jakarta Sans', 'DM Sans', sans-serif";
+const FONT = "var(--font-sans)";
 const ITEM_HEIGHT = 72;
 const VISIBLE_COUNT = 5;
 
-const NAVY = "#233971";
+const NAVY = "#24476e";
 const NAVY_LIGHT = "#e8edf7";
 const NAVY_SOFT = "#f0f3fa";
-const NAVY_MID = "#3d5a9e";
+const NAVY_MID = "#2d5a8a";
 
 const AVATAR_GRADIENTS = [
   ["#6366f1", "#8b5cf6"],
@@ -237,7 +237,7 @@ export default function CustomerPreview({ customers }) {
                 transition: "border-color 0.15s ease, box-shadow 0.15s ease",
                 "&:hover": {
                   borderColor: NAVY_MID,
-                  boxShadow: `0 4px 16px rgba(35,57,113,0.08)`,
+                  boxShadow: `0 4px 16px rgba(36, 71, 110,0.08)`,
                 },
               }}
             >

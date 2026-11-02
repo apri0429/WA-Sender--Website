@@ -28,23 +28,24 @@ import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlin
 import api    from "../services/api";
 import socket from "../services/socket";
 import CreateButton from "../components/button/CreateButton";
+import Avatar from "../components/Avatar";
 
-const FONT_SANS = "'Plus Jakarta Sans', 'Inter', sans-serif";
-const FONT_MONO = "'JetBrains Mono', 'Fira Code', monospace";
+const FONT_SANS = "var(--font-sans)";
+const FONT_MONO = "var(--font-mono)";
 
 const T = {
-  brand:       "#233971",
-  brandDark:   "#163a6b",
-  brandLight:  "#eaeff7",
-  brandBorder: "#b3c1d8",
+  brand:       "#24476e",
+  brandDark:   "#24476e",
+  brandLight:  "#eef2f7",
+  brandBorder: "#b9c8dc",
   green:       "#166534",
   greenLight:  "#dcfce7",
   greenBorder: "#86efac",
-  ink:         "#163a6b",
+  ink:         "var(--c-ink)",
   text:        "#374151",
   muted:       "#6b7280",
   subtle:      "#9ca3af",
-  line:        "#e5e7eb",
+  line:        "#e3e6eb",
   surface:     "#f9fafb",
   white:       "#ffffff",
   wa:          "#25d366",
@@ -81,21 +82,25 @@ function RowsPerPageDropdown({ value, onChange }) {
   return (
     <div ref={ref} style={{ position: "relative", width: 76 }}>
       <button type="button" onClick={() => setOpen((v) => !v)}
-        style={{ width: "100%", height: 30, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, borderRadius: 999, border: `1.5px solid ${open ? "rgba(233,196,106,0.75)" : "#d4ddf0"}`, background: "linear-gradient(180deg, #f8fafc 0%, #eef1f6 100%)", padding: "0 8px 0 11px", cursor: "pointer", outline: "none", boxShadow: open ? "0 0 0 3px rgba(233,196,106,0.13)" : "0 2px 8px rgba(22,58,107,0.06)", transition: "border-color 0.18s, box-shadow 0.18s" }}>
+        style={{ width: "100%", height: 30, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, borderRadius: 999, border: `1.5px solid ${open ? "rgba(58, 111, 166,0.75)" : "#d7e1ee"}`, background: "linear-gradient(180deg, #f8fafc 0%, #eff1f4 100%)", padding: "0 8px 0 11px", cursor: "pointer", outline: "none", boxShadow: open ? "0 0 0 3px rgba(58, 111, 166,0.14)" : "0 1px 2px rgba(36, 71, 110,0.08)", transition: "border-color 0.18s, box-shadow 0.18s" }}>
         <span style={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: 700, color: T.ink, lineHeight: 1 }}>{value}</span>
         <KeyboardArrowDownRoundedIcon style={{ fontSize: 16, color: T.brand, flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
       </button>
       {open && (
-        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, right: 0, zIndex: 1000, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 12, boxShadow: "0 10px 30px rgba(22,58,107,0.14), 0 2px 8px rgba(22,58,107,0.07)", overflow: "hidden" }}>
+        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, right: 0, zIndex: 1000, background: "#fff", border: "1px solid #c9d4e1", borderRadius: 10, padding: 4, boxShadow: "0 8px 24px rgba(36, 71, 110,0.16)" }}>
           {options.map((opt) => {
             const active = opt === value;
             return (
-              <button key={opt} type="button" onClick={() => { onChange(opt); setOpen(false); }}
-                style={{ width: "100%", minHeight: 30, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "7px 9px 7px 11px", background: active ? T.brandLight : "transparent", border: "none", borderBottom: opt === options[options.length - 1] ? "none" : `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", transition: "background 0.12s" }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f4f6fa"; }}
-                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}>
-                <span style={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: active ? 800 : 600, color: active ? T.brand : T.text }}>{opt}</span>
-                {active && <CheckCircleOutlineRoundedIcon style={{ fontSize: 14, color: T.brand, flexShrink: 0 }} />}
+              <button
+                key={opt}
+                type="button"
+                onClick={() => { onChange(opt); setOpen(false); }}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "6px 8px", background: active ? "#f0f4f9" : "transparent", border: "none", borderRadius: 6, cursor: "pointer", textAlign: "left", fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? "#24476e" : "#374151", whiteSpace: "nowrap", outline: "none" }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f3f6fb"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = active ? "#f0f4f9" : "transparent"; }}
+              >
+                <span>{opt}</span>
+                {active && <CheckCircleOutlineRoundedIcon style={{ fontSize: 15, color: "#3a6fa6", flexShrink: 0 }} />}
               </button>
             );
           })}
@@ -121,7 +126,7 @@ function WilayahDropdown({ options, value, onChange }) {
   return (
     <div ref={ref} style={{ position: "relative", width: 176 }}>
       <button type="button" onClick={() => setOpen((v) => !v)}
-        style={{ width: "100%", height: 36, display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: 999, border: `1.5px solid ${open ? T.brand : "#d4ddf0"}`, background: "linear-gradient(180deg, #f8fafc 0%, #eef1f6 100%)", padding: "0 11px 0 14px", cursor: "pointer", outline: "none", boxShadow: open ? `0 0 0 3px ${T.brandLight}` : "0 2px 8px rgba(22,58,107,0.07)", transition: "border-color 0.18s, box-shadow 0.18s" }}>
+        style={{ width: "100%", height: 36, display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: 999, border: `1.5px solid ${open ? T.brand : "#d7e1ee"}`, background: "linear-gradient(180deg, #f8fafc 0%, #eff1f4 100%)", padding: "0 11px 0 14px", cursor: "pointer", outline: "none", boxShadow: open ? `0 0 0 3px ${T.brandLight}` : "0 2px 8px rgba(36, 71, 110,0.07)", transition: "border-color 0.18s, box-shadow 0.18s" }}>
         <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
           <span style={{ width: 24, height: 24, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: value === "all" ? T.white : T.brandLight, border: `1px solid ${value === "all" ? T.line : T.brandBorder}` }}>
             <RoomRoundedIcon style={{ fontSize: 14, color: value === "all" ? T.subtle : T.brand }} />
@@ -133,7 +138,7 @@ function WilayahDropdown({ options, value, onChange }) {
         <KeyboardArrowDownRoundedIcon style={{ fontSize: 19, color: T.brand, flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: "100%", minWidth: 200, zIndex: 1000, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 14, boxShadow: "0 8px 32px rgba(22,58,107,0.13), 0 2px 8px rgba(22,58,107,0.07)", overflow: "hidden", maxHeight: 260, overflowY: "auto" }}>
+        <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: "100%", minWidth: 200, zIndex: 1000, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 14, boxShadow: "0 8px 32px rgba(36, 71, 110,0.13), 0 2px 8px rgba(36, 71, 110,0.07)", overflow: "hidden", maxHeight: 260, overflowY: "auto" }}>
           <div style={{ padding: "6px 10px 4px", borderBottom: `1px solid ${T.line}` }}>
             <span style={{ fontFamily: FONT_SANS, fontSize: 10, fontWeight: 800, color: T.subtle, textTransform: "uppercase", letterSpacing: "0.07em" }}>Wilayah</span>
           </div>
@@ -142,7 +147,7 @@ function WilayahDropdown({ options, value, onChange }) {
             return (
               <button key={item.value} type="button" onClick={() => { onChange(item.value); setOpen(false); }}
                 style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: active ? T.brandLight : "transparent", border: "none", borderBottom: `1px solid ${T.line}`, cursor: "pointer", transition: "background 0.12s", textAlign: "left" }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f4f6fa"; }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f5f6f8"; }}
                 onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: item.value === "all" ? T.subtle : "#16a34a" }} />
                 <span style={{ flex: 1, minWidth: 0, fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: active ? 800 : 600, color: active ? T.brand : T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -174,7 +179,7 @@ function SessionDropdown({ sessions, value, onChange }) {
   return (
     <div ref={ref} style={{ position: "relative", width: 188 }}>
       <button type="button" onClick={() => setOpen((v) => !v)}
-        style={{ width: "100%", height: 36, display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: 999, border: `1.5px solid ${open ? T.wa : "#d4ddf0"}`, background: "linear-gradient(180deg, #f8fafc 0%, #eef1f6 100%)", padding: "0 11px 0 14px", cursor: "pointer", outline: "none", boxShadow: open ? `0 0 0 3px ${T.waBg}` : "0 2px 8px rgba(22,58,107,0.07)", transition: "border-color 0.18s, box-shadow 0.18s" }}>
+        style={{ width: "100%", height: 36, display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: 999, border: `1.5px solid ${open ? T.wa : "#d7e1ee"}`, background: "linear-gradient(180deg, #f8fafc 0%, #eff1f4 100%)", padding: "0 11px 0 14px", cursor: "pointer", outline: "none", boxShadow: open ? `0 0 0 3px ${T.waBg}` : "0 2px 8px rgba(36, 71, 110,0.07)", transition: "border-color 0.18s, box-shadow 0.18s" }}>
         <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
           <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: active?.runtimeReady ? T.wa : T.subtle }} />
           <span style={{ fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 700, color: active ? T.ink : T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -184,7 +189,7 @@ function SessionDropdown({ sessions, value, onChange }) {
         <KeyboardArrowDownRoundedIcon style={{ fontSize: 19, color: T.brand, flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: "100%", zIndex: 1000, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 14, boxShadow: "0 8px 32px rgba(22,58,107,0.13), 0 2px 8px rgba(22,58,107,0.07)", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: "100%", zIndex: 1000, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 14, boxShadow: "0 8px 32px rgba(36, 71, 110,0.13), 0 2px 8px rgba(36, 71, 110,0.07)", overflow: "hidden" }}>
           <div style={{ padding: "6px 10px 4px", borderBottom: `1px solid ${T.line}` }}>
             <span style={{ fontFamily: FONT_SANS, fontSize: 10, fontWeight: 800, color: T.subtle, textTransform: "uppercase", letterSpacing: "0.07em" }}>Akun WhatsApp</span>
           </div>
@@ -193,7 +198,7 @@ function SessionDropdown({ sessions, value, onChange }) {
             return (
               <button key={s.id} type="button" onClick={() => { onChange(s.id); setOpen(false); }}
                 style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: isActive ? T.waBg : "transparent", border: "none", borderBottom: `1px solid ${T.line}`, cursor: "pointer", transition: "background 0.12s", textAlign: "left" }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#f4f6fa"; }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#f5f6f8"; }}
                 onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: s.runtimeReady ? T.wa : T.subtle }} />
                 <span style={{ flex: 1, minWidth: 0, fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: isActive ? 800 : 600, color: isActive ? T.green : T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -217,7 +222,7 @@ function SkeletonBar({ w, delay = 0 }) {
   return (
     <div style={{
       height: 10, borderRadius: 6, width: w,
-      background: "rgba(26,42,87,0.08)",
+      background: "rgba(36, 71, 110,0.08)",
       animation: `shimmer 1.4s ease-in-out ${delay}s infinite`,
     }} />
   );
@@ -226,7 +231,7 @@ function SkeletonBar({ w, delay = 0 }) {
 function LoadingTableState() {
   return (
     <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", margin: "0 16px", overflow: "hidden" }}>
-      <div style={{ display: "flex", borderBottom: `1.5px solid rgba(26,42,87,0.1)`, background: T.surface, flexShrink: 0 }}>
+      <div style={{ display: "flex", borderBottom: `1.5px solid rgba(36, 71, 110,0.1)`, background: T.surface, flexShrink: 0 }}>
         {SKEL_COLS.map((w, ci) => (
           <div key={ci} style={{ padding: "12px 16px", flex: ci === 1 ? 2 : 1, minWidth: w }}>
             <SkeletonBar w={`${[40,55,48,44,42,38,50][ci]}%`} delay={ci * 0.05} />
@@ -235,7 +240,7 @@ function LoadingTableState() {
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
         {SKEL_ROWS.map((_, ri) => (
-          <div key={ri} style={{ display: "flex", borderBottom: `1px solid rgba(26,42,87,0.05)`, background: ri % 2 === 0 ? T.white : T.surface, alignItems: "center" }}>
+          <div key={ri} style={{ display: "flex", borderBottom: `1px solid rgba(36, 71, 110,0.05)`, background: ri % 2 === 0 ? T.white : T.surface, alignItems: "center" }}>
             {SKEL_COLS.map((w, ci) => (
               <div key={ci} style={{ padding: "11px 16px", flex: ci === 1 ? 2 : 1, minWidth: w }}>
                 <SkeletonBar w={`${Math.round(50 + ((ri * 7 + ci * 13) % 35))}%`} delay={(ri * 0.04 + ci * 0.02)} />
@@ -483,7 +488,7 @@ export default function HasilPdfPage() {
             <input type="text" className="hdr-search" placeholder="Search..." value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
               style={{ height: 34, paddingLeft: 32, paddingRight: searchQuery ? 30 : 14, width: 200, fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 500, color: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", borderRadius: 10, background: "rgba(255,255,255,0.12)", outline: "none", transition: "border-color 0.18s, background 0.18s", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.12)" }}
-              onFocus={e => { e.target.style.borderColor = "rgba(233,196,106,0.8)"; e.target.style.background = "rgba(233,196,106,0.12)"; }}
+              onFocus={e => { e.target.style.borderColor = "rgba(58, 111, 166,0.8)"; e.target.style.background = "rgba(58, 111, 166,0.12)"; }}
               onBlur={e  => { e.target.style.borderColor = searchQuery ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)"; e.target.style.background = "rgba(255,255,255,0.12)"; }}
             />
             {searchQuery && (
@@ -499,7 +504,7 @@ export default function HasilPdfPage() {
         headerSlot
       )}
 
-      <section className="dashboard-panel" style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", borderRadius: 28 }}>
+      <section className="dashboard-panel" style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", borderRadius: 6 }}>
 
         {/* Card Header */}
         <div className="dashboard-panel__header" style={{ padding: "18px 24px 12px", borderBottom: "none", background: T.white, flexShrink: 0, margin: 0 }}>
@@ -597,7 +602,7 @@ export default function HasilPdfPage() {
                   <tr key={i} className="users-table__row" style={{ background: i % 2 !== 0 ? T.surface : T.white }}>
                     <td style={{ padding: "8px 14px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
-                        <span className="users-table__avatar" style={{ width: 30, height: 30, fontFamily: FONT_SANS, fontSize: 9.5, letterSpacing: "0.04em", flexShrink: 0 }}>{getInitials(row.nama)}</span>
+                        <Avatar seed={row.nama} initials={getInitials(row.nama)} />
                         <span style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 700, color: T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.nama || "—"}</span>
                       </div>
                     </td>

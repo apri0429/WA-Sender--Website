@@ -3,6 +3,8 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import logoPiagam from '../assets/logo-piagam.png'
+import logoPiagamMark from '../assets/logo-piagam2.png'
 import '../styles/layout.css'
 import { submitLogout } from '../lib/logoutService.js'
 
@@ -13,15 +15,6 @@ function BackToPilarGroupIcon({ size = 22, className }) {
       style={{ width: size, height: size, transform: 'scaleX(-1)' }}
     />
   )
-}
-
-function getInitials(name) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
 }
 
 function getItemKey(item) {
@@ -173,8 +166,6 @@ function Sidebar({
   collapsed = false,
   mobileOpen = false,
   activePath = '/dashboard',
-  userName = 'IT PIAGAM',
-  userRole = 'IT Team',
   primaryItems = [],
   secondaryItems = [],
   onAction,
@@ -192,7 +183,6 @@ function Sidebar({
   const [expandedGroups, setExpandedGroups] = useState(() =>
     getInitiallyExpandedGroups([...primaryItems, ...secondaryItems], activePath)
   )
-  const initials = getInitials(userName)
 
   useEffect(() => {
     setSelectedPath(activePath)
@@ -286,7 +276,10 @@ function Sidebar({
         {collapsed ? (
           <ChevronRight className="toggle-icon" size={16} />
         ) : (
-          <ChevronLeft className="toggle-icon" size={16} />
+          <>
+            <ChevronLeft className="toggle-icon" size={16} />
+            <span className="ns-toggle-text">Ciutkan menu</span>
+          </>
         )}
       </button>
 
@@ -300,17 +293,11 @@ function Sidebar({
       </button>
 
       <div className="sidebar-logo">
-        <div className="profile-content">
-          <div className="profile-avatar">
-            <span className="profile-avatar__badge">{initials}</span>
-            <div className="online-status" />
-          </div>
-
-          <div className="profile-info">
-            <h3 className="profile-name">{userName}</h3>
-            <p className="profile-role">{userRole}</p>
-          </div>
-        </div>
+        <img
+          src={collapsed ? logoPiagamMark : logoPiagam}
+          alt="PT Pilar Niaga Makmur"
+          className="ns-sidebar-logo"
+        />
       </div>
 
       <nav className="sidebar-nav" aria-label="Main navigation">
@@ -367,7 +354,7 @@ function Sidebar({
               letterSpacing: '0.02em',
               userSelect: 'none',
             }}>
-              &copy; 2026 PT Pilar Niaga Makmur
+              Sendline &middot; v1.0
             </p>
             <p style={{
               margin: 0,
@@ -378,7 +365,7 @@ function Sidebar({
               letterSpacing: '0.01em',
               userSelect: 'none',
             }}>
-              Developed by IT Team 
+              &copy; 2026 PT Pilar Niaga Makmur
             </p>
           </div>
         )}

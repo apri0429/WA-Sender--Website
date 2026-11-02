@@ -1,0 +1,1857 @@
+/* ==========================================================================
+   NetSuite skin — loaded last (after netsuite.css) so every page shares one look:
+   flat grey page, square-ish white panels, classic grey buttons with one blue
+   primary, grey list-table headers. Pages opt in with .ns-page on their root;
+   the !important rules beat the inline styles those pages still carry.
+   ========================================================================== */
+:root {
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+  --ns-page-bg: #eef1f5;
+  --ns-panel-border: #d3d9e1;
+  --ns-line: #e3e7ec;
+  --ns-th-bg: #e4e9ef;
+  --ns-th-border: #c3ccd7;
+  --ns-th-text: #3c4a5c;
+  --ns-ink: #222c38;
+  --ns-title: #1c2a3d;
+  --ns-row-alt: #f8f9fb;
+  --ns-row-hover: #eaf1fb;
+  --ns-btn-border: #a9b3bf;
+  --ns-btn-top: #ffffff;
+  --ns-btn-bottom: #e9edf1;
+  --ns-btn-text: #1f2a37;
+  --ns-primary-top: #3577c8;
+  --ns-primary-bottom: #24476e;
+  --ns-primary-border: #164682;
+  --ns-radius: 3px;
+  /* Same blue as the top header; reused by portlet bars and popup title bars */
+  --ns-head-gradient: linear-gradient(90deg, #1c2a3d 0%, var(--primary-blue) 45%, var(--secondary-blue) 100%);
+}
+
+body,
+.dashboard-main {
+  background: var(--ns-page-bg);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv11', 'ss01', 'tnum';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- Buttons (ToolButton, dashboard, table buttons, MUI) ----------
+   NetSuite style: light grey gradient face with a hairline border for every
+   action, one solid blue gradient for the primary action, bold short labels. */
+.pt-btn,
+.bd-btn,
+.users-table__detail-button,
+.users-table__accordion-button,
+.users-table-pagination__button,
+.MuiButton-root.MuiButton-outlined {
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 14px;
+  border: 1px solid var(--ns-btn-border) !important;
+  border-radius: var(--ns-radius) !important;
+  background: linear-gradient(180deg, var(--ns-btn-top) 0%, var(--ns-btn-bottom) 100%) !important;
+  color: var(--ns-btn-text) !important;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  text-transform: none !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 1px rgba(16, 24, 40, 0.06) !important;
+  transform: none !important;
+  filter: none !important;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+
+.pt-btn:hover:not(:disabled),
+.bd-btn:hover:not(:disabled),
+.users-table__detail-button:hover:not(:disabled),
+.users-table__accordion-button:hover:not(:disabled),
+.users-table-pagination__button:hover:not(:disabled),
+.MuiButton-root.MuiButton-outlined:hover {
+  border-color: #7f8b99 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #dde2e8 100%) !important;
+}
+
+.pt-btn:active:not(:disabled),
+.bd-btn:active:not(:disabled),
+.MuiButton-root.MuiButton-outlined:active {
+  background: linear-gradient(180deg, #d6dce3 0%, #eceff3 100%) !important;
+  box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.15) !important;
+}
+
+/* One blue primary per bar, whatever colour tone the page asked for */
+.pt-btn--primary,
+.bd-btn--primary,
+.ns-actions .bd-btn--primary,
+.users-table-pagination__button--active,
+.MuiButton-root.MuiButton-containedPrimary {
+  border: 1px solid var(--ns-primary-border) !important;
+  background: linear-gradient(180deg, var(--ns-primary-top) 0%, var(--ns-primary-bottom) 100%) !important;
+  color: #fff !important;
+  font-weight: 700;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(16, 24, 40, 0.18) !important;
+}
+
+.pt-btn--primary:hover:not(:disabled),
+.bd-btn--primary:hover:not(:disabled),
+.ns-actions .bd-btn--primary:hover:not(:disabled),
+.users-table-pagination__button--active:hover:not(:disabled),
+.MuiButton-root.MuiButton-containedPrimary:hover {
+  border-color: #1c2a3d !important;
+  background: linear-gradient(180deg, #3a6fa6 0%, #24476e 100%) !important;
+}
+
+.pt-btn--primary:active:not(:disabled),
+.bd-btn--primary:active:not(:disabled),
+.MuiButton-root.MuiButton-containedPrimary:active {
+  background: linear-gradient(180deg, #24476e 0%, #24476e 100%) !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Keyboard focus: NetSuite-blue ring, never on mouse click */
+.pt-btn:focus-visible,
+.bd-btn:focus-visible,
+.users-table__detail-button:focus-visible,
+.users-table__accordion-button:focus-visible,
+.users-table-pagination__button:focus-visible,
+.MuiButton-root:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(44, 105, 181, 0.55) !important;
+}
+
+/* Destructive buttons keep grey face, red text */
+.pt-btn--rose:not(.pt-btn--primary),
+.bd-btn--stop,
+.users-table__accordion-button--danger,
+.MuiButton-root.MuiButton-outlinedError {
+  color: #b42318 !important;
+}
+
+.bd-btn--danger-solid,
+.MuiButton-root.MuiButton-containedError {
+  border: 1px solid #a8231a !important;
+  background: linear-gradient(180deg, #d9463b 0%, #b42318 100%) !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.pt-btn:disabled,
+.bd-btn:disabled,
+.users-table-pagination__button:disabled,
+.MuiButton-root.Mui-disabled {
+  opacity: 0.5;
+  cursor: default;
+  box-shadow: none !important;
+}
+
+.bd-btn--lg,
+.MuiButton-root.MuiButton-sizeLarge:not(.MuiButton-text) {
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 18px;
+  font-size: 13.5px;
+}
+
+.MuiButton-root.MuiButton-sizeSmall:not(.MuiButton-text) {
+  height: 26px !important;
+  min-height: 26px !important;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.bd-btn--icon,
+.bd-btn--sm {
+  width: 30px;
+  padding: 0;
+}
+
+.users-table__detail-button {
+  border-radius: var(--ns-radius) !important;
+}
+
+/* ---------- Search / inputs ---------- */
+.pt-search {
+  width: 220px;
+}
+
+.pt-search input,
+.bd-search input {
+  height: 28px !important;
+  border: 1px solid var(--ns-btn-border) !important;
+  border-radius: var(--ns-radius) !important;
+  background: #fff !important;
+  color: var(--ns-ink) !important;
+  font-size: 12.5px;
+  font-weight: 400;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+.pt-search input:focus,
+.bd-search input:focus {
+  border-color: #3a6fa6 !important;
+  box-shadow: 0 0 0 2px rgba(44, 105, 181, 0.18) !important;
+}
+
+/* Filter dropdown triggers (wilayah, penagih): plain NetSuite select box */
+.ns-select {
+  height: 28px !important;
+  padding: 0 6px 0 8px !important;
+  border: 1px solid var(--ns-btn-border) !important;
+  border-radius: var(--ns-radius) !important;
+  background: #fff !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+.ns-select:focus-visible,
+.ns-select[aria-expanded='true'] {
+  border-color: #3a6fa6 !important;
+}
+
+.ns-select > span > span:first-child:not(:only-child) {
+  width: 18px !important;
+  height: 18px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.ns-select span {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+}
+
+/* ---------- List pages (Input, Periode, Master Data, Generate PDF) ---------- */
+/* NetSuite list/record pages are plain white edge to edge; only the dashboard
+   shows grey behind its portlets. */
+.ns-page {
+  padding: 0 !important;
+  gap: 0 !important;
+  background: #fff;
+}
+
+.ns-page .dashboard-panel {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+/* Page header: title on top, NetSuite button bar underneath, search on the right */
+.ns-page .dashboard-panel__header {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: flex-end !important;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 14px 18px 12px !important;
+  border-bottom: 1px solid var(--ns-line) !important;
+  background: #fff !important;
+}
+
+.ns-page .dashboard-panel__header > div:first-child {
+  flex: 1 0 100%;
+}
+
+.ns-page .dashboard-panel__title {
+  margin: 0;
+  color: var(--c-ink) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 20px !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.ns-page .dashboard-panel__description {
+  color: #6b7785 !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11.5px !important;
+}
+
+.ns-page .dashboard-panel__action {
+  flex: 1 1 auto;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+}
+
+.ns-page .dashboard-panel__action > .pt-search {
+  order: 99;
+  margin-left: auto;
+}
+
+/* Notices: NetSuite yellow alert bar */
+.ns-page .pt-notice,
+.pt-notice {
+  border: 1px solid #e3c766;
+  border-left: 4px solid #d9a400;
+  border-radius: var(--ns-radius);
+  background: #fff8d9;
+  color: #5c4500;
+}
+
+.ns-page .dashboard-panel__header + div:has(> .pt-notice) {
+  padding: 10px 18px 0 !important;
+}
+
+/* Table: full-bleed grey header, thin grid lines */
+.ns-page .users-table-wrapper {
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+.ns-page .dashboard-panel__header ~ div > .pt-notice {
+  margin-bottom: 10px;
+}
+
+.ns-page .users-table,
+.bd-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.ns-page .users-table th,
+.bd-table th {
+  height: 30px !important;
+  padding: 0 10px !important;
+  background: var(--ns-th-bg) !important;
+  border-top: 0 !important;
+  border-bottom: 1px solid var(--ns-th-border) !important;
+  border-right: 1px solid #d5dce4 !important;
+  border-radius: 0 !important;
+  color: var(--ns-th-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase;
+}
+
+.ns-page .users-table th:last-child,
+.bd-table th:last-child {
+  border-right: 0 !important;
+}
+
+.ns-page .users-table td,
+.bd-table td {
+  border-bottom: 1px solid var(--ns-line) !important;
+  color: var(--ns-ink);
+  font-size: 12.5px;
+}
+
+.ns-page .users-table tbody tr:nth-child(even) td {
+  background: var(--ns-row-alt);
+}
+
+.ns-page .users-table tbody tr.users-table__row:hover td,
+.bd-table tbody tr:hover td {
+  background: var(--ns-row-hover) !important;
+}
+
+.ns-page .users-table tbody tr.users-table__row--expanded td {
+  background: #e1ebf8 !important;
+}
+
+.ns-page .users-table__accordion {
+  border-radius: 0 !important;
+  background: #f6f8fb !important;
+  border-top: 1px solid var(--ns-line);
+}
+
+/* Footer / pagination strip */
+.ns-page .users-table-pagination {
+  padding: 8px 18px !important;
+  border-top: 1px solid var(--ns-panel-border) !important;
+  background: #f4f6f9;
+}
+
+/* ---------- Dashboard (Kirim Tagihan) ---------- */
+.bd-stats,
+.bd-panel,
+.ns-portlet {
+  border-color: var(--ns-panel-border) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}
+
+.bd-panel__head {
+  border-bottom: 1px solid var(--ns-line);
+}
+
+.bd-panel__head h2,
+.bd-panel__title h2 {
+  color: var(--c-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.bd-stat__label {
+  color: #5d6a7a;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.bd-stat__value {
+  color: var(--c-ink);
+  font-family: var(--font-sans);
+}
+
+.ns-portlet__head {
+  height: 34px;
+  border-radius: 0;
+  background: var(--ns-head-gradient) !important;
+}
+
+.ns-portlet__toggle {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Flat white bodies, plain text figures: no tinted gradients anywhere */
+.ns-portlet,
+.ns-portlet__body,
+.ns-portlet--fill .ns-portlet__body,
+.bd-panel,
+.bd-stats {
+  background: #fff !important;
+}
+
+.bd-stat__value,
+.bd-stat:first-child .bd-stat__value {
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+  color: var(--c-ink) !important;
+}
+
+.bd-tab.active {
+  border-bottom-color: var(--ns-primary-bottom) !important;
+}
+
+.bd-qr__frame,
+.bd-qr__steps,
+.bd-toast,
+.bd-preview,
+.bd-modal__warn {
+  border-radius: var(--ns-radius) !important;
+}
+
+.bd-qr__steps {
+  background: #f4f6f9;
+  border: 1px solid var(--ns-line);
+}
+
+.bd-count {
+  border-radius: var(--ns-radius) !important;
+  background: var(--ns-th-bg) !important;
+  color: var(--ns-th-text) !important;
+}
+
+/* ---------- Modals ---------- */
+.bd-modal,
+.header-modal {
+  border-radius: 4px !important;
+}
+
+.bd-modal__head {
+  border-bottom: 1px solid var(--ns-line);
+  background: #f4f6f9;
+}
+
+.MuiDialog-paper {
+  border-radius: 4px !important;
+}
+
+/* Menu dropdowns and pills used across pages */
+.nsh .ns-menu__dropdown {
+  border-radius: 0 0 var(--ns-radius) var(--ns-radius);
+}
+
+/* Phone: keep the header to logo + menu button + avatar so nothing overlaps */
+@media (max-width: 600px) {
+  .nsh-top {
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .nsh-divider,
+  .nsh-title,
+  .pm__meta,
+  .pm__chevron {
+    display: none !important;
+  }
+
+
+  .ns-page .dashboard-panel__header {
+    padding: 12px !important;
+  }
+
+  .ns-page .dashboard-panel__action > .pt-search {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* ==========================================================================
+   NetSuite polish, round 2: flat bars, no decorative avatars or pastel pills,
+   compact list rows. Same data on every page, only the look changes.
+   ========================================================================== */
+:root {
+  --ns-head-gradient: #24476e;
+}
+
+/* Header: flat navy bar + darker menu strip, no glow */
+.nsh {
+  background: #24476e !important;
+  box-shadow: 0 1px 0 #1c2a3d !important;
+}
+
+.nsh-menurow {
+  background: #1c2a3d !important;
+  border-top: 1px solid #1c2a3d !important;
+}
+
+/* Lists: plain text cells like a NetSuite saved search */
+.users-table__avatar {
+  display: none !important;
+}
+
+.users-table__status,
+.users-table__status--inline {
+  min-width: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--ns-ink) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: inherit !important;
+}
+
+.users-table td > button[type='button'] {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  border-radius: var(--ns-radius) !important;
+}
+
+/* Row delete: quiet grey icon, red only on hover */
+.users-table td > button:not([type]) {
+  width: 24px !important;
+  height: 24px !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--ns-radius) !important;
+  background: transparent !important;
+}
+
+.users-table td > button:not([type]) svg {
+  color: #7a8594 !important;
+}
+
+.users-table td > button:not([type]):hover {
+  border-color: var(--ns-btn-border) !important;
+  background: linear-gradient(180deg, var(--ns-btn-top) 0%, var(--ns-btn-bottom) 100%) !important;
+}
+
+.users-table td > button:not([type]):hover svg {
+  color: #b42318 !important;
+}
+
+/* Dashboard status: dot + text, no pill */
+.bd-status,
+.bd-status--ok,
+.bd-status--danger,
+.bd-status--warn,
+.bd-status--idle,
+.bd-status--muted {
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+}
+
+.bd-stats,
+.bd-panel,
+.ns-portlet {
+  border-radius: 2px !important;
+}
+
+/* ---------- Profile (header right): NetSuite user/role switcher ---------- */
+.pm__trigger {
+  height: 40px !important;
+  padding: 0 8px !important;
+  gap: 8px !important;
+  border: 1px solid transparent !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.pm__trigger:hover,
+.pm__trigger.open {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.pm__avatar {
+  width: 26px !important;
+  height: 26px !important;
+  border: 0 !important;
+  background: #dfe5ec !important;
+  color: #24476e !important;
+  box-shadow: none !important;
+}
+
+.pm__trigger:hover .pm__avatar,
+.pm__trigger.open .pm__avatar {
+  box-shadow: none !important;
+}
+
+.pm__meta strong {
+  color: #fff !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+}
+
+.pm__meta small {
+  color: rgba(255, 255, 255, 0.72) !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+}
+
+.pm__chevron {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Dropdown: square white panel, grey title strip, plain list rows */
+.pm__panel {
+  padding: 0 !important;
+  border: 1px solid #b4bcc6 !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18) !important;
+  overflow: hidden;
+}
+
+.pm__card {
+  margin: 0 !important;
+  padding: 10px 12px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #c3ccd7 !important;
+  border-radius: 0 !important;
+  background: #e4e9ef !important;
+}
+
+.pm__card::after {
+  display: none !important;
+}
+
+.pm__avatar--lg {
+  width: 32px !important;
+  height: 32px !important;
+  background: #fff !important;
+  border: 1px solid #c3ccd7 !important;
+}
+
+.pm__who strong {
+  color: #222c38 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.pm__who span {
+  color: #5d6a7a !important;
+  font-size: 11.5px !important;
+}
+
+.pm__info {
+  margin: 0 !important;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid var(--ns-line) !important;
+  background: #fff !important;
+}
+
+.pm__info dt {
+  color: #5d6a7a !important;
+  font-size: 11.5px !important;
+}
+
+.pm__info dd {
+  color: #222c38 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.pm__list {
+  padding: 4px 0 !important;
+}
+
+.pm__item {
+  height: 30px !important;
+  padding: 0 12px !important;
+  border-radius: 0 !important;
+  color: #222c38 !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+}
+
+.pm__item svg {
+  color: #5d6a7a !important;
+}
+
+.pm__item:hover {
+  background: var(--ns-row-hover) !important;
+  color: #24476e !important;
+}
+
+/* NetSuite Redwood profile: bare outline "users" glyph, no disc */
+.pm__avatar,
+.pm__avatar--lg {
+  width: 22px !important;
+  height: 22px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.pm__avatar--lg {
+  width: 26px !important;
+  height: 26px !important;
+  color: #3c4a5c !important;
+}
+
+/* ==========================================================================
+   Colour system, final pass: deep navy chrome, one confident blue for
+   actions, cool slate neutrals for text/lines, gold kept only as brand accent.
+   Every colour below comes from these tokens.
+   ========================================================================== */
+:root {
+  /* Same hue as the header bar (#1c2a3d), so page chrome and header read as one family */
+  --c-navy-900: #151f2e;
+  --c-navy-800: #1c2a3d;
+  --c-navy-700: #24476e;
+  --c-blue-600: #2d5a8a;
+  --c-blue-500: #3a6fa6;
+  --c-blue-50: #f0f4f9;
+  /* Slate neutrals (blue-tinted, not pure grey) */
+  --c-ink: #1c2a3d;
+  --c-ink-soft: #3d4c60;
+  --c-muted: #66768a;
+  --c-line: #e2e7ee;
+  --c-line-strong: #cfd7e2;
+  --c-surface-2: #f5f7fa;
+  --c-gold: #d4b06a;
+  --c-gold-soft: #f7efdc;
+
+  --ns-page-bg: #eef1f5;
+  --ns-panel-border: var(--c-line-strong);
+  --ns-line: var(--c-line);
+  --ns-th-bg: #f1f4f8;
+  --ns-th-border: var(--c-line-strong);
+  --ns-th-text: var(--c-ink-soft);
+  --ns-ink: var(--c-ink);
+  --ns-title: var(--c-ink);
+  --ns-row-alt: #f9fafc;
+  --ns-row-hover: #eef3f9;
+  --ns-primary-top: var(--c-blue-600);
+  --ns-primary-bottom: var(--c-navy-700);
+  --ns-primary-border: #1c2a3d;
+  --ns-head-gradient: linear-gradient(180deg, #f8fafc 0%, #edf1f6 100%);
+}
+
+body {
+  color: var(--c-ink);
+}
+
+/* Header: deep navy brand bar, slightly darker menu strip */
+.nsh {
+  background: #1c2a3d !important;
+  box-shadow: 0 1px 0 #131d2b, 0 2px 8px rgba(15, 23, 42, 0.16) !important;
+}
+
+.nsh-menurow {
+  background: #151f2e !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.nsh .ns-menu__trigger {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.nsh .ns-menu__trigger:hover,
+.nsh .ns-menu__trigger.open {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #fff !important;
+}
+
+.nsh .ns-menu__trigger.active {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  border-bottom-color: var(--c-gold) !important;
+}
+
+/* Page titles: solid navy, a touch heavier so they anchor the page */
+.ns-page .dashboard-panel__title {
+  color: var(--c-ink) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em;
+}
+
+.ns-page .dashboard-panel__description {
+  color: var(--c-muted) !important;
+}
+
+/* Portlets: light NetSuite title bar with navy text instead of solid blue blocks */
+.ns-portlet {
+  border: 1px solid var(--c-line-strong) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05) !important;
+  overflow: hidden;
+}
+
+.ns-portlet__head {
+  background: var(--ns-head-gradient) !important;
+  border-bottom: 1px solid var(--c-line-strong) !important;
+}
+
+.ns-portlet__toggle,
+.ns-portlet__toggle span {
+  color: var(--c-ink) !important;
+}
+
+.ns-portlet__toggle svg {
+  color: var(--c-muted) !important;
+}
+
+.ns-portlet__actions,
+.ns-portlet__actions .bd-status {
+  color: var(--c-ink-soft) !important;
+}
+
+.ns-portlet__actions .ns-link {
+  color: var(--c-blue-600) !important;
+}
+
+.ns-kv th {
+  color: var(--c-muted) !important;
+  font-weight: 500 !important;
+}
+
+.ns-kv td {
+  color: var(--c-ink) !important;
+}
+
+/* Stat strip */
+.bd-stats {
+  border: 1px solid var(--c-line-strong) !important;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05) !important;
+}
+
+.bd-stat__label {
+  color: var(--c-muted) !important;
+}
+
+.bd-stat__value,
+.bd-stat:first-child .bd-stat__value {
+  color: var(--c-ink) !important;
+}
+
+.bd-panel,
+.dashboard-panel {
+  border-color: var(--c-line-strong) !important;
+}
+
+/* List tables */
+.users-table th,
+.MuiTableCell-head {
+  background: var(--ns-th-bg) !important;
+  color: var(--c-ink-soft) !important;
+  border-bottom: 1px solid var(--c-line-strong) !important;
+}
+
+.users-table td {
+  color: var(--c-ink);
+  border-color: var(--c-line) !important;
+}
+
+.users-table tbody tr:hover > td {
+  background: var(--ns-row-hover) !important;
+}
+
+/* Links */
+.bd-link,
+.ns-link {
+  color: var(--c-blue-600);
+}
+
+.bd-link:hover,
+.ns-link:hover {
+  color: var(--c-navy-800);
+}
+
+/* Disabled primary goes grey like NetSuite, not a washed-out blue */
+.pt-btn--primary:disabled,
+.bd-btn--primary:disabled,
+.MuiButton-root.MuiButton-containedPrimary.Mui-disabled {
+  opacity: 1;
+  border-color: var(--c-line-strong) !important;
+  background: linear-gradient(180deg, #f6f7f9 0%, #e7ebef 100%) !important;
+  color: #9aa5b3 !important;
+  text-shadow: none;
+}
+
+.pt-btn:disabled,
+.bd-btn:disabled,
+.MuiButton-root.Mui-disabled {
+  opacity: 0.6;
+}
+
+.pt-btn--primary:disabled,
+.bd-btn--primary:disabled,
+.MuiButton-root.MuiButton-containedPrimary.Mui-disabled {
+  opacity: 1;
+}
+
+/* Inputs: focus ring in the action blue */
+.pt-search input:focus,
+.bd-search input:focus,
+.ns-select:focus-visible,
+.ns-select[aria-expanded='true'] {
+  border-color: var(--c-blue-500) !important;
+  box-shadow: 0 0 0 3px rgba(58, 111, 166, 0.16) !important;
+}
+
+/* Plain solid headings: no gradient-filled text */
+.dashboard-panel__title {
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+/* Disabled text links stay grey */
+.ns-link:disabled,
+.ns-link[aria-disabled='true'] {
+  color: #a3abb5 !important;
+  cursor: default;
+}
+
+/* ==========================================================================
+   Header harmony: page background, cards and accents pick up the header's
+   slate navy + champagne gold, so the bar and the content read as one piece.
+   ========================================================================== */
+body,
+.dashboard-shell,
+.dashboard-main {
+  background: var(--ns-page-bg) !important;
+}
+
+/* Main cards carry a thin gold cap, echoing the gold underline of the active menu */
+.bd-stats,
+.ns-page > .dashboard-panel {
+  border-top: 2px solid var(--c-gold) !important;
+}
+
+.bd-stat__label {
+  color: var(--c-ink-soft) !important;
+  letter-spacing: 0.04em;
+}
+
+/* Portlet title bars: slate tint with a navy marker on the left */
+.ns-portlet__head {
+  background: var(--ns-head-gradient) !important;
+  box-shadow: inset 3px 0 0 var(--c-navy-700);
+}
+
+/* Buttons by role, muted to sit next to the slate header:
+   navy solid = main action, green solid = go to next step,
+   soft blue = sync/refresh, soft green = open Google Sheet, red text = cancel. */
+.bd-btn:not(.bd-btn--primary):not(.bd-btn--danger):not(.bd-btn--danger-solid):not(.bd-btn--stop),
+.pt-btn:not(.pt-btn--primary) {
+  border-color: var(--c-line-strong) !important;
+  background: linear-gradient(180deg, #ffffff 0%, var(--c-surface-2) 100%) !important;
+  color: var(--c-navy-800) !important;
+}
+
+.pt-btn--blue:not(.pt-btn--primary) {
+  border-color: var(--brand-200) !important;
+  background: var(--brand-50) !important;
+  color: var(--c-navy-700) !important;
+}
+
+.pt-btn--blue:not(.pt-btn--primary):hover:not(:disabled) {
+  border-color: var(--c-blue-500) !important;
+  background: var(--brand-100) !important;
+}
+
+.pt-btn--green:not(.pt-btn--primary) {
+  border-color: #b9dcc7 !important;
+  background: #f1f8f4 !important;
+  color: #1f7a4d !important;
+}
+
+.pt-btn--green:not(.pt-btn--primary):hover:not(:disabled) {
+  border-color: #1f7a4d !important;
+  background: #e2f1e8 !important;
+}
+
+.pt-btn--primary.pt-btn--green {
+  border-color: #17633e !important;
+  background: linear-gradient(180deg, #24875a 0%, #1a6b45 100%) !important;
+  color: #fff !important;
+}
+
+.pt-btn--primary.pt-btn--green:hover:not(:disabled) {
+  background: linear-gradient(180deg, #2a9864 0%, #1a6b45 100%) !important;
+}
+
+.pt-btn--rose:not(.pt-btn--primary) {
+  border-color: #efc6c2 !important;
+  background: #fff !important;
+  color: #b42318 !important;
+}
+
+.pt-btn--rose:not(.pt-btn--primary):hover:not(:disabled) {
+  border-color: #b42318 !important;
+  background: #fdf1f0 !important;
+}
+
+/* Count badges next to card titles */
+.dashboard-panel__title + span,
+.bd-count {
+  background: var(--c-gold-soft);
+  color: #8a6a2c;
+}
+
+/* Tone colours above must not win over the grey disabled state */
+.pt-btn:disabled,
+.pt-btn--primary.pt-btn--green:disabled {
+  border-color: var(--c-line-strong) !important;
+  background: linear-gradient(180deg, #f6f7f9 0%, #e7ebef 100%) !important;
+  color: #9aa5b3 !important;
+}
+
+/* ==========================================================================
+   List filter (NetSuite saved-search style): small caps label inside a
+   square select, flat option list, navy highlight on the chosen value.
+   ========================================================================== */
+.ns-filter {
+  position: relative;
+  flex-shrink: 0;
+  min-width: 210px;
+}
+
+.ns-filter__field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 30px;
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--c-line-strong);
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(28, 42, 61, 0.06);
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ns-filter__field:hover {
+  border-color: #9aa8b9;
+}
+
+.ns-filter__field[aria-expanded='true'],
+.ns-filter__field:focus-visible {
+  outline: none;
+  border-color: var(--c-blue-500);
+  box-shadow: 0 0 0 2px rgba(58, 111, 166, 0.18);
+}
+
+/* A value is chosen: gold marker on the left, like the active menu tab */
+.ns-filter__field--set {
+  box-shadow: inset 3px 0 0 var(--c-gold);
+}
+
+.ns-filter__label {
+  padding-right: 8px;
+  border-right: 1px solid var(--c-line);
+  color: var(--c-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ns-filter__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ns-filter__arrow {
+  flex-shrink: 0;
+  color: var(--c-muted);
+  font-size: 18px !important;
+  transition: transform 0.15s;
+}
+
+.ns-filter__field[aria-expanded='true'] .ns-filter__arrow {
+  transform: rotate(180deg);
+}
+
+.ns-filter__menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  z-index: 1000;
+  min-width: 100%;
+  width: max-content;
+  max-width: min(380px, 90vw);
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 2px 0;
+  border: 1px solid #b4bcc6;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(28, 42, 61, 0.18);
+}
+
+.ns-filter__option {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--c-ink);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.ns-filter__option:hover {
+  background: var(--ns-row-hover);
+}
+
+.ns-filter__option--active,
+.ns-filter__option--active:hover {
+  background: var(--c-navy-700);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Data tables + pagination, NetSuite saved-search style: compact 30px rows,
+   flat grid, quiet column tags, a slim footer with square page buttons.
+   ========================================================================== */
+.ns-page .users-table td {
+  height: 30px;
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+  vertical-align: middle;
+}
+
+.ns-page .users-table td > button[type='button'] {
+  padding: 2px 6px !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+
+.ns-page .users-table th {
+  color: var(--c-ink-soft) !important;
+}
+
+/* Column -> PDF field tags in the header: plain muted text, no boxed pill */
+.ns-page .users-table th .users-table__status {
+  margin-left: 2px;
+  border: 0 !important;
+  color: var(--c-muted) !important;
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.ns-page .users-table th .users-table__status svg {
+  opacity: 0.8;
+}
+
+/* Row "Detail" toggle: small square button */
+.ns-page .users-table__detail-button {
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+  border-radius: 2px !important;
+  font-size: 11.5px !important;
+}
+
+/* Footer strip */
+.users-table-pagination {
+  min-height: 40px;
+  padding: 5px 16px !important;
+  border-top: 1px solid var(--c-line-strong) !important;
+  background: var(--c-surface-2) !important;
+  font-family: var(--font-sans);
+}
+
+.users-table-pagination__summary,
+.users-table-pagination__page-size {
+  color: var(--c-ink-soft) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+}
+
+.users-table-pagination__summary strong {
+  color: var(--c-ink) !important;
+  font-weight: 700;
+}
+
+.users-table-pagination__button {
+  height: 26px !important;
+  min-height: 26px !important;
+  min-width: 26px !important;
+  padding: 0 8px !important;
+  border-radius: 2px !important;
+  font-size: 12px !important;
+  box-shadow: none !important;
+}
+
+.users-table-pagination__button span {
+  font-size: 12px !important;
+}
+
+/* Current page: plain navy */
+.users-table-pagination__button--active,
+.users-table-pagination__button--active:hover:not(:disabled) {
+  border-color: var(--c-navy-800) !important;
+  background: var(--c-navy-700) !important;
+  box-shadow: none !important;
+  color: #fff !important;
+}
+
+.users-table-pagination__ellipsis {
+  color: var(--c-muted) !important;
+}
+
+/* "Show [25] rows": same square select as the list filters */
+.users-table-pagination__page-size > div > button,
+.users-table-pagination__page-size > div > button:first-child {
+  height: 26px !important;
+  border: 1px solid var(--c-line-strong) !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  box-shadow: inset 0 1px 2px rgba(28, 42, 61, 0.06) !important;
+}
+
+.users-table-pagination__page-size > div > button[aria-expanded='true'],
+.users-table-pagination__page-size > div > button:hover {
+  border-color: var(--c-blue-500) !important;
+}
+
+.users-table-pagination__page-size > div > button span {
+  color: var(--c-ink) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+}
+
+.users-table-pagination__page-size > div > button svg {
+  color: var(--c-muted) !important;
+}
+
+.users-table-pagination__page-size > div > div {
+  padding: 2px 0 !important;
+  border: 1px solid #b4bcc6 !important;
+  border-radius: 2px !important;
+  box-shadow: 0 4px 14px rgba(28, 42, 61, 0.18) !important;
+}
+
+.users-table-pagination__page-size > div > div > button {
+  border-radius: 0 !important;
+  font-size: 12px !important;
+}
+
+.users-table-pagination__page-size > div > div > button svg {
+  display: none;
+}
+
+/* ==========================================================================
+   List cells like a NetSuite saved search: one plain 12.5px sans face,
+   normal weight ink text, record key (first column) shown as a link,
+   aligned figures, no centred pills.
+   ========================================================================== */
+.ns-page .users-table td,
+.ns-page .users-table td > button span,
+.ns-page .users-table td > button div > span {
+  font-family: var(--font-sans) !important;
+  font-size: 12.5px !important;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0 !important;
+}
+
+.ns-page .users-table td > button span,
+.ns-page .users-table td > button div > span {
+  color: var(--c-ink) !important;
+  font-weight: 400 !important;
+}
+
+/* Record key column: NetSuite blue link, underlined on hover */
+.ns-page .users-table tbody td:first-child > button span {
+  color: var(--c-blue-600) !important;
+  font-weight: 600 !important;
+}
+
+.ns-page .users-table tbody tr:hover td:first-child > button span {
+  text-decoration: underline;
+}
+
+/* Termin and similar status values sit left like any other text */
+.ns-page .users-table td .users-table__status {
+  margin: 0 !important;
+}
+
+/* Cell edit affordance: square, subtle */
+.ns-page .users-table td > button[type='button']:hover {
+  border-color: var(--c-line-strong) !important;
+  background: #fff !important;
+}
+
+/* Header: sentence-weight caps, darker ink, a navy rule under the header row */
+.ns-page .users-table thead th {
+  border-bottom: 1px solid var(--c-navy-700) !important;
+  color: var(--c-ink) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+/* Zebra + hover tuned to the slate palette */
+.ns-page .users-table tbody tr.users-table__row:nth-child(even) td {
+  background: var(--ns-row-alt) !important;
+}
+
+.ns-page .users-table tbody tr.users-table__row:nth-child(odd) td {
+  background: #fff !important;
+}
+
+.ns-page .users-table tbody tr.users-table__row:hover td {
+  background: #fdf8ec !important;
+}
+
+/* ==========================================================================
+   Kirim Tagihan list (bd-table) on the same NetSuite list look as the
+   data pages: slate header with navy rule, compact rows, plain text,
+   customer as the record link, cream hover, soft blue for selected rows.
+   ========================================================================== */
+.bd-table th {
+  height: 30px !important;
+  padding: 0 10px !important;
+  background: var(--ns-th-bg) !important;
+  border-bottom: 1px solid var(--c-navy-700) !important;
+  border-right: 1px solid #d5dce4 !important;
+  color: var(--c-ink) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase;
+}
+
+.bd-table th:last-child {
+  border-right: 0 !important;
+}
+
+.bd-table td {
+  height: 40px !important;
+  padding: 4px 10px !important;
+  border-bottom: 1px solid var(--ns-line) !important;
+  color: var(--c-ink);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+}
+
+.bd-table th.chk,
+.bd-table td.chk {
+  padding-left: 14px !important;
+  padding-right: 0 !important;
+}
+
+.bd-table th.num,
+.bd-table td.num {
+  padding-right: 14px !important;
+}
+
+.bd-table tbody tr:nth-child(even) td {
+  background: var(--ns-row-alt);
+}
+
+.bd-table tbody tr:hover td {
+  background: #fdf8ec !important;
+}
+
+.bd-table tbody tr.is-selected td {
+  background: var(--brand-50) !important;
+}
+
+.bd-table tbody tr.is-selected:hover td {
+  background: var(--brand-100) !important;
+}
+
+/* Customer = record link: blue, normal case weight; region muted below */
+.bd-cust strong {
+  color: var(--c-blue-600) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+}
+
+.bd-table tbody tr:hover .bd-cust strong {
+  text-decoration: underline;
+}
+
+.bd-table tr.is-off .bd-cust strong {
+  color: var(--c-ink-soft) !important;
+}
+
+.bd-cust small,
+.bd-statuscell__time {
+  color: var(--c-muted) !important;
+  font-size: 11px !important;
+}
+
+.bd-amount,
+.bd-due__date,
+.bd-phone {
+  color: var(--c-ink) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+}
+
+.bd-due__note {
+  font-size: 11px !important;
+}
+
+/* Row actions: small square icon buttons */
+.bd-table .bd-btn--sm {
+  width: 26px !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  border-radius: 2px !important;
+}
+
+/* Footer under the list: same strip as the pagination bar */
+.bd-foot {
+  min-height: 40px;
+  border-top: 1px solid var(--c-line-strong) !important;
+  background: var(--c-surface-2) !important;
+  color: var(--c-ink-soft);
+  font-size: 12px;
+}
+
+/* Count chips next to card titles (Periode "82 baris · 7 kolom"): slate, not teal */
+.master-project-badge,
+.master-project-badge--active {
+  border: 1px solid var(--c-line-strong) !important;
+  border-radius: 2px !important;
+  background: var(--c-surface-2) !important;
+  color: var(--c-ink-soft) !important;
+  font-family: var(--font-sans) !important;
+}
+
+/* ==========================================================================
+   Kirim Tagihan, NetSuite dashboard pass: every block is a portlet
+   (slate title bar + navy marker), KPI strip is compact, filters are
+   subtabs, controls are 28px squares, checkboxes in navy.
+   ========================================================================== */
+
+/* KPI strip: compact, same frame as the portlets */
+.bd-stats {
+  border: 1px solid var(--c-line-strong) !important;
+  border-top: 1px solid var(--c-line-strong) !important;
+  border-radius: 4px !important;
+}
+
+.bd-stat {
+  gap: 2px !important;
+  padding: 10px 16px !important;
+}
+
+.bd-stat__label {
+  color: var(--c-muted) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase;
+}
+
+.bd-stat__value,
+.bd-stat:first-child .bd-stat__value {
+  color: var(--c-ink) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.bd-stat__value--danger {
+  color: #b42318 !important;
+}
+
+.bd-stat__value--warn {
+  color: #b45309 !important;
+}
+
+.bd-stat__sub {
+  color: var(--c-muted) !important;
+  font-size: 11.5px !important;
+}
+
+/* Main list card = portlet */
+.bd-panel {
+  border: 1px solid var(--c-line-strong) !important;
+  border-radius: 4px !important;
+  overflow: hidden;
+}
+
+.bd-panel__head {
+  min-height: 40px;
+  padding: 6px 12px 6px 14px !important;
+  background: var(--ns-head-gradient) !important;
+  border-bottom: 1px solid var(--c-line-strong) !important;
+  box-shadow: inset 3px 0 0 var(--c-navy-700);
+  align-items: center !important;
+}
+
+.bd-panel__title {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: baseline !important;
+  gap: 10px !important;
+}
+
+.bd-panel__title h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0 !important;
+  color: var(--c-ink) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.bd-count {
+  min-width: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  color: var(--c-muted) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.bd-count::before { content: '('; }
+.bd-count::after { content: ')'; }
+
+.bd-updated {
+  color: var(--c-muted) !important;
+  font-size: 11.5px !important;
+}
+
+.bd-head-actions {
+  gap: 6px !important;
+}
+
+.bd-head-actions .bd-search input {
+  height: 28px !important;
+  border-radius: 2px !important;
+  font-size: 12.5px !important;
+}
+
+.bd-head-actions .bd-btn {
+  height: 28px !important;
+  min-height: 28px !important;
+  border-radius: 2px !important;
+}
+
+.bd-head-actions .bd-btn--icon {
+  width: 28px !important;
+  padding: 0 !important;
+}
+
+/* Filters = NetSuite subtabs */
+.bd-tabs {
+  gap: 0 !important;
+  padding: 0 8px !important;
+  background: #fff !important;
+  border-bottom: 1px solid var(--c-line-strong) !important;
+}
+
+.bd-tab {
+  height: 34px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--c-ink-soft) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+}
+
+.bd-tab:hover {
+  color: var(--c-ink) !important;
+  background: var(--c-surface-2) !important;
+}
+
+.bd-tab.active {
+  border-bottom-color: var(--c-navy-700) !important;
+  color: var(--c-navy-800) !important;
+  font-weight: 700 !important;
+}
+
+.bd-tab span {
+  min-width: 0 !important;
+  height: auto !important;
+  margin-left: 4px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  color: var(--c-muted) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.bd-tab span::before { content: '('; }
+.bd-tab span::after { content: ')'; }
+
+/* Sort headers: label first, small muted arrow after */
+.bd-sort {
+  gap: 3px !important;
+  color: inherit !important;
+  font: inherit !important;
+  letter-spacing: inherit !important;
+  text-transform: inherit !important;
+}
+
+.bd-sort svg {
+  color: var(--c-muted);
+  font-size: 13px !important;
+}
+
+.bd-sort.is-active svg {
+  color: var(--c-navy-700);
+}
+
+.bd-table th.num .bd-sort {
+  flex-direction: row-reverse;
+}
+
+/* Checkboxes in navy */
+.bd-page input[type='checkbox'] {
+  width: 14px !important;
+  height: 14px !important;
+  accent-color: var(--c-navy-700);
+  cursor: pointer;
+}
+
+/* Side portlets: same 40px title bar height as the list */
+.ns-portlet__head {
+  min-height: 40px;
+}
+
+.ns-portlet__toggle span {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.bd-tab.active,
+.bd-tab.active:hover {
+  box-shadow: inset 0 -2px 0 var(--c-navy-700) !important;
+}
+
+.bd-tab::after {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Portlets must not clip dropdowns that open inside them (WhatsApp account
+   picker). Only the scrolling "fill" portlet keeps its clipping.
+   ========================================================================== */
+.ns-portlet:not(.ns-portlet--fill) {
+  overflow: visible !important;
+}
+
+.ns-portlet:not(.ns-portlet--fill) > .ns-portlet__head {
+  border-radius: 3px 3px 0 0;
+}
+
+/* The portlet holding an open menu sits above the portlets below it */
+.ns-portlet:focus-within {
+  position: relative;
+  z-index: 30;
+}
+
+/* WhatsApp account picker: same square select + flat list as the list filters */
+.ns-acct {
+  position: relative;
+  width: 100%;
+}
+
+.ns-acct__field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--c-line-strong);
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(28, 42, 61, 0.06);
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ns-acct__field:hover:not(:disabled) {
+  border-color: #9aa8b9;
+}
+
+.ns-acct__field[aria-expanded='true'],
+.ns-acct__field:focus-visible {
+  outline: none;
+  border-color: var(--c-blue-500);
+  box-shadow: 0 0 0 2px rgba(58, 111, 166, 0.18);
+}
+
+.ns-acct__field:disabled {
+  background: var(--c-surface-2);
+  cursor: not-allowed;
+}
+
+.ns-acct__dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #b4bcc6;
+}
+
+.ns-acct__dot--ready { background: #1f7a4d; }
+.ns-acct__dot--idle { background: #d4a03a; }
+
+.ns-acct__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ns-acct__value--empty {
+  color: var(--c-muted);
+  font-weight: 400;
+}
+
+.ns-acct__arrow {
+  flex-shrink: 0;
+  color: var(--c-muted);
+  font-size: 18px !important;
+  transition: transform 0.15s;
+}
+
+.ns-acct__field[aria-expanded='true'] .ns-acct__arrow {
+  transform: rotate(180deg);
+}
+
+.ns-acct__menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 2px 0;
+  border: 1px solid #b4bcc6;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(28, 42, 61, 0.18);
+}
+
+.ns-acct__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ns-acct__option:hover {
+  background: var(--ns-row-hover);
+}
+
+.ns-acct__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-ink);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ns-acct__num {
+  flex-shrink: 0;
+  color: var(--c-muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ns-acct__option--active,
+.ns-acct__option--active:hover {
+  background: var(--c-navy-700);
+}
+
+.ns-acct__option--active .ns-acct__label {
+  color: #fff;
+  font-weight: 600;
+}
+
+.ns-acct__option--active .ns-acct__num {
+  color: rgba(255, 255, 255, 0.75);
+}

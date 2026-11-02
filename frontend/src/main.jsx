@@ -3,6 +3,8 @@ import ReactDOM from "react-dom/client";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import App from "./App";
 import theme from "./theme";
+import "./layout/styles/netsuite.css";
+import "./layout/styles/ns-skin.css";
 
 class RootErrorBoundary extends React.Component {
   constructor(props) {

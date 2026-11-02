@@ -10,60 +10,744 @@
   ],
   "rows": [
     {
-      "noInvoice": "SI251212106",
-      "tanggalInvoice": "30/12/2025",
+      "noInvoice": "SI260705869",
+      "tanggalInvoice": "02/07/2026",
       "termin": "3 Bulan",
-      "tempo": "30/03/2026",
-      "customer": "MATSUM TJIAWI",
-      "tagihan": 925000,
-      "penagih": "Shoona Kabila Mahaaba"
+      "tempo": "02/10/2026",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 23189739,
+      "penagih": "Rina Rahayu"
     },
     {
-      "noInvoice": "SI260100315",
-      "tanggalInvoice": "08/01/2026",
+      "noInvoice": "SI260705873",
+      "tanggalInvoice": "02/07/2026",
       "termin": "3 Bulan",
-      "tempo": "08/04/2026",
-      "customer": "MATSUM TJIAWI",
-      "tagihan": 3835000,
-      "penagih": "Shoona Kabila Mahaaba"
+      "tempo": "02/10/2026",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 11323860,
+      "penagih": "Rina Rahayu"
     },
     {
-      "noInvoice": "SI260302689",
-      "tanggalInvoice": "30/03/2026",
+      "noInvoice": "SI260705875",
+      "tanggalInvoice": "02/07/2026",
       "termin": "3 Bulan",
-      "tempo": "29/06/2026",
-      "customer": "PUTRA FANGHIN SEJAHTERA, CV",
-      "tagihan": 1238000,
-      "penagih": "Shoona Kabila Mahaaba"
+      "tempo": "02/10/2026",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 14492076,
+      "penagih": "Rina Rahayu"
     },
     {
-      "noInvoice": "SI260402777",
-      "tanggalInvoice": "01/04/2026",
+      "noInvoice": "SI260705942",
+      "tanggalInvoice": "03/07/2026",
       "termin": "3 Bulan",
-      "tempo": "01/07/2026",
-      "customer": "KARYA MAJU TEKNINDO, PT",
-      "tagihan": 17826986,
-      "penagih": "Shoona Kabila Mahaaba"
+      "tempo": "03/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 31526530,
+      "penagih": "Rina Rahayu"
     },
     {
-      "noInvoice": "SI260402778",
-      "tanggalInvoice": "01/04/2026",
+      "noInvoice": "SI260705954",
+      "tanggalInvoice": "03/07/2026",
       "termin": "3 Bulan",
-      "tempo": "01/07/2026",
-      "customer": "KARYA MAJU TEKNINDO, PT",
-      "tagihan": 16272025,
-      "penagih": "Shoona Kabila Mahaaba"
+      "tempo": "03/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 8138817,
+      "penagih": "Rina Rahayu"
     },
     {
-      "noInvoice": "SI260402779",
-      "tanggalInvoice": "01/04/2026",
+      "noInvoice": "SI260705905",
+      "tanggalInvoice": "04/07/2026",
       "termin": "3 Bulan",
-      "tempo": "01/07/2026",
-      "customer": "RICARDO JULIVER PARDOSI",
-      "tagihan": 2550000,
-      "penagih": "Shoona Kabila Mahaaba"
+      "tempo": "04/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 23289200,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260705986",
+      "tanggalInvoice": "06/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 3120500,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260705988",
+      "tanggalInvoice": "06/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 411195,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260705992",
+      "tanggalInvoice": "06/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/10/2026",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 6571536,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260705998",
+      "tanggalInvoice": "06/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/10/2026",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 17545584,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260705999",
+      "tanggalInvoice": "06/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/10/2026",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 5230116,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706002",
+      "tanggalInvoice": "06/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 5507722,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706003",
+      "tanggalInvoice": "06/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "06/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2481864,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706028",
+      "tanggalInvoice": "07/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "07/10/2026",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 61157280,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706033",
+      "tanggalInvoice": "07/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "07/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1749060,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706083",
+      "tanggalInvoice": "08/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "08/10/2026",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 18991600,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706102",
+      "tanggalInvoice": "08/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "08/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1824900,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706103",
+      "tanggalInvoice": "08/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "08/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 987500,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706104",
+      "tanggalInvoice": "08/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "08/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 21762604,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706106",
+      "tanggalInvoice": "08/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "08/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 3871000,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706239",
+      "tanggalInvoice": "08/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "08/10/2026",
+      "customer": "ISTANA JAYA SEJAHTERA,CV",
+      "tagihan": 2125100,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706149",
+      "tanggalInvoice": "09/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "09/10/2026",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 1888100,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706163",
+      "tanggalInvoice": "09/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "09/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2100847,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706164",
+      "tanggalInvoice": "09/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "09/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 663600,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706207",
+      "tanggalInvoice": "10/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "10/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 49070850,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706212",
+      "tanggalInvoice": "10/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "10/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 13764960,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706225",
+      "tanggalInvoice": "10/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "10/10/2026",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 9448100,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706253",
+      "tanggalInvoice": "11/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "11/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 3310100,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706254",
+      "tanggalInvoice": "11/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "11/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2125100,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706259",
+      "tanggalInvoice": "11/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "11/10/2026",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 967355,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706290",
+      "tanggalInvoice": "13/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "13/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1879410,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706317",
+      "tanggalInvoice": "14/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "14/10/2026",
+      "customer": "CAHAYA MATERIAL INDONESIA, CV",
+      "tagihan": 10134120,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706332",
+      "tanggalInvoice": "14/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "14/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 663600,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706371",
+      "tanggalInvoice": "15/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "15/10/2026",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 26276140,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706376",
+      "tanggalInvoice": "15/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "15/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 16770910,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706429",
+      "tanggalInvoice": "16/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "16/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1749060,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706430",
+      "tanggalInvoice": "16/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "16/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 3945087,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706445",
+      "tanggalInvoice": "16/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "16/10/2026",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 4642040,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706446",
+      "tanggalInvoice": "16/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "16/10/2026",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 6794316,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706489",
+      "tanggalInvoice": "17/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "17/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 7698708,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706508",
+      "tanggalInvoice": "18/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "18/10/2026",
+      "customer": "ADIJAYA BUANA PERKASA, PT",
+      "tagihan": 6568218,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706511",
+      "tanggalInvoice": "18/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "18/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2841630,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706543",
+      "tanggalInvoice": "20/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "20/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 4937500,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706599",
+      "tanggalInvoice": "21/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "21/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1696920,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706600",
+      "tanggalInvoice": "21/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "21/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2481864,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706683",
+      "tanggalInvoice": "23/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "23/10/2026",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 1499000,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706733",
+      "tanggalInvoice": "24/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "24/10/2026",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 56548200,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706736",
+      "tanggalInvoice": "24/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "24/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1595010,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706749",
+      "tanggalInvoice": "24/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "24/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1975000,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706753",
+      "tanggalInvoice": "24/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "24/10/2026",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 2669410,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706754",
+      "tanggalInvoice": "24/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "24/10/2026",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 2131420,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706766",
+      "tanggalInvoice": "25/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "25/10/2026",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 4408200,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706767",
+      "tanggalInvoice": "25/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "25/10/2026",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 7374124,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706784",
+      "tanggalInvoice": "25/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "25/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2353410,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706785",
+      "tanggalInvoice": "25/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "25/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1634510,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706786",
+      "tanggalInvoice": "25/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "25/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 1816210,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706810",
+      "tanggalInvoice": "27/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "27/10/2026",
+      "customer": "CAHAYA LAS INDONESIA, PT",
+      "tagihan": 16969200,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706869",
+      "tanggalInvoice": "28/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "28/10/2026",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 5941432,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706871",
+      "tanggalInvoice": "28/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "28/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 874530,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706887",
+      "tanggalInvoice": "28/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "28/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 874530,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706888",
+      "tanggalInvoice": "28/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "28/10/2026",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 20346450,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706901",
+      "tanggalInvoice": "29/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "29/10/2026",
+      "customer": "SINAR LOGAM BANGUN SEJATI, PT",
+      "tagihan": 16566300,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706902",
+      "tanggalInvoice": "29/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "29/10/2026",
+      "customer": "SINAR LOGAM BANGUN SEJATI, PT",
+      "tagihan": 5522100,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706908",
+      "tanggalInvoice": "29/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "29/10/2026",
+      "customer": "SAMUDRA BAUT TEKNIK, PT",
+      "tagihan": 6612300,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706924",
+      "tanggalInvoice": "29/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "29/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 3145464,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706925",
+      "tanggalInvoice": "29/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "29/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 4937500,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706929",
+      "tanggalInvoice": "29/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "29/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2481864,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706963",
+      "tanggalInvoice": "30/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "30/10/2026",
+      "customer": "JAFIAN WELDING INDONESIA, PT",
+      "tagihan": 34365000,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706966",
+      "tanggalInvoice": "30/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "30/10/2026",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 9075994,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706975",
+      "tanggalInvoice": "30/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "30/10/2026",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 10695355,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706976",
+      "tanggalInvoice": "30/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "30/10/2026",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 10858550,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706977",
+      "tanggalInvoice": "30/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "30/10/2026",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 23633250,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706978",
+      "tanggalInvoice": "30/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "30/10/2026",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 5312750,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706979",
+      "tanggalInvoice": "30/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "30/10/2026",
+      "customer": "ANEKA HUTAMA PERSADA, PT",
+      "tagihan": 4730400,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706991",
+      "tanggalInvoice": "30/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "30/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2238939,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706993",
+      "tanggalInvoice": "30/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "30/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2320230,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260706994",
+      "tanggalInvoice": "30/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "30/10/2026",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 2843210,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260707028",
+      "tanggalInvoice": "31/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "31/10/2026",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 3943127,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260707029",
+      "tanggalInvoice": "31/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "31/10/2026",
+      "customer": "KUAT GIAT NINIGI, CV",
+      "tagihan": 6903415,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260707033",
+      "tanggalInvoice": "31/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "31/10/2026",
+      "customer": "PILAR TEKNIK ANDALAN INDONESIA, PT",
+      "tagihan": 42240510,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260707034",
+      "tanggalInvoice": "31/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "31/10/2026",
+      "customer": "GLISTAGEN, PT",
+      "tagihan": 2125100,
+      "penagih": "Rina Rahayu"
+    },
+    {
+      "noInvoice": "SI260707056",
+      "tanggalInvoice": "31/07/2026",
+      "termin": "3 Bulan",
+      "tempo": "31/10/2026",
+      "customer": "INDOTOOL SUKSES MAKMUR, PT",
+      "tagihan": 1705500,
+      "penagih": "Rina Rahayu"
     }
   ],
-  "generatedAt": "2026-07-16T08:48:03.060Z",
+  "generatedAt": "2026-11-02T03:13:29.722Z",
   "sourceSheet": "Google Sheet"
 }

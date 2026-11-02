@@ -1,17 +1,13 @@
+import logoPiagamMark from '../assets/logo-piagam2.png'
+
+// Page backdrop: soft neutral gradient, a faint grid, and the Piagam mark as a watermark.
+// Kept quiet on purpose so tables and forms stay the focus.
 function BackgroundMain({ position = 'fixed', zIndex = -1 }) {
   return (
     <div aria-hidden="true" style={{ ...styles.root, position, zIndex }}>
-      <div style={styles.texture} />
-      <div style={styles.topCurve} />
-      <div style={styles.topRing} />
-      <div style={styles.topGlow} />
-      <div style={styles.middleBand} />
-      <div style={styles.dotField} />
-      <div style={styles.bottomCurve} />
-      <div style={styles.bottomRing} />
-      <div style={styles.rightGlow} />
-      <div style={styles.dotLarge} />
-      <div style={styles.dotSmall} />
+      <div style={styles.glow} />
+      <div style={styles.grid} />
+      <img src={logoPiagamMark} alt="" style={styles.mark} />
     </div>
   )
 }
@@ -21,114 +17,35 @@ const styles = {
     inset: 0,
     overflow: 'hidden',
     pointerEvents: 'none',
-    background:
-      'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(238, 243, 249, 1) 100%)',
+    // same blues as the header gradient (#151f2e > #1c2a3d > #2d5a8a), washed out
+    background: 'linear-gradient(150deg, #dbe5f3 0%, #e6edf7 40%, #eff3f9 75%, #f6f8fc 100%)',
   },
-  texture: {
+  // deeper header-blue glow from the top-left, ties the page to the header
+  glow: {
+    position: 'absolute',
+    top: '-30%',
+    left: '-10%',
+    width: '90%',
+    height: '100%',
+    background: 'radial-gradient(closest-side, rgba(28, 82, 153, 0.12) 0%, rgba(18, 59, 112, 0) 100%)',
+  },
+  // fine dot grid, fading out toward the bottom-right
+  grid: {
     position: 'absolute',
     inset: 0,
-    opacity: 0.55,
-    backgroundImage:
-      'linear-gradient(135deg, rgba(31, 78, 140, 0.08) 0, rgba(31, 78, 140, 0.08) 2px, transparent 2px, transparent 34px), radial-gradient(rgba(31, 78, 140, 0.09) 1.2px, transparent 1.2px)',
-    backgroundSize: '34px 34px, 24px 24px',
-    backgroundPosition: '0 0, 12px 10px',
+    backgroundImage: 'radial-gradient(rgba(18, 59, 112, 0.12) 1px, transparent 1px)',
+    backgroundSize: '22px 22px',
+    WebkitMaskImage: 'linear-gradient(135deg, #000 0%, transparent 65%)',
+    maskImage: 'linear-gradient(135deg, #000 0%, transparent 65%)',
   },
-  topCurve: {
+  mark: {
     position: 'absolute',
-    top: '-18%',
-    left: '-8%',
-    width: '88%',
-    height: '48%',
-    borderRadius: '50%',
-    background:
-      'radial-gradient(circle at center, rgba(210, 218, 228, 0.94) 0%, rgba(210, 218, 228, 0.94) 42%, rgba(210, 218, 228, 0) 73%)',
-  },
-  topRing: {
-    position: 'absolute',
-    top: '-28%',
-    right: '-12%',
-    width: '58%',
-    height: '58%',
-    borderRadius: '50%',
-    border: '30px solid rgba(31, 78, 140, 0.12)',
-  },
-  topGlow: {
-    position: 'absolute',
-    top: '4%',
-    right: '8%',
-    width: '420px',
-    height: '420px',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(47, 111, 178, 0.22) 0%, rgba(47, 111, 178, 0) 70%)',
-    filter: 'blur(6px)',
-  },
-  middleBand: {
-    position: 'absolute',
-    top: '26%',
-    left: '-10%',
-    width: '70%',
-    height: '22%',
-    borderRadius: '999px',
-    background:
-      'linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(244, 169, 64, 0.12) 24%, rgba(31, 78, 140, 0.12) 68%, rgba(255, 255, 255, 0) 100%)',
-    transform: 'rotate(-10deg)',
-  },
-  dotField: {
-    position: 'absolute',
-    top: '14%',
-    right: '5%',
-    width: '26%',
-    height: '34%',
-    opacity: 0.9,
-    backgroundImage: 'radial-gradient(rgba(31, 78, 140, 0.22) 1.6px, transparent 1.6px)',
-    backgroundSize: '18px 18px',
-  },
-  bottomCurve: {
-    position: 'absolute',
-    right: '-14%',
-    bottom: '-26%',
-    width: '78%',
-    height: '54%',
-    borderRadius: '50%',
-    background:
-      'radial-gradient(circle at center, rgba(214, 224, 236, 0.88) 0%, rgba(214, 224, 236, 0.88) 44%, rgba(214, 224, 236, 0) 74%)',
-  },
-  bottomRing: {
-    position: 'absolute',
-    left: '-14%',
-    bottom: '-28%',
-    width: '44%',
-    height: '44%',
-    borderRadius: '50%',
-    border: '22px solid rgba(244, 169, 64, 0.12)',
-  },
-  rightGlow: {
-    position: 'absolute',
-    top: '40%',
-    right: '-10%',
-    width: '500px',
-    height: '500px',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(244, 169, 64, 0.2) 0%, rgba(244, 169, 64, 0) 72%)',
-    filter: 'blur(8px)',
-  },
-  dotLarge: {
-    position: 'absolute',
-    right: '64px',
-    top: '132px',
-    width: '28px',
-    height: '28px',
-    borderRadius: '50%',
-    background: 'rgba(31, 78, 140, 0.18)',
-  },
-  dotSmall: {
-    position: 'absolute',
-    right: '38px',
-    top: '176px',
-    width: '14px',
-    height: '14px',
-    borderRadius: '50%',
-    background: 'rgba(244, 169, 64, 0.3)',
+    right: '-4%',
+    bottom: '-14%',
+    width: 'min(620px, 52vw)',
+    height: 'auto',
+    opacity: 0.34,
+    userSelect: 'none',
   },
 }
 

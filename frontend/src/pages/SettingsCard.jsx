@@ -15,34 +15,29 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import TimerRoundedIcon from "@mui/icons-material/TimerRounded";
-import EditNoteRoundedIcon from "@mui/icons-material/EditNoteRounded";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
-import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import CloudDoneRoundedIcon from "@mui/icons-material/CloudDoneRounded";
-import AddToDriveRoundedIcon from "@mui/icons-material/AddToDriveRounded";
 import FolderOpenRoundedIcon from "@mui/icons-material/FolderOpenRounded";
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
-import InsertPhotoRoundedIcon from "@mui/icons-material/InsertPhotoRounded";
 import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 
 // ─────────────────────────────────────────────
 // Design Tokens (disamakan dengan Code 1)
 // ─────────────────────────────────────────────
-const FONT_SANS = "'Plus Jakarta Sans', 'Inter', sans-serif";
-const FONT_MONO = "'JetBrains Mono', 'Fira Code', monospace";
+const FONT_SANS = "var(--font-sans)";
+const FONT_MONO = "var(--font-mono)";
 
 const T = {
-  brand: "#233971",
-  brandLight: "#eaeff7",
-  brandBorder: "#b3c1d8",
-  brandDark: "#163a6b",
+  brand: "#24476e",
+  brandLight: "#eef2f7",
+  brandBorder: "#b9c8dc",
+  brandDark: "#24476e",
 
   blue: "#2e5bba",
   blueBg: "#eef2f9",
@@ -65,8 +60,8 @@ const T = {
   skyBorder: "#c5d0e6",
 
   teal: "#2a4585",
-  tealBg: "#eaeff7",
-  tealBorder: "#b3c1d8",
+  tealBg: "#eef2f7",
+  tealBorder: "#b9c8dc",
 
   rose: "#e11d48",
   roseBg: "#fff1f2",
@@ -78,7 +73,7 @@ const T = {
   muted: "#6b7280",
   subtle: "#9ca3af",
   ghost: "#d1d5db",
-  line: "#e5e7eb",
+  line: "#e3e6eb",
   surface: "#f9fafb",
   canvas: "#f3f4f6",
   white: "#ffffff",
@@ -116,7 +111,7 @@ function normalizeDriveConfig(data = {}) {
   };
 }
 
-function SettingsPanel({ icon, eyebrow = "Pengaturan", title, action, sx = {}, children }) {
+function SettingsPanel({ title, action, sx = {}, children }) {
   return (
     <Box
       className="dashboard-panel"
@@ -126,9 +121,10 @@ function SettingsPanel({ icon, eyebrow = "Pengaturan", title, action, sx = {}, c
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        borderRadius: "28px",
+        borderRadius: "2px",
         background: T.white,
-        border: `1px solid ${T.line}`,
+        border: "1px solid #d3d9e1",
+        boxShadow: "none",
         ...sx,
       }}
     >
@@ -140,47 +136,32 @@ function SettingsPanel({ icon, eyebrow = "Pengaturan", title, action, sx = {}, c
           justifyContent: "space-between",
           gap: 1,
           flexWrap: "nowrap",
-          minHeight: 44,
-          padding: "12px 16px 8px",
-          borderBottom: "none",
-          background: T.white,
+          minHeight: 32,
+          padding: "0 12px",
+          borderBottom: "1px solid #c3ccd7",
+          background: "#e4e9ef !important",
           flexShrink: 0,
           margin: 0,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, flex: 1 }}>
-          <Box
-            sx={{
-              width: 28,
-              height: 28,
-              borderRadius: "8px",
-              background: "linear-gradient(180deg, #f3f4f6 0%, #e9ebef 100%)",
-              border: `1.5px solid ${T.ghost}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              "& svg": { fontSize: 15, color: T.ink2 },
-            }}
-          >
-            {icon}
-          </Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography className="dashboard-panel__eyebrow" sx={{ fontFamily: FONT_SANS, mb: 0 }}>
-              {eyebrow}
-            </Typography>
-            <Typography
-              className="dashboard-panel__title"
-              noWrap
-              sx={{ margin: 0, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis" }}
-            >
-              {title}
-            </Typography>
-          </Box>
-        </Box>
+        <Typography
+          className="dashboard-panel__title"
+          noWrap
+          sx={{
+            margin: 0,
+            fontFamily: FONT_SANS,
+            fontSize: 12.5,
+            fontWeight: 700,
+            color: "#3c4a5c",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {title}
+        </Typography>
         <Box sx={{ flexShrink: 0, whiteSpace: "nowrap" }}>{action}</Box>
       </Box>
-      <Box sx={{ padding: "0 16px 16px", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <Box sx={{ padding: "12px", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
         {children}
       </Box>
     </Box>
@@ -204,10 +185,6 @@ function StatusPill({ label, color = "gray" }) {
         display: "inline-flex",
         alignItems: "center",
         gap: 0.6,
-        px: 1.25,
-        py: 0.5,
-        borderRadius: "20px",
-        bgcolor: s.bg,
       }}
     >
       <Box
@@ -221,10 +198,9 @@ function StatusPill({ label, color = "gray" }) {
       <Typography
         sx={{
           fontFamily: FONT_SANS,
-          fontSize: 11.5,
-          fontWeight: 600,
-          color: s.text,
-          letterSpacing: "0.01em",
+          fontSize: 12,
+          fontWeight: 400,
+          color: T.text,
         }}
       >
         {label}
@@ -241,22 +217,27 @@ function ActionBtn({
   sx = {},
   ...props
 }) {
-  const h = size === "sm" ? 28 : size === "lg" ? 42 : 35;
-  const fs = size === "sm" ? 12.5 : size === "lg" ? 14.5 : 13.5;
+  const h = size === "sm" ? 26 : size === "lg" ? 32 : 30;
+  const fs = size === "sm" ? 12 : size === "lg" ? 13.5 : 12.5;
 
   const solidColors = {
     brand: {
-      bg: "linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-dark) 100%)",
-      hover: "linear-gradient(135deg, var(--accent-teal-dark) 0%, var(--accent-teal-dark) 100%)",
+      bg: "linear-gradient(180deg, #3a6fa6 0%, #24476e 100%)",
+      hover: "linear-gradient(180deg, #2a62a8 0%, #24476e 100%)",
       text: "#fff",
     },
     blue: {
-      bg: "linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-dark) 100%)",
-      hover: "linear-gradient(135deg, var(--accent-teal-dark) 0%, var(--accent-teal-dark) 100%)",
+      bg: "linear-gradient(180deg, #3a6fa6 0%, #24476e 100%)",
+      hover: "linear-gradient(180deg, #2a62a8 0%, #24476e 100%)",
       text: "#fff",
     },
     violet: { bg: T.violet, hover: "#6d28d9", text: "#fff" },
-    red: { bg: T.red, hover: "#b91c1c", text: "#fff" },
+    red: {
+      bg: "linear-gradient(180deg, #fdfdfd 0%, #e6e9ed 100%)",
+      hover: "linear-gradient(180deg, #ffffff 0%, #d9dee4 100%)",
+      text: "#b42318",
+      border: "#b4bcc6",
+    },
     slate: { bg: T.ink2, hover: T.ink, text: "#fff" },
   };
 
@@ -275,19 +256,19 @@ function ActionBtn({
         sx={{
           height: h,
           px: 2,
-          borderRadius: "999px",
+          borderRadius: "3px",
           fontFamily: FONT_SANS,
           fontSize: fs,
-          fontWeight: 500,
+          fontWeight: 600,
           textTransform: "none",
           letterSpacing: "-0.01em",
           whiteSpace: "nowrap",
           flexShrink: 0,
           color: s.text,
-          bgcolor: s.bg,
-          border: `1px solid ${s.border}`,
+          background: "linear-gradient(180deg, #fdfdfd 0%, #e6e9ed 100%)",
+          border: "1px solid #b4bcc6",
           boxShadow: "none",
-          "&:hover": { bgcolor: s.hover, boxShadow: "none" },
+          "&:hover": { background: "linear-gradient(180deg, #ffffff 0%, #d9dee4 100%)", borderColor: "#8d97a3", boxShadow: "none" },
           "&:disabled": { opacity: 0.4, pointerEvents: "none" },
           ...sx,
         }}
@@ -305,16 +286,17 @@ function ActionBtn({
       sx={{
         height: h,
         px: 2,
-        borderRadius: "999px",
+        borderRadius: "3px",
         fontFamily: FONT_SANS,
         fontSize: fs,
-        fontWeight: 500,
+        fontWeight: 600,
         textTransform: "none",
         letterSpacing: "-0.01em",
         whiteSpace: "nowrap",
         flexShrink: 0,
         background: s.bg,
         color: s.text,
+        border: `1px solid ${s.border || "#24476e"}`,
         boxShadow: "none",
         "&:hover": { background: s.hover, boxShadow: "none" },
         "&:disabled": { background: T.canvas, color: T.ghost, boxShadow: "none" },
@@ -331,39 +313,32 @@ function ToggleSwitch({ checked, onChange, disabled }) {
   return (
     <button
       type="button"
-      role="switch"
+      role="checkbox"
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
       style={{
-        position: "relative", width: 42, height: 24, padding: 0, flexShrink: 0,
-        border: "none", borderRadius: 999, cursor: disabled ? "not-allowed" : "pointer",
-        background: checked ? "linear-gradient(135deg, #22c55e 0%, #15803d 100%)" : "#d1d5db",
-        boxShadow: checked ? "0 3px 10px rgba(21,128,61,0.35), inset 0 1px 1px rgba(255,255,255,0.25)" : "inset 0 1px 3px rgba(0,0,0,0.15)",
-        transition: "background 0.28s ease, box-shadow 0.28s ease",
+        width: 15, height: 15, padding: 0, flexShrink: 0,
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        border: `1px solid ${checked ? "#24476e" : "#8d97a3"}`, borderRadius: 2,
+        background: checked ? "#24476e" : "#fff",
+        cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.55 : 1,
       }}
     >
-      <span style={{
-        position: "absolute", top: 3, left: checked ? 21 : 3, width: 18, height: 18, borderRadius: "50%",
-        background: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-        boxShadow: "0 2px 5px rgba(0,0,0,0.28)",
-        transition: "left 0.28s cubic-bezier(0.34,1.4,0.64,1)",
-      }}>
-        <CheckRoundedIcon sx={{ fontSize: 12, color: checked ? "#16a34a" : "transparent", transition: "color 0.2s" }} />
-      </span>
+      {checked && <CheckRoundedIcon sx={{ fontSize: 13, color: "#fff" }} />}
     </button>
   );
 }
 
 const fieldStyle = {
   "& .MuiOutlinedInput-root": {
-    borderRadius: "8px",
-    bgcolor: T.surface,
+    borderRadius: "2px",
+    bgcolor: T.white,
     fontFamily: FONT_SANS,
-    fontSize: 13.5,
-    "& fieldset": { borderColor: T.line },
-    "&:hover fieldset": { borderColor: T.ghost },
+    fontSize: 13,
+    "& fieldset": { borderColor: "#b4bcc6" },
+    "&:hover fieldset": { borderColor: "#8d97a3" },
     "&.Mui-focused": { bgcolor: T.white },
     "&.Mui-focused fieldset": { borderColor: T.brand, borderWidth: "1.5px" },
   },
@@ -430,18 +405,6 @@ export default function SettingsCard({
     : currentHasScriptUrl || currentHasFolderId
       ? "amber"
       : "gray";
-
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    if (!document.getElementById("plus-jakarta-sans-font")) {
-      const link = document.createElement("link");
-      link.id = "plus-jakarta-sans-font";
-      link.rel = "stylesheet";
-      link.href =
-        "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap";
-      document.head.appendChild(link);
-    }
-  }, []);
 
   const showToast = (msg, sev = "success") =>
     setToast({ open: true, message: msg, severity: sev });
@@ -634,50 +597,46 @@ export default function SettingsCard({
       slotProps={{ backdrop: { sx: { background: "rgba(10, 18, 40, 0.68)" } } }}
       PaperProps={{
         sx: {
-          borderRadius: "20px",
+          borderRadius: "2px",
           maxHeight: "95vh",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          boxShadow: "0 28px 80px rgba(10, 18, 40, 0.32)",
-          border: "1px solid rgba(26, 42, 87, 0.12)",
+          boxShadow: "0 8px 30px rgba(10, 18, 40, 0.3)",
+          border: "1px solid #1c2a3d",
         },
       }}
     >
       <Box
         sx={{
           display: "flex",
-          alignItems: "flex-start",
+          alignItems: "center",
           justifyContent: "space-between",
           gap: 2,
-          px: 2.5,
-          pt: 2.5,
-          pb: 2,
-          background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)",
-          borderBottom: "1px solid rgba(26,42,87,0.10)",
+          px: 2,
+          py: 1,
+          background: "#1c2a3d",
+          borderBottom: "2px solid #d4b06a",
           flexShrink: 0,
         }}
       >
-        <Box>
-          <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.625 }}>
-            Aplikasi
-          </Typography>
-          <Typography sx={{ fontFamily: FONT_SANS, fontSize: 19, fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>
+        <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+          <Typography sx={{ fontFamily: FONT_SANS, fontSize: 15, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>
             Pengaturan
+          </Typography>
+          <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: "rgba(255,255,255,0.7)" }}>
+            Aplikasi
           </Typography>
         </Box>
         <IconButton
           size="small"
           onClick={onClose}
           sx={{
-            width: 36,
-            height: 36,
-            borderRadius: "10px",
-            border: "1px solid rgba(255,255,255,0.18)",
-            background: "rgba(255,255,255,0.08)",
-            color: "rgba(255,255,255,0.75)",
-            transition: "background 0.15s, border-color 0.15s",
-            "&:hover": { background: "rgba(255,255,255,0.14)", borderColor: "rgba(233,196,106,0.4)" },
+            width: 26,
+            height: 26,
+            borderRadius: "2px",
+            color: "rgba(255,255,255,0.85)",
+            "&:hover": { background: "rgba(255,255,255,0.14)", color: "#fff" },
           }}
         >
           <CloseRoundedIcon sx={{ fontSize: 17 }} />
@@ -688,6 +647,7 @@ export default function SettingsCard({
         sx={{
           fontFamily: FONT_SANS,
           p: 1.5,
+          bgcolor: "#eef1f5",
           boxSizing: "border-box",
           overflow: "hidden",
           flex: 1,
@@ -702,24 +662,15 @@ export default function SettingsCard({
         <Grid container spacing={1.25}>
           <Grid item xs={12} sm={6} lg={3}>
             <SettingsPanel
-              icon={<TimerRoundedIcon />}
               title="Jeda Antar Pesan"
               action={<StatusPill label={`${currentDelay} ms`} color="blue" />}
             >
-              <Box
-                sx={{
-                  p: 1.1,
-                  borderRadius: "8px",
-                  bgcolor: T.brandLight,
-                  border: `1px solid ${T.brandBorder}`,
-                  mb: 1,
-                }}
-              >
+              <Box sx={{ mb: 1 }}>
                 <Typography
                   sx={{
                     fontFamily: FONT_SANS,
-                    fontSize: 12.5,
-                    color: T.brandDark,
+                    fontSize: 12,
+                    color: T.muted,
                     lineHeight: 1.45,
                   }}
                 >
@@ -768,7 +719,6 @@ export default function SettingsCard({
 
           <Grid item xs={12} sm={6} lg={3}>
             <SettingsPanel
-              icon={<EditNoteRoundedIcon />}
               title="Template Pesan"
               action={
                 <StatusPill
@@ -777,20 +727,12 @@ export default function SettingsCard({
                 />
               }
             >
-              <Box
-                sx={{
-                  p: 1.1,
-                  borderRadius: "8px",
-                  bgcolor: T.brandLight,
-                  border: `1px solid ${T.brandBorder}`,
-                  mb: 1,
-                }}
-              >
+              <Box sx={{ mb: 1 }}>
                 <Typography
                   sx={{
                     fontFamily: FONT_SANS,
-                    fontSize: 12.5,
-                    color: T.brandDark,
+                    fontSize: 12,
+                    color: T.muted,
                     lineHeight: 1.45,
                   }}
                 >
@@ -836,7 +778,6 @@ export default function SettingsCard({
 
           <Grid item xs={12} sm={6} lg={3}>
             <SettingsPanel
-              icon={<GridViewRoundedIcon />}
               title="Google Sheet"
               action={
                 <StatusPill
@@ -845,20 +786,12 @@ export default function SettingsCard({
                 />
               }
             >
-              <Box
-                sx={{
-                  p: 1.1,
-                  borderRadius: "8px",
-                  bgcolor: T.brandLight,
-                  border: `1px solid ${T.brandBorder}`,
-                  mb: 1,
-                }}
-              >
+              <Box sx={{ mb: 1 }}>
                 <Typography
                   sx={{
                     fontFamily: FONT_SANS,
-                    fontSize: 12.5,
-                    color: T.brandDark,
+                    fontSize: 12,
+                    color: T.muted,
                     lineHeight: 1.45,
                   }}
                 >
@@ -874,7 +807,7 @@ export default function SettingsCard({
                     gap: 1,
                     px: 1.5,
                     py: 0.75,
-                    borderRadius: "8px",
+                    borderRadius: "3px",
                     bgcolor: T.surface,
                     border: `1px solid ${T.line}`,
                     mb: 1,
@@ -900,14 +833,14 @@ export default function SettingsCard({
                       size="small"
                       onClick={handleStartEdit}
                       sx={{
-                        color: T.brand,
-                        bgcolor: T.brandLight,
-                        border: `1px solid ${T.brandBorder}`,
-                        borderRadius: "8px",
+                        color: "#2b3540",
+                        background: "linear-gradient(180deg, #fdfdfd 0%, #e6e9ed 100%)",
+                        border: "1px solid #b4bcc6",
+                        borderRadius: "3px",
                         width: 26,
                         height: 26,
                         flexShrink: 0,
-                        "&:hover": { bgcolor: "#d4ddef" },
+                        "&:hover": { background: "linear-gradient(180deg, #ffffff 0%, #d9dee4 100%)" },
                       }}
                     >
                       <EditRoundedIcon sx={{ fontSize: 15 }} />
@@ -976,7 +909,6 @@ export default function SettingsCard({
 
           <Grid item xs={12} sm={6} lg={3}>
             <SettingsPanel
-              icon={<InsertPhotoRoundedIcon />}
               title="Logo PDF"
               action={<StatusPill label={hasLogo ? "Terpasang" : "Belum ada"} color={hasLogo ? "green" : "gray"} />}
             >
@@ -987,7 +919,7 @@ export default function SettingsCard({
                   gap: 1,
                   px: 1.5,
                   py: 0.75,
-                  borderRadius: "8px",
+                  borderRadius: "3px",
                   bgcolor: T.surface,
                   border: `1px solid ${T.line}`,
                   mb: 1,
@@ -997,7 +929,7 @@ export default function SettingsCard({
                   sx={{
                     width: 32,
                     height: 32,
-                    borderRadius: "8px",
+                    borderRadius: "3px",
                     border: `1px solid ${T.line}`,
                     bgcolor: T.white,
                     display: "grid",
@@ -1047,7 +979,6 @@ export default function SettingsCard({
         </Grid>
 
         <SettingsPanel
-          icon={<AddToDriveRoundedIcon />}
           title="Google Drive Integration"
           action={
             <StatusPill
@@ -1056,20 +987,12 @@ export default function SettingsCard({
             />
           }
         >
-            <Box
-              sx={{
-                p: 1.1,
-                borderRadius: "8px",
-                bgcolor: "#f0f4fc",
-                border: "1px solid #d2e3fc",
-                mb: 1,
-              }}
-            >
+            <Box sx={{ mb: 1 }}>
               <Typography
                 sx={{
                   fontFamily: FONT_SANS,
-                  fontSize: 12.5,
-                  color: "#1a73e8",
+                  fontSize: 12,
+                  color: T.muted,
                   lineHeight: 1.45,
                 }}
               >
@@ -1086,7 +1009,7 @@ export default function SettingsCard({
                     gap: 1,
                     px: 1.5,
                     py: 0.75,
-                    borderRadius: "8px",
+                    borderRadius: "3px",
                     bgcolor: T.surface,
                     border: `1px solid ${T.line}`,
                     mb: 1,
@@ -1114,14 +1037,14 @@ export default function SettingsCard({
                       size="small"
                       onClick={handleStartDriveEdit}
                       sx={{
-                        color: "#1a73e8",
-                        bgcolor: "#e8f0fe",
-                        border: "1px solid #c5d8fb",
-                        borderRadius: "8px",
+                        color: "#2b3540",
+                        background: "linear-gradient(180deg, #fdfdfd 0%, #e6e9ed 100%)",
+                        border: "1px solid #b4bcc6",
+                        borderRadius: "3px",
                         width: 26,
                         height: 26,
                         flexShrink: 0,
-                        "&:hover": { bgcolor: "#dbe7fd" },
+                        "&:hover": { background: "linear-gradient(180deg, #ffffff 0%, #d9dee4 100%)" },
                       }}
                     >
                       <EditRoundedIcon sx={{ fontSize: 15 }} />
@@ -1196,7 +1119,7 @@ export default function SettingsCard({
                   sx={{
                     fontFamily: FONT_SANS,
                     fontSize: 13,
-                    color: currentDriveConfig.enabled ? "#1a73e8" : T.muted,
+                    color: currentDriveConfig.enabled ? T.ink2 : T.muted,
                     fontWeight: currentDriveConfig.enabled ? 600 : 400,
                   }}
                 >
@@ -1215,13 +1138,13 @@ export default function SettingsCard({
             </Box>
 
             {currentDriveConfig.enabled && !currentHasScriptUrl && (
-              <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 1, borderRadius: "8px" }}>
+              <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 1, borderRadius: "3px" }}>
                 Harap isi Apps Script URL agar upload otomatis dapat berfungsi.
               </Alert>
             )}
 
             {currentDriveConfig.enabled && currentHasScriptUrl && !currentHasFolderId && (
-              <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 1, borderRadius: "8px" }}>
+              <Alert severity="warning" sx={{ fontFamily: FONT_SANS, fontSize: 12.5, mb: 1, borderRadius: "3px" }}>
                 Isi link atau ID folder Google Drive dulu agar file tahu harus diupload ke folder mana.
               </Alert>
             )}
@@ -1234,13 +1157,13 @@ export default function SettingsCard({
                   gap: 1,
                   px: 1.25,
                   py: 0.75,
-                  borderRadius: "8px",
-                  bgcolor: "#e8f0fe",
-                  border: "1px solid #c5d8fb",
+                  borderRadius: "3px",
+                  bgcolor: "#f4f6f9",
+                  border: `1px solid ${T.line}`,
                 }}
               >
-                <CloudDoneRoundedIcon sx={{ fontSize: 18, color: "#1a73e8" }} />
-                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: "#1a73e8", fontWeight: 600 }}>
+                <CloudDoneRoundedIcon sx={{ fontSize: 18, color: "#25a244" }} />
+                <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: T.ink2, fontWeight: 600 }}>
                   Apps Script telah diatur.
                 </Typography>
               </Box>
@@ -1261,7 +1184,7 @@ export default function SettingsCard({
             fontFamily: FONT_SANS,
             fontWeight: 500,
             fontSize: 13,
-            borderRadius: "10px",
+            borderRadius: "4px",
             boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
             letterSpacing: "-0.01em",
           }}

@@ -4,10 +4,10 @@ import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import InsertDriveFileRoundedIcon from "@mui/icons-material/InsertDriveFileRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 
-const BRAND = "#233971";
+const BRAND = "#24476e";
 const BRAND_DARK = "#1c2f5c";
-const BRAND_LIGHT = "#eaeff7";
-const BRAND_BORDER = "#b3c1d8";
+const BRAND_LIGHT = "#eef2f7";
+const BRAND_BORDER = "#b9c8dc";
 
 export default function UploadCard({ onUpload, fileInfo }) {
   const inputRef = useRef(null);
@@ -51,19 +51,19 @@ export default function UploadCard({ onUpload, fileInfo }) {
           textAlign: "center",
           bgcolor: dragging ? BRAND_LIGHT : "#ffffff",
           backgroundImage: dragging
-            ? "radial-gradient(circle, rgba(35,57,113,0.18) 1px, transparent 1px)"
+            ? "radial-gradient(circle, rgba(36, 71, 110,0.18) 1px, transparent 1px)"
             : "radial-gradient(circle, rgba(179,193,216,0.55) 1px, transparent 1px)",
           backgroundSize: "20px 20px",
           cursor: "pointer",
           transition: "all 0.22s ease",
           boxShadow: dragging
-            ? "0 0 0 4px rgba(35,57,113,0.08)"
-            : "0 1px 4px rgba(35,57,113,0.08)",
+            ? "0 0 0 4px rgba(36, 71, 110,0.08)"
+            : "0 1px 4px rgba(36, 71, 110,0.08)",
           "&:hover": {
             borderColor: BRAND,
             bgcolor: "#f8fafe",
-            backgroundImage: "radial-gradient(circle, rgba(35,57,113,0.18) 1px, transparent 1px)",
-            boxShadow: "0 0 0 4px rgba(35,57,113,0.08)",
+            backgroundImage: "radial-gradient(circle, rgba(36, 71, 110,0.18) 1px, transparent 1px)",
+            boxShadow: "0 0 0 4px rgba(36, 71, 110,0.08)",
           },
           "&:hover .upload-icon-wrap": {
             transform: "scale(1.08)",
@@ -86,7 +86,7 @@ export default function UploadCard({ onUpload, fileInfo }) {
               mx: "auto",
               mb: 1.5,
               transition: "all 0.2s ease",
-              boxShadow: { xs: "none", md: "0 10px 24px rgba(35,57,113,0.14)" },
+              boxShadow: { xs: "none", md: "0 10px 24px rgba(36, 71, 110,0.14)" },
               "& svg": { fontSize: 28, color: BRAND },
             }}
           >
@@ -96,7 +96,7 @@ export default function UploadCard({ onUpload, fileInfo }) {
           <Typography
             fontWeight={700}
             fontSize={14}
-            sx={{ color: "#0f172a", fontFamily: "'DM Sans', sans-serif", mb: 0.5 }}
+            sx={{ color: "#0f172a", fontFamily: "var(--font-sans)", mb: 0.5 }}
           >
             {dragging ? "Lepaskan file di sini" : "Upload file Excel"}
           </Typography>
@@ -105,7 +105,7 @@ export default function UploadCard({ onUpload, fileInfo }) {
             variant="body2"
             sx={{
               color: "#94a3b8",
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font-sans)",
               fontSize: 12,
               mb: 2,
             }}
@@ -125,15 +125,15 @@ export default function UploadCard({ onUpload, fileInfo }) {
               borderRadius: "10px",
               fontWeight: 700,
               textTransform: "none",
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font-sans)",
               fontSize: 13,
               px: 2.5,
               py: 0.9,
               bgcolor: BRAND,
-              boxShadow: "0 4px 12px rgba(35,57,113,0.28)",
+              boxShadow: "0 4px 12px rgba(36, 71, 110,0.28)",
               "&:hover": {
                 bgcolor: BRAND_DARK,
-                boxShadow: "0 6px 16px rgba(35,57,113,0.34)",
+                boxShadow: "0 6px 16px rgba(36, 71, 110,0.34)",
               },
             }}
           >
@@ -189,7 +189,7 @@ export default function UploadCard({ onUpload, fileInfo }) {
                 fontSize={13}
                 sx={{
                   color: BRAND_DARK,
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-sans)",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -202,7 +202,7 @@ export default function UploadCard({ onUpload, fileInfo }) {
               variant="body2"
               sx={{
                 color: BRAND,
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "var(--font-sans)",
                 fontSize: 11,
                 opacity: 0.9,
               }}

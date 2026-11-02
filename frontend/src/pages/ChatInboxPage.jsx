@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { QRCodeSVG } from "qrcode.react";
 import {
@@ -55,8 +55,8 @@ import socket from "../services/socket";
 const picCache = new Map();
 const picSubs = new Map();
 
-const FONT_SANS = "'Plus Jakarta Sans', 'Inter', sans-serif";
-const FONT_MONO = "'JetBrains Mono', 'Fira Code', monospace";
+const FONT_SANS = "var(--font-sans)";
+const FONT_MONO = "var(--font-mono)";
 
 const WA = {
   sidebarBg: "#F0F2F5",
@@ -65,13 +65,13 @@ const WA = {
   sidebarBorder: "#E9EDEF",
   sidebarText: "#111B21",
   sidebarSub: "#667781",
-  chatBg: "#EFEAE2",
-  sentBg: "#D9FDD3",
+  chatBg: "#EEF1F5",
+  sentBg: "#DFE8F3",
   recvBg: "#FFFFFF",
   msgText: "#111B21",
   msgMeta: "#667781",
-  green: "#00A884",
-  greenDark: "#017C63",
+  green: "#24476E",
+  greenDark: "#1C2A3D",
   inputBar: "#F0F2F5",
   inputField: "#FFFFFF",
   inputText: "#111B21",
@@ -79,10 +79,11 @@ const WA = {
 };
 
 const P = {
-  brand: "#00A884",
-  brandDark: "#017C63",
-  brandLight: "#E7F8F4",
-  brandBorder: "#99D5C9",
+  // Header navy, not WhatsApp green: chrome matches the rest of the app.
+  brand: "#24476E",
+  brandDark: "#1C2A3D",
+  brandLight: "#F0F4F9",
+  brandBorder: "#C9D4E1",
   line: "#E9EDEF",
   ink: "#111B21",
   text: "#334155",
@@ -105,7 +106,28 @@ const MSG_TYPE = {
   contact_card_multi: { Icon: GroupOutlinedIcon,           label: "Beberapa kontak" },
   vcard:              { Icon: PersonOutlinedIcon,          label: "Kontak" },
   revoked:            { Icon: BlockOutlinedIcon,           label: "Pesan dihapus" },
+  interactive:        { Icon: InsertDriveFileOutlinedIcon, label: "Pesan interaktif" },
+  list:               { Icon: InsertDriveFileOutlinedIcon, label: "Pesan interaktif" },
+  buttons_response:   { Icon: InsertDriveFileOutlinedIcon, label: "Balasan tombol" },
+  poll_creation:      { Icon: InsertDriveFileOutlinedIcon, label: "Polling" },
 };
+
+// WhatsApp system entries (encryption notice, business info, group events):
+// WA Web leaves the preview line empty for these instead of saying "no messages".
+const SYSTEM_MSG_TYPES = new Set([
+  "e2e_notification", "notification_template", "notification", "gp2",
+  "protocol", "ciphertext", "broadcast_notification", "call_log", "biz_content_placeholder",
+]);
+
+function formatPhone(raw = "") {
+  const d = String(raw).replace(/\D/g, "");
+  if (!d) return "";
+  if (d.startsWith("62") && d.length >= 10) {
+    const rest = d.slice(2);
+    return `+62 ${rest.slice(0, 3)}-${rest.slice(3, 7)}-${rest.slice(7)}`;
+  }
+  return `+${d}`;
+}
 
 const EMOJI_LIST = [
   "😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊","😋","😎","😍","😘","🥰","😗",
@@ -183,6 +205,18 @@ function formatDateLabel(ts) {
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 }
 
+// Opening a chat asks for the newest messages only; the full history loads once per chat in the background.
+const QUICK_MESSAGE_LIMIT = 150;
+// Bubbles drawn at a time; older ones appear on "Tampilkan pesan lebih lama".
+const RENDER_STEP = 60;
+
+// Merge message lists by id, oldest first; the newer copy of a message wins.
+function mergeMessages(base, incoming) {
+  const byId = new Map();
+  [...base, ...incoming].forEach((m) => byId.set(m.serializedId || m.id, m));
+  return [...byId.values()].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+}
+
 function isSameDay(ts1, ts2) {
   if (!ts1 || !ts2) return false;
   const norm = (t) => { const n = typeof t === "number" && t < 1e12 ? t * 1000 : t; return new Date(n); };
@@ -198,14 +232,15 @@ function formatDateTime(value) {
 }
 
 function getPreviewText(msg = {}) {
-  if (!msg) return "Belum ada pesan";
+  if (!msg) return "";
+  if (SYSTEM_MSG_TYPES.has(msg.type)) return "";
   const meta = MSG_TYPE[msg.type];
   if (meta) {
     const caption = String(msg.body || "").trim();
     return caption ? `${meta.label}: ${caption.length > 40 ? caption.slice(0, 40) + "…" : caption}` : meta.label;
   }
   const text = String(msg.body || "").trim();
-  if (!text) return "Belum ada pesan";
+  if (!text) return "";
   return text.length > 55 ? `${text.slice(0, 55)}…` : text;
 }
 
@@ -276,7 +311,7 @@ function applyMarkdown(text) {
 
 function WaText({ text, fromMe }) {
   if (!text) return null;
-  const urlColor = fromMe ? "#066B4F" : "#027EB5";
+  const urlColor = fromMe ? "#24476E" : "#2D5A8A";
   const parts = parseWaText(text);
   return (
     <Typography component="span" sx={{
@@ -346,21 +381,29 @@ function useProfilePic(chatId) {
 function ChatAvatar({ name = "", chatId = "", size = 42 }) {
   const picUrl = useProfilePic(chatId);
   const [imgError, setImgError] = useState(false);
-  const initials = name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || "").join("") || "?";
-  const palette = ["#6B93D6","#A67BC0","#E56B6F","#F4A261","#2A9D8F","#00A884","#E76F51"];
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  const bg = palette[Math.abs(h) % palette.length];
+  const isGroup = String(chatId).endsWith("@g.us");
   return (
-    <Box sx={{ width: size, height: size, borderRadius: "50%", overflow: "hidden", flexShrink: 0, bgcolor: bg }}>
+    <Box sx={{ width: size, height: size, borderRadius: "50%", overflow: "hidden", flexShrink: 0, bgcolor: "#DFE5E7" }}>
       {picUrl && !imgError ? (
         <Box component="img" src={picUrl} alt={name} onError={() => setImgError(true)}
           sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
       ) : (
-        <Box sx={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: "#fff",
-          fontFamily: FONT_SANS, fontWeight: 700, fontSize: Math.round(size * 0.36), userSelect: "none" }}>
-          {initials}
-        </Box>
+        // Same "no photo" placeholder WhatsApp uses
+        <svg viewBox="0 0 212 212" width="100%" height="100%" aria-hidden="true">
+          {isGroup ? (
+            <g fill="#FFFFFF">
+              <circle cx="78" cy="88" r="27" />
+              <path d="M24 170c4-30 26-49 54-49s50 19 54 49z" />
+              <circle cx="140" cy="82" r="23" opacity="0.85" />
+              <path d="M118 120c8-5 15-6 22-6 25 0 44 17 48 45h-46c-3-17-11-30-24-39z" opacity="0.85" />
+            </g>
+          ) : (
+            <g fill="#FFFFFF">
+              <circle cx="106" cy="83" r="40" />
+              <path d="M37 182c6-40 35-66 69-66s63 26 69 66c-20 19-44 30-69 30s-49-11-69-30z" />
+            </g>
+          )}
+        </svg>
       )}
     </Box>
   );
@@ -372,7 +415,7 @@ function QuotedMsgBlock({ quotedMsg, fromMe }) {
   if (!quotedMsg) return null;
   const meta = MSG_TYPE[quotedMsg.type];
   const preview = meta ? meta.label : (String(quotedMsg.body || "").slice(0, 80) || "(pesan media)");
-  const accent = fromMe ? "#0C6E58" : WA.green;
+  const accent = fromMe ? "#1C2A3D" : WA.green;
   const bg = fromMe ? "rgba(0,0,0,0.07)" : "#EEF2F5";
   const label = quotedMsg.from === "me" ? "Kamu" : (quotedMsg.authorName || "");
   return (
@@ -399,7 +442,7 @@ function MediaBubble({ msg, fromMe }) {
   const mediaCapableTypes = new Set(["image", "sticker", "video", "audio", "ptt", "document"]);
   const canTryMedia = sid && (msg?.hasMedia || mediaCapableTypes.has(msg?.type));
   const mUrl = canTryMedia ? mediaUrl : null;
-  const iconColor = fromMe ? "#057C5D" : WA.green;
+  const iconColor = fromMe ? "#2D5A8A" : WA.green;
   const bgColor = fromMe ? "rgba(0,0,0,0.08)" : "#F0F2F5";
 
   useEffect(() => {
@@ -437,6 +480,11 @@ function MediaBubble({ msg, fromMe }) {
   };
 
   if (!meta) return null;
+
+  // Old media is deleted from WhatsApp's servers; WA Web can't open it either, only the phone can.
+  const mediaStatus = mediaError
+    ? "Tidak tersedia lagi · cek di HP"
+    : canTryMedia && !mUrl ? "Memuat…" : "";
 
   if (msg.type === "revoked") {
     return (
@@ -538,7 +586,9 @@ function MediaBubble({ msg, fromMe }) {
           <InsertDriveFileOutlinedIcon sx={{ fontSize: 32, color: iconColor, flexShrink: 0 }} />
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: WA.msgText, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{filename}</Typography>
-            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: WA.msgMeta }}>Dokumen</Typography>
+            <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: mediaError ? "#B42318" : WA.msgMeta }}>
+              {mediaStatus || "Dokumen"}
+            </Typography>
           </Box>
           {mUrl ? (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, flexShrink: 0 }}>
@@ -564,7 +614,12 @@ function MediaBubble({ msg, fromMe }) {
     <Box>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1, py: 0.75, bgcolor: bgColor, borderRadius: "6px", mb: caption ? 0.75 : 0 }}>
         <Icon sx={{ fontSize: 18, color: iconColor, flexShrink: 0 }} />
-        <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, color: fromMe ? "#2D6A4F" : WA.msgMeta }}>{meta.label}</Typography>
+        <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, color: fromMe ? "#3D4C60" : WA.msgMeta }}>{meta.label}</Typography>
+        {mediaStatus && (
+          <Typography sx={{ fontFamily: FONT_SANS, fontSize: 11.5, color: mediaError ? "#B42318" : WA.msgMeta }}>
+            · {mediaStatus}
+          </Typography>
+        )}
       </Box>
       {caption && <WaText text={caption} fromMe={fromMe} />}
     </Box>
@@ -652,13 +707,20 @@ export default function ChatInboxPage() {
   const [sendingMedia, setSendingMedia] = useState(false);
   const [myPicUrl, setMyPicUrl] = useState(null);
   const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
-  const [hoveredMsgId, setHoveredMsgId] = useState(null);
+  const [renderLimit, setRenderLimit] = useState(RENDER_STEP);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [headerSlotEl, setHeaderSlotEl] = useState(null);
   const [sessionMenuAnchor, setSessionMenuAnchor] = useState(null);
   const messageListRef = useRef(null);
+  // Messages already fetched per chat, so reopening a chat is instant.
+  const messageCacheRef = useRef(new Map());
+  // Chats whose full history has been pulled this session.
+  const fullHistoryRef = useRef(new Set());
+  const selectedChatIdRef = useRef("");
   const shouldSnapToLatestRef = useRef(true);
+  // True while the user is at the newest message; media that loads later must not push them up.
+  const pinnedToBottomRef = useRef(true);
   const fileInputRef = useRef(null);
   const draftInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
@@ -696,22 +758,33 @@ export default function ChatInboxPage() {
     }
   }, [selectedChatId]);
 
-  const loadMessages = useCallback(async (chatId, { forceRefresh = false, snapToLatest = true } = {}) => {
+  const loadMessages = useCallback(async (chatId, { full = false, silent = false, snapToLatest = true } = {}) => {
     if (!chatId) { setMessages([]); setMessageMeta({ source: "", note: "", limit: 0 }); return; }
     try {
-      setLoadingMessages(true);
+      if (!silent) setLoadingMessages(true);
+      const params = full ? { limit: "all", refresh: "1" } : { limit: String(QUICK_MESSAGE_LIMIT), refresh: "0" };
+      const res = await api.get(`/chats/${encodeURIComponent(chatId)}/messages`, { params });
+      const incoming = Array.isArray(res?.data?.messages) ? res.data.messages : [];
+      const next = mergeMessages(messageCacheRef.current.get(chatId) || [], incoming);
+      messageCacheRef.current.set(chatId, next);
+      // The user may have opened another chat while this one was loading.
+      if (selectedChatIdRef.current !== chatId) return;
       shouldSnapToLatestRef.current = snapToLatest;
-      const res = await api.get(`/chats/${encodeURIComponent(chatId)}/messages`, { params: { limit: "all", refresh: forceRefresh ? "1" : "0" } });
-      setMessages(Array.isArray(res?.data?.messages) ? res.data.messages : []);
+      // Keep an optimistic bubble until its real copy shows up.
+      setMessages((prev) => {
+        const pending = prev.filter((m) => m.pending && !next.some((n) => n.from === "me" && n.body === m.body));
+        return pending.length ? [...next, ...pending] : next;
+      });
       setMessageMeta({ source: res?.data?.source || "", note: res?.data?.note || "", limit: Number(res?.data?.limit) || 0 });
       setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, unread: 0 } : c)));
       api.post(`/chats/${encodeURIComponent(chatId)}/mark-read`).catch(() => {});
     } catch (err) {
+      if (silent) return;
       const msg = err?.response?.data?.message || "Gagal memuat pesan";
       setMessageMeta({ source: "", note: msg, limit: 0 });
       showToast(msg, "error");
     } finally {
-      setLoadingMessages(false);
+      if (!silent) setLoadingMessages(false);
     }
   }, []);
 
@@ -769,22 +842,38 @@ export default function ChatInboxPage() {
 
   const handleSendMessage = async () => {
     if (!selectedChatId || !messageDraft.trim()) return;
+    const chatId = selectedChatId;
+    const body = messageDraft.trim();
+    const quoted = replyingTo;
+    const tempId = `tmp-${Date.now()}`;
+    const sentAt = Date.now();
+    // Show the bubble right away; the socket echo (or the quick fetch below) replaces it.
+    setMessageDraft("");
+    setReplyingTo(null);
+    shouldSnapToLatestRef.current = true;
+    pinnedToBottomRef.current = true;
+    setMessages((prev) => [...prev, {
+      id: tempId, serializedId: null, from: "me", body, timestamp: sentAt, type: "chat",
+      hasMedia: false, ack: 0, pending: true,
+      quotedMsg: quoted ? { body: quoted.body, type: quoted.type, from: quoted.from, authorName: quoted.authorName } : null,
+    }]);
+    setChats((prev) => sortChatsByActivity(prev.map((c) => (
+      c.id === chatId ? { ...c, lastMessage: { id: tempId, from: "me", body, timestamp: sentAt, type: "chat" } } : c
+    ))));
     try {
       setSendingMessage(true);
-      shouldSnapToLatestRef.current = true;
-      await api.post(`/chats/${encodeURIComponent(selectedChatId)}/reply`, {
-        message: messageDraft.trim(),
-        quotedMsgId: replyingTo?.serializedId || undefined,
+      await api.post(`/chats/${encodeURIComponent(chatId)}/reply`, {
+        message: body,
+        quotedMsgId: quoted?.serializedId || undefined,
       });
-      setMessageDraft("");
-      setReplyingTo(null);
-      await loadMessages(selectedChatId, { forceRefresh: false, snapToLatest: true });
-      await loadChats({ preserveSelection: true });
-      scrollToBottom("instant");
-    } catch (err) {
-      showToast(err?.response?.data?.message || "Gagal mengirim pesan", "error");
-    } finally {
       setSendingMessage(false);
+      loadMessages(chatId, { silent: true, snapToLatest: true });
+    } catch (err) {
+      setSendingMessage(false);
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setMessageDraft(body);
+      setReplyingTo(quoted);
+      showToast(err?.response?.data?.message || "Gagal mengirim pesan", "error");
     }
   };
 
@@ -813,9 +902,7 @@ export default function ChatInboxPage() {
       await api.post(`/chats/${encodeURIComponent(selectedChatId)}/reply-media`, formData, { headers: { "Content-Type": "multipart/form-data" } });
       handleCloseMediaDialog();
       setReplyingTo(null);
-      await loadMessages(selectedChatId, { forceRefresh: false, snapToLatest: true });
-      await loadChats({ preserveSelection: true });
-      scrollToBottom("instant");
+      loadMessages(selectedChatId, { silent: true, snapToLatest: true });
     } catch (err) {
       showToast(err?.response?.data?.message || "Gagal mengirim file", "error");
     } finally {
@@ -848,8 +935,29 @@ export default function ChatInboxPage() {
   const handleMsgListScroll = () => {
     const el = messageListRef.current;
     if (!el) return;
-    setShowScrollBtn(el.scrollHeight - el.scrollTop - el.clientHeight > 150);
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    pinnedToBottomRef.current = distance < 150;
+    setShowScrollBtn(distance > 150);
   };
+
+  // Photos, PDFs and voice notes resolve after the bubbles render and grow the list;
+  // keep the view on the newest message like WhatsApp does.
+  useEffect(() => {
+    const el = messageListRef.current;
+    if (!el) return undefined;
+    const stick = () => {
+      if (pinnedToBottomRef.current) el.scrollTop = el.scrollHeight;
+    };
+    const observer = new MutationObserver(stick);
+    observer.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
+    el.addEventListener("load", stick, true);
+    el.addEventListener("loadedmetadata", stick, true);
+    return () => {
+      observer.disconnect();
+      el.removeEventListener("load", stick, true);
+      el.removeEventListener("loadedmetadata", stick, true);
+    };
+  }, [selectedChatId, loadingMessages]);
 
   // Close emoji picker on outside click
   useEffect(() => {
@@ -874,8 +982,21 @@ export default function ChatInboxPage() {
     return () => window.clearInterval(t);
   }, [whatsappReady]);
   useEffect(() => {
+    selectedChatIdRef.current = selectedChatId;
     shouldSnapToLatestRef.current = true;
-    loadMessages(selectedChatId, { forceRefresh: true, snapToLatest: true });
+    pinnedToBottomRef.current = true;
+    setRenderLimit(RENDER_STEP);
+    if (!selectedChatId) { setMessages([]); return; }
+    const cached = messageCacheRef.current.get(selectedChatId);
+    setMessages(cached || []);
+    const chatId = selectedChatId;
+    (async () => {
+      // Newest messages first (fast), then the slow full-history pull once per chat.
+      await loadMessages(chatId, { silent: !!cached, snapToLatest: true });
+      if (fullHistoryRef.current.has(chatId)) return;
+      fullHistoryRef.current.add(chatId);
+      loadMessages(chatId, { full: true, silent: true, snapToLatest: false });
+    })();
   }, [selectedChatId]);
   useEffect(() => {
     if (whatsappReady || (!waInitializing && !waQr)) return undefined;
@@ -916,9 +1037,14 @@ export default function ChatInboxPage() {
         const next = { id: payload.chatId, name: payload.name || cur?.name || payload.phone || "Chat", phone: payload.phone || cur?.phone || "", isGroup: cur?.isGroup || false, unread: isOpen ? 0 : (typeof payload.unread === "number" ? payload.unread : (cur?.unread || 0) + 1), lastMessage: { id: msg.id, from: msg.from, body: msg.body || "", timestamp: msg.timestamp || Date.now(), type: msg.type || "chat" } };
         return sortChatsByActivity([next, ...prev.filter((c) => c.id !== payload.chatId)]);
       });
+      const cached = messageCacheRef.current.get(payload.chatId);
+      if (cached) messageCacheRef.current.set(payload.chatId, mergeMessages(cached, [msg]));
       if (isOpen) {
         shouldSnapToLatestRef.current = true;
-        setMessages((prev) => prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]);
+        setMessages((prev) => {
+          const rest = msg.from === "me" ? prev.filter((m) => !(m.pending && m.body === msg.body)) : prev;
+          return rest.some((m) => m.id === msg.id) ? rest : [...rest, msg];
+        });
         api.post(`/chats/${encodeURIComponent(payload.chatId)}/mark-read`).catch(() => {});
       }
     };
@@ -945,22 +1071,114 @@ export default function ChatInboxPage() {
     "location", "contact", "vcard", "contact_card_multi", "revoked",
   ]);
 
-  const visibleMessages = messages.filter((m) => {
+  const visibleMessages = useMemo(() => messages.filter((m) => {
     if (!VISIBLE_MSG_TYPES.has(m?.type)) return false;
     // skip chat messages with no body AND no media
     if (m.type === "chat" && !String(m.body || "").trim() && !m.hasMedia) return false;
     return true;
-  });
+  }), [messages]);
+
+  // Only the newest `renderLimit` bubbles are drawn; long chats stay light.
+  const hiddenOlderCount = Math.max(0, visibleMessages.length - renderLimit);
 
   // Build messages with date separators
-  const messagesWithSeparators = [];
-  visibleMessages.forEach((msg, i) => {
-    const prev = visibleMessages[i - 1];
-    if (!prev || !isSameDay(prev.timestamp, msg.timestamp)) {
-      messagesWithSeparators.push({ type: "separator", ts: msg.timestamp, key: `sep-${i}` });
-    }
-    messagesWithSeparators.push({ type: "message", msg, key: msg.id || `${msg.timestamp}-${i}` });
-  });
+  const messagesWithSeparators = useMemo(() => {
+    const shown = visibleMessages.slice(-renderLimit);
+    const out = [];
+    shown.forEach((msg, i) => {
+      const prev = shown[i - 1];
+      if (!prev || !isSameDay(prev.timestamp, msg.timestamp)) {
+        out.push({ type: "separator", ts: msg.timestamp, key: `sep-${msg.id || i}` });
+      }
+      out.push({ type: "message", msg, key: msg.id || `${msg.timestamp}-${i}` });
+    });
+    return out;
+  }, [visibleMessages, renderLimit]);
+
+  const showOlderMessages = useCallback(() => {
+    const el = messageListRef.current;
+    const prevHeight = el?.scrollHeight || 0;
+    const prevTop = el?.scrollTop || 0;
+    setRenderLimit((n) => n + RENDER_STEP);
+    // Keep the message the user was reading in place while older ones are inserted above it.
+    window.requestAnimationFrame(() => {
+      if (el) el.scrollTop = el.scrollHeight - prevHeight + prevTop;
+    });
+  }, []);
+
+  // Memoised so typing in the composer or hovering does not redraw every bubble.
+  const selectedChatLabel = selectedChat?.name || selectedChat?.phone || "";
+  const messageListContent = useMemo(() => (
+    <>
+      {!loadingMessages && hiddenOlderCount > 0 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
+          <Button size="small" onClick={showOlderMessages}
+            sx={{ fontFamily: FONT_SANS, fontSize: 12, textTransform: "none", color: P.brand, bgcolor: P.white, border: `1px solid ${P.brandBorder}`, borderRadius: "2px", px: 1.5, "&:hover": { bgcolor: P.brandLight } }}>
+            Tampilkan pesan lebih lama ({hiddenOlderCount})
+          </Button>
+        </Box>
+      )}
+      {loadingMessages ? (
+                      <Box sx={{ display: "flex", justifyContent: "center", pt: 5 }}><CircularProgress size={26} sx={{ color: WA.green }} /></Box>
+                    ) : messagesWithSeparators.length ? messagesWithSeparators.map((item) => {
+                      if (item.type === "separator") {
+                        return <DateSeparator key={item.key} label={formatDateLabel(item.ts)} />;
+                      }
+                      const msg = item.msg;
+                      const fromMe = msg?.from === "me";
+                      const doReply = () => setReplyingTo({
+                        serializedId: msg.serializedId, id: msg.id, body: msg.body || "",
+                        type: msg.type || "chat", from: msg.from,
+                        authorName: fromMe ? "Kamu" : selectedChatLabel,
+                      });
+                      return (
+                        <Box key={item.key}
+                          onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ open: true, anchorEl: e.currentTarget, msg }); }}
+                          sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", width: "100%", mb: 0.5, alignItems: "center", position: "relative", "&:hover .chat-msg-menu": { opacity: 1 } }}>
+
+                          {/* Bubble */}
+                          <Box
+                            sx={{ position: "relative", maxWidth: "72%", px: 1.4, py: 0.8,
+                              bgcolor: fromMe ? WA.sentBg : WA.recvBg, color: WA.msgText,
+                              borderRadius: fromMe ? "8px 8px 0 8px" : "8px 8px 8px 0",
+                              boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+                              "&::before": { content: '""', position: "absolute", bottom: 0, ...(fromMe ? { right: -8 } : { left: -8 }), width: 8, height: 13, backgroundColor: fromMe ? WA.sentBg : WA.recvBg, ...(fromMe ? { borderBottomLeftRadius: 8 } : { borderBottomRightRadius: 8 }) },
+                              "&::after": { content: '""', position: "absolute", bottom: -2, ...(fromMe ? { right: -10 } : { left: -10 }), width: 10, height: 10, backgroundColor: WA.chatBg, ...(fromMe ? { borderBottomLeftRadius: 6 } : { borderBottomRightRadius: 6 }) },
+                            }}>
+                            {/* Dropdown ▾ di pojok bubble */}
+                            <Box className="chat-msg-menu" sx={{ position: "absolute", top: 2, ...(fromMe ? { left: -26 } : { right: -26 }), opacity: 0, transition: "opacity 0.15s", zIndex: 1 }}>
+                              <IconButton size="small"
+                                onClick={(e) => setCtxMenu({ open: true, anchorEl: e.currentTarget, msg })}
+                                sx={{ color: WA.sidebarSub, p: 0.25, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", "&:hover": { bgcolor: "#fff" } }}>
+                                <KeyboardArrowDownRoundedIcon sx={{ fontSize: 14 }} />
+                              </IconButton>
+                            </Box>
+
+                            <QuotedMsgBlock quotedMsg={msg.quotedMsg} fromMe={fromMe} />
+                            {MSG_TYPE[msg?.type] ? (
+                              <MediaBubble msg={msg} fromMe={fromMe} />
+                            ) : (
+                              <WaText text={msg?.body || ""} fromMe={fromMe} />
+                            )}
+                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.4, mt: 0.25 }}>
+                              <Typography sx={{ fontFamily: FONT_MONO, fontSize: 10.5, color: WA.msgMeta }}>
+                                {formatTime(msg?.timestamp)}
+                              </Typography>
+                              {fromMe && <MsgTick ack={msg?.ack} />}
+                            </Box>
+                          </Box>
+
+                        </Box>
+                      );
+                    }) : (
+                      <Box sx={{ textAlign: "center", pt: 5 }}>
+                        <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, color: WA.msgMeta }}>
+                          Belum ada riwayat pesan. Buka chat di WhatsApp lalu klik Sync.
+                        </Typography>
+                      </Box>
+                    )}
+    </>
+  ), [loadingMessages, messagesWithSeparators, hiddenOlderCount, selectedChatLabel, showOlderMessages]);
 
   // ─── Header portal ──────────────────────────────────────────────────────────
 
@@ -1091,7 +1309,7 @@ export default function ChatInboxPage() {
                         </Typography>
                       </Box>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        {chat.lastMessage?.from === "me" && <DoneAllIcon sx={{ fontSize: 14, color: WA.green, flexShrink: 0 }} />}
+                        {chat.lastMessage?.from === "me" && getPreviewText(chat?.lastMessage) && <DoneAllIcon sx={{ fontSize: 14, color: WA.green, flexShrink: 0 }} />}
                         <Typography sx={{ fontFamily: FONT_SANS, fontSize: 12.5, color: WA.sidebarSub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                           {getPreviewText(chat?.lastMessage)}
                         </Typography>
@@ -1127,14 +1345,19 @@ export default function ChatInboxPage() {
                         {selectedChat.name || selectedChat.phone || "Chat"}
                       </Typography>
                       <Typography sx={{ fontFamily: FONT_MONO, fontSize: 11.5, color: WA.sidebarSub }}>
-                        {selectedChat.phone || selectedChat.id}
+                        {(() => {
+                          const phoneLabel = formatPhone(selectedChat.phone);
+                          if (!phoneLabel || selectedChat.isGroup) return selectedChat.isGroup ? "Grup" : "";
+                          const sameAsTitle = String(selectedChat.name || "").replace(/\D/g, "") === String(selectedChat.phone).replace(/\D/g, "");
+                          return sameAsTitle ? "" : phoneLabel;
+                        })()}
                       </Typography>
                     </Box>
                   </Box>
                   <Box sx={{ display: "flex", gap: 0.5 }}>
                     <Tooltip title="Sync riwayat chat">
                       <span>
-                        <IconButton size="small" onClick={async () => { await loadMessages(selectedChatId, { forceRefresh: true, snapToLatest: true }); await loadChats({ preserveSelection: true }); showToast("Chat diperbarui", "success"); }} disabled={loadingMessages} sx={{ color: WA.sidebarSub, "&:hover": { bgcolor: WA.sidebarHover } }}>
+                        <IconButton size="small" onClick={async () => { await loadMessages(selectedChatId, { full: true, snapToLatest: true }); await loadChats({ preserveSelection: true }); showToast("Chat diperbarui", "success"); }} disabled={loadingMessages} sx={{ color: WA.sidebarSub, "&:hover": { bgcolor: WA.sidebarHover } }}>
                           {loadingMessages ? <CircularProgress size={16} sx={{ color: WA.sidebarSub }} /> : <RefreshRoundedIcon sx={{ fontSize: 20 }} />}
                         </IconButton>
                       </span>
@@ -1150,69 +1373,7 @@ export default function ChatInboxPage() {
                 <Box sx={{ flex: 1, minHeight: 0, position: "relative", display: "flex", flexDirection: "column" }}>
                   <Box ref={messageListRef} onScroll={handleMsgListScroll}
                     sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, py: 1.5, bgcolor: WA.chatBg, scrollbarWidth: "thin", scrollbarColor: "#C0B9AE transparent", "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "#C0B9AE", borderRadius: 2 }, }}>
-                    {loadingMessages ? (
-                      <Box sx={{ display: "flex", justifyContent: "center", pt: 5 }}><CircularProgress size={26} sx={{ color: WA.green }} /></Box>
-                    ) : messagesWithSeparators.length ? messagesWithSeparators.map((item) => {
-                      if (item.type === "separator") {
-                        return <DateSeparator key={item.key} label={formatDateLabel(item.ts)} />;
-                      }
-                      const msg = item.msg;
-                      const fromMe = msg?.from === "me";
-                      const msgId = msg.id || msg.serializedId;
-                      const isHovered = hoveredMsgId === msgId;
-                      const doReply = () => setReplyingTo({
-                        serializedId: msg.serializedId, id: msg.id, body: msg.body || "",
-                        type: msg.type || "chat", from: msg.from,
-                        authorName: fromMe ? "Kamu" : (selectedChat?.name || selectedChat?.phone || ""),
-                      });
-                      return (
-                        <Box key={item.key}
-                          onMouseEnter={() => setHoveredMsgId(msgId)}
-                          onMouseLeave={() => setHoveredMsgId(null)}
-                          onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ open: true, anchorEl: e.currentTarget, msg }); }}
-                          sx={{ display: "flex", justifyContent: fromMe ? "flex-end" : "flex-start", width: "100%", mb: 0.5, alignItems: "center", position: "relative" }}>
-
-                          {/* Bubble */}
-                          <Box
-                            sx={{ position: "relative", maxWidth: "72%", px: 1.4, py: 0.8,
-                              bgcolor: fromMe ? WA.sentBg : WA.recvBg, color: WA.msgText,
-                              borderRadius: fromMe ? "8px 8px 0 8px" : "8px 8px 8px 0",
-                              boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
-                              "&::before": { content: '""', position: "absolute", bottom: 0, ...(fromMe ? { right: -8 } : { left: -8 }), width: 8, height: 13, backgroundColor: fromMe ? WA.sentBg : WA.recvBg, ...(fromMe ? { borderBottomLeftRadius: 8 } : { borderBottomRightRadius: 8 }) },
-                              "&::after": { content: '""', position: "absolute", bottom: -2, ...(fromMe ? { right: -10 } : { left: -10 }), width: 10, height: 10, backgroundColor: WA.chatBg, ...(fromMe ? { borderBottomLeftRadius: 6 } : { borderBottomRightRadius: 6 }) },
-                            }}>
-                            {/* Dropdown ▾ di pojok bubble */}
-                            <Box sx={{ position: "absolute", top: 2, ...(fromMe ? { left: -26 } : { right: -26 }), opacity: isHovered ? 1 : 0, transition: "opacity 0.15s", zIndex: 1 }}>
-                              <IconButton size="small"
-                                onClick={(e) => setCtxMenu({ open: true, anchorEl: e.currentTarget, msg })}
-                                sx={{ color: WA.sidebarSub, p: 0.25, bgcolor: "rgba(255,255,255,0.9)", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", "&:hover": { bgcolor: "#fff" } }}>
-                                <KeyboardArrowDownRoundedIcon sx={{ fontSize: 14 }} />
-                              </IconButton>
-                            </Box>
-
-                            <QuotedMsgBlock quotedMsg={msg.quotedMsg} fromMe={fromMe} />
-                            {MSG_TYPE[msg?.type] ? (
-                              <MediaBubble msg={msg} fromMe={fromMe} />
-                            ) : (
-                              <WaText text={msg?.body || ""} fromMe={fromMe} />
-                            )}
-                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.4, mt: 0.25 }}>
-                              <Typography sx={{ fontFamily: FONT_MONO, fontSize: 10.5, color: WA.msgMeta }}>
-                                {formatTime(msg?.timestamp)}
-                              </Typography>
-                              {fromMe && <MsgTick ack={msg?.ack} />}
-                            </Box>
-                          </Box>
-
-                        </Box>
-                      );
-                    }) : (
-                      <Box sx={{ textAlign: "center", pt: 5 }}>
-                        <Typography sx={{ fontFamily: FONT_SANS, fontSize: 13, color: WA.msgMeta }}>
-                          Belum ada riwayat pesan. Buka chat di WhatsApp lalu klik Sync.
-                        </Typography>
-                      </Box>
-                    )}
+                    {messageListContent}
                   </Box>
 
                   {/* Scroll to bottom FAB — di luar area scroll, tetap di posisinya */}

@@ -10,8 +10,9 @@ import {
 } from '@untitledui/icons'
 
 import logoPiagam from '../assets/logo-piagam.png'
-import logoPiagamTransparent from '../assets/logo-piagam2.png'
 import '../styles/layout.css'
+import TopMenu from './AppTopMenu.jsx'
+import ProfileMenu from './ProfileMenu.jsx'
 import {
   ALL_DEPARTMENTS_FILTER_ID,
   ALL_DEPARTMENTS_FILTER_LABEL,
@@ -33,12 +34,17 @@ function Header({
   searchProps,
   showMenuButton = false,
   departmentFilterProps,
+  menuItems = [],
+  activePath,
+  menuOpen = false,
+  onMenuAction,
+  onMenuNavigate,
 }) {
   const hasSearch = Boolean(searchProps)
   const hasNotification = Boolean(notificationProps)
   const hasBreadcrumb = Array.isArray(breadcrumb) && breadcrumb.length > 0
-  const shouldShowBreadcrumbRow =
-    hasBreadcrumb || Boolean(departmentFilterProps) || hasSearch || hasNotification || Boolean(onRefresh)
+  // Row stays mounted: pages portal their controls into #header-wa-slot.
+  const shouldShowBreadcrumbRow = true
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
   const [isDepartmentDropdownOpen, setIsDepartmentDropdownOpen] = useState(false)
   const [departmentDropdownStyle, setDepartmentDropdownStyle] = useState(null)
@@ -251,98 +257,39 @@ function Header({
   }
 
   return (
-    <header className="header-main">
-      <img
-        src={logoPiagamTransparent}
-        alt=""
-        aria-hidden="true"
-        className="header-accent-logo"
-      />
-
-      <div className="header-content">
-        <div className="header-left">
+    <header className="header-main nsh">
+      {/* Row 1: brand, status, user */}
+      <div className="nsh-top">
+        <div className="nsh-brand">
           {showMenuButton ? (
-            <button
-              type="button"
-              className="header-menu-button"
-              aria-label="Open sidebar"
-              onClick={onMenuToggle}
-            >
+            <button type="button" className="nsh-toggle" aria-label="Buka menu" onClick={onMenuToggle}>
               <Menu01 size={20} />
             </button>
           ) : null}
-
-          <div className="header-brand">
-            <img src={logoPiagam} alt="Logo Piagam" className="header-brand-logo" />
-          </div>
+          <img src={logoPiagam} alt="PT Pilar Niaga Makmur" className="nsh-logo" />
+          <span className="nsh-divider" aria-hidden="true" />
+          <span className="nsh-title" aria-label={title}>
+            <b>Send</b>line
+          </span>
         </div>
 
-        <div className="header-right">
-          <span className="header-brand-title">{title}</span>
+        <div className="nsh-right">
+          {/* Pages portal small status controls (e.g. WhatsApp state) in here. */}
+          <div id="header-wa-slot" className="nsh-slot" />
+          <ProfileMenu />
         </div>
       </div>
 
-      {shouldShowBreadcrumbRow ? (
-        <div className="header-breadcrumb">
-          <div className="header-breadcrumb-content">
-            {hasBreadcrumb || departmentFilterProps ? (
-              <nav
-                className="breadcrumb-nav"
-                aria-label={departmentFilterProps ? 'Filter divisi' : 'Breadcrumb'}
-                ref={breadcrumbFilterRef}
-              >
-                {renderBreadcrumb()}
-              </nav>
-            ) : null}
-
-            <div id="header-wa-slot" style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }} />
-
-            {hasSearch || hasNotification || onRefresh ? (
-              <div className="header-toolbar">
-                {hasSearch ? (
-                  <label
-                    className="header-search header-search--compact"
-                    aria-label={searchProps.ariaLabel ?? 'Search'}
-                  >
-                    <SearchMd size={16} className="header-search__icon header-search__icon--compact" />
-                    <input
-                      type="search"
-                      className="header-search__input header-search__input--compact"
-                      value={searchProps.value ?? ''}
-                      placeholder={searchProps.placeholder ?? 'Search...'}
-                      onChange={searchProps.onChange}
-                      aria-label={searchProps.ariaLabel ?? 'Search'}
-                      autoComplete="off"
-                    />
-                  </label>
-                ) : null}
-
-                {hasNotification ? (
-                  <button
-                    type="button"
-                    className="header-icon-button header-icon-button--compact"
-                    aria-label={notificationProps.ariaLabel ?? 'Open notifications'}
-                    title={notificationProps.ariaLabel ?? 'Open notifications'}
-                    onClick={() => setIsNotificationModalOpen(true)}
-                  >
-                    <Bell04 size={16} />
-                  </button>
-                ) : null}
-
-                {onRefresh ? (
-                  <button
-                    type="button"
-                    className="header-icon-button header-icon-button--compact"
-                    aria-label="Refresh halaman"
-                    title="Refresh halaman"
-                    onClick={onRefresh}
-                  >
-                    <RefreshCw05 size={16} />
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
+      {/* Row 2: menu bar, left aligned, with dropdowns */}
+      {menuItems.length > 0 ? (
+        <div className="nsh-menurow">
+          <TopMenu
+            items={menuItems}
+            activePath={activePath}
+            mobileOpen={menuOpen}
+            onAction={onMenuAction}
+            onNavigate={onMenuNavigate}
+          />
         </div>
       ) : null}
 

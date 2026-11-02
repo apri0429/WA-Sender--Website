@@ -1,104 +1,61 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { BarChartSquare02, Settings01, FilePlus02, FileCheck02, Table, Database01, CalendarDate } from "@untitledui/icons";
 
-import AppSidebar from "./components/AppSidebar";
 import AppHeader from "./components/AppHeader";
-import BackgroundMain from "./components/BackgroundMain";
 import SettingsCard from "../pages/SettingsCard";
+import { OPEN_SETTINGS_EVENT } from "../components/PageTools";
 
-const waPrimaryItems = [
-  { label: "Dashboard", href: "/", icon: BarChartSquare02 },
+// NetSuite-style menu bar. Follows the workflow order: pull data -> generate PDF -> send.
+const menuItems = [
   {
-    label: "Input Data",
-    icon: Table,
+    label: "Data",
+    href: "/data",
     children: [
-      { label: "Input", href: "/input", icon: Table },
-      { label: "Periode", href: "/input/periode", icon: CalendarDate },
+      { label: "Input", href: "/data" },
+      { label: "Periode", href: "/data/periode" },
+      { label: "Master Data", href: "/data/master" },
     ],
   },
-  {
-    label: "Generate PDF",
-    icon: FilePlus02,
-    children: [
-      { label: "Generate", href: "/pdf", icon: FilePlus02 },
-      { label: "Hasil PDF", href: "/pdf/hasil", icon: FileCheck02 },
-    ],
-  },
-  { label: "Master Data", href: "/masterdata", icon: Database01 },
-  { label: "Settings", action: "open-settings", icon: Settings01 },
+  { label: "Generate PDF", href: "/pdf" },
+  { label: "Kirim Tagihan", href: "/" },
+  // Chat hidden: replies are read on the phone / WhatsApp Web (see App.jsx to restore).
+  { label: "Settings", action: "open-settings" },
 ];
-
-const pageBreadcrumbs = {
-  "/": [{ label: "Dashboard", active: true }],
-  "/input": [{ label: "Input Data" }, { label: "Input", active: true }],
-  "/input/periode": [{ label: "Input Data" }, { label: "Periode", active: true }],
-  "/pdf": [{ label: "Generate PDF", active: true }],
-  "/pdf/hasil": [{ label: "Generate PDF" }, { label: "Hasil PDF", active: true }],
-  "/masterdata": [{ label: "Master Data", active: true }],
-};
-
 
 export default function AppLayout() {
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const breadcrumb =
-    pageBreadcrumbs[location.pathname] ?? [{ label: "Halaman", active: true }];
 
-  const handleSidebarAction = (action) => {
+  // Pages ask for Settings (e.g. "Google Sheet belum diatur") through a window event.
+  useEffect(() => {
+    const open = () => setSettingsOpen(true);
+    window.addEventListener(OPEN_SETTINGS_EVENT, open);
+    return () => window.removeEventListener(OPEN_SETTINGS_EVENT, open);
+  }, []);
+
+  const handleAction = (action) => {
     if (action === "open-settings") setSettingsOpen(true);
   };
 
-  useEffect(() => {
-    if (!document.getElementById("plus-jakarta-sans-font")) {
-      const link = document.createElement("link");
-      link.id = "plus-jakarta-sans-font";
-      link.rel = "stylesheet";
-      link.href =
-        "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap";
-      document.head.appendChild(link);
-    }
-  }, []);
-
   return (
-    <div
-      className={`dashboard-shell${
-        collapsed ? " dashboard-shell--sidebar-collapsed" : ""
-      }`}
-    >
-      <AppSidebar
-        collapsed={collapsed}
-        mobileOpen={mobileOpen}
-        activePath={location.pathname}
-        primaryItems={waPrimaryItems}
-        secondaryItems={[]}
-        onAction={handleSidebarAction}
-        onToggleCollapse={() => setCollapsed((v) => !v)}
-        onCloseMobile={() => setMobileOpen(false)}
-      />
-
+    <div className="dashboard-shell dashboard-shell--topnav">
       <SettingsCard open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-
-      <div
-        className={`sidebar-overlay${mobileOpen ? " active" : ""}`}
-        onClick={() => setMobileOpen(false)}
-      />
 
       <div className="dashboard-stage">
         <AppHeader
           title="Sendline"
-          breadcrumb={breadcrumb}
-          showMenuButton={true}
-          onMenuToggle={() => setMobileOpen((v) => !v)}
+          breadcrumb={[]}
+          showMenuButton
+          onMenuToggle={() => setMenuOpen((v) => !v)}
+          menuItems={menuItems}
+          activePath={location.pathname}
+          menuOpen={menuOpen}
+          onMenuAction={handleAction}
+          onMenuNavigate={() => setMenuOpen(false)}
         />
 
-        <main
-          className="dashboard-main"
-          style={{ position: "relative", padding: 0, overflow: "hidden" }}
-        >
-          <BackgroundMain position="absolute" zIndex={0} />
+        <main className="dashboard-main" style={{ position: "relative", padding: 0, overflow: "hidden", background: "var(--ns-page-bg)" }}>
           <div
             style={{
               position: "relative",
@@ -113,7 +70,6 @@ export default function AppLayout() {
           </div>
         </main>
       </div>
-
     </div>
   );
 }

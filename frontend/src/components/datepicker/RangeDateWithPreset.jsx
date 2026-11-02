@@ -415,7 +415,7 @@ export const DateRangePickerWithPresets = ({
             fontWeight: 600, 
             fontSize: '0.875rem', 
             color: '#0F172A',
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+            fontFamily: "var(--font-sans)",
             letterSpacing: '-0.01em',
             lineHeight: 1.3
           }}>
@@ -443,19 +443,19 @@ export const DateRangePickerWithPresets = ({
               <CalendarMonthRoundedIcon 
                 sx={{ 
                   fontSize: '1.1rem',
-                  color: showPicker ? '#2F6FB2' : '#64748B',
+                  color: showPicker ? '#3a6fa6' : '#64748B',
                   transition: 'color 0.2s ease'
                 }} 
               />
             }
             sx={{
-              borderColor: showPicker ? '#2F6FB2' : '#E2E8F0',
-              color: showPicker ? '#2F6FB2' : '#475569',
+              borderColor: showPicker ? '#3a6fa6' : '#E2E8F0',
+              color: showPicker ? '#3a6fa6' : '#475569',
               bgcolor: showPicker ? 'rgba(47, 111, 178, 0.08)' : 'transparent',
               textTransform: 'none',
               fontSize: '0.8125rem',
               fontWeight: showPicker ? 600 : 500,
-              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontFamily: "var(--font-sans)",
               borderRadius: 1.5,
               px: 2,
               py: 0.875,
@@ -464,7 +464,7 @@ export const DateRangePickerWithPresets = ({
               boxShadow: showPicker ? '0 2px 4px rgba(47, 111, 178, 0.15)' : 'none',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                borderColor: '#2F6FB2',
+                borderColor: '#3a6fa6',
                 bgcolor: showPicker ? 'rgba(47, 111, 178, 0.12)' : 'rgba(47, 111, 178, 0.06)',
                 boxShadow: showPicker ? '0 2px 6px rgba(47, 111, 178, 0.2)' : 'none',
                 transform: 'translateY(-1px)'
@@ -475,7 +475,7 @@ export const DateRangePickerWithPresets = ({
               '&:disabled': {
                 borderColor: '#E2E8F0',
                 color: '#94A3B8',
-                bgcolor: '#F8FAFC',
+                bgcolor: '#f8fafc',
                 transform: 'none',
                 cursor: 'not-allowed'
               }
@@ -641,8 +641,8 @@ export const DateRangePickerWithPresets = ({
                   px: 2,
                   pt: isMobileFullPage ? 'calc(env(safe-area-inset-top, 0px) + 12px)' : 2,
                   pb: 1.5,
-                  borderBottom: '1px solid #F1F5F9',
-                  bgcolor: '#FAFBFC',
+                  borderBottom: '1px solid #f1f5f9',
+                  bgcolor: '#f8fafc',
                   position: isMobileFullPage ? 'sticky' : 'static',
                   top: 0,
                   zIndex: 1
@@ -651,7 +651,7 @@ export const DateRangePickerWithPresets = ({
                     fontSize: '1.125rem',
                     fontWeight: 600,
                     color: '#0F172A',
-                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                    fontFamily: "var(--font-sans)",
                     letterSpacing: '-0.01em'
                   }}>
                     Pilih Range Tanggal
@@ -666,7 +666,7 @@ export const DateRangePickerWithPresets = ({
                       borderRadius: '50%',
                       color: '#64748B',
                       '&:hover': {
-                        bgcolor: '#F1F5F9',
+                        bgcolor: '#f1f5f9',
                         color: '#0F172A'
                       }
                     }}
@@ -689,9 +689,9 @@ export const DateRangePickerWithPresets = ({
                         sx={{
                           fontSize: '0.8125rem',
                           color: '#64748B',
-                          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                          fontFamily: "var(--font-sans)",
                           '&.Mui-focused': {
-                            color: '#2F6FB2'
+                            color: '#3a6fa6'
                           }
                         }}
                       >
@@ -725,7 +725,7 @@ export const DateRangePickerWithPresets = ({
                         }}
                         sx={{
                           fontSize: '0.875rem',
-                          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                          fontFamily: "var(--font-sans)",
                           borderRadius: 1.5,
                           '& .MuiOutlinedInput-notchedOutline': {
                             borderColor: '#E2E8F0'
@@ -734,7 +734,7 @@ export const DateRangePickerWithPresets = ({
                             borderColor: '#CBD5E1'
                           },
                           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#2F6FB2'
+                            borderColor: '#3a6fa6'
                           }
                         }}
                       >
@@ -742,7 +742,7 @@ export const DateRangePickerWithPresets = ({
                           value=""
                           sx={{
                             fontSize: '0.875rem',
-                            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                            fontFamily: "var(--font-sans)",
                             color: '#64748B'
                           }}
                         >
@@ -754,7 +754,7 @@ export const DateRangePickerWithPresets = ({
                             value={preset.key}
                             sx={{
                               fontSize: '0.875rem',
-                              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+                              fontFamily: "var(--font-sans)"
                             }}
                           >
                             {preset.label}
@@ -777,9 +777,9 @@ export const DateRangePickerWithPresets = ({
                       <Box sx={{
                         width: { xs: '100%', md: '200px' },
                         minWidth: { md: '200px' },
-                        borderRight: { md: '1px solid #F1F5F9' },
-                        borderBottom: { xs: '1px solid #F1F5F9', md: 'none' },
-                        bgcolor: '#FAFBFC',
+                        borderRight: { md: '1px solid #f1f5f9' },
+                        borderBottom: { xs: '1px solid #f1f5f9', md: 'none' },
+                        bgcolor: '#f8fafc',
                         p: 2,
                         display: 'flex',
                         flexDirection: 'column',
@@ -794,19 +794,19 @@ export const DateRangePickerWithPresets = ({
                               textTransform: 'none',
                               fontSize: '0.875rem',
                               fontWeight: selectedPreset === preset.key ? 600 : 400,
-                              color: selectedPreset === preset.key ? '#2F6FB2' : '#475569',
+                              color: selectedPreset === preset.key ? '#3a6fa6' : '#475569',
                               bgcolor: selectedPreset === preset.key ? 'rgba(47, 111, 178, 0.08)' : 'transparent',
                               borderRadius: 1.5,
                               px: 1.5,
                               py: 0.875,
                               minHeight: '36px',
-                              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                              fontFamily: "var(--font-sans)",
                               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                               '&:hover': {
                                 bgcolor: selectedPreset === preset.key
                                   ? 'rgba(47, 111, 178, 0.12)'
                                   : 'rgba(47, 111, 178, 0.06)',
-                                color: '#2F6FB2',
+                                color: '#3a6fa6',
                               },
                             }}
                           >
@@ -850,7 +850,7 @@ export const DateRangePickerWithPresets = ({
                     gap: 1,
                     mt: 1.5,
                     pt: 2,
-                    borderTop: '1px solid #F1F5F9',
+                    borderTop: '1px solid #f1f5f9',
                     justifyContent: isMobilePicker ? 'stretch' : 'flex-end',
                     flexDirection: 'row'
                   }}>
@@ -864,7 +864,7 @@ export const DateRangePickerWithPresets = ({
                         textTransform: 'none',
                         fontSize: '0.875rem',
                         fontWeight: 500,
-                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                        fontFamily: "var(--font-sans)",
                         borderRadius: 1.5,
                         flex: isMobilePicker ? 1 : '0 0 auto',
                         px: 2.5,
@@ -873,8 +873,8 @@ export const DateRangePickerWithPresets = ({
                         height: '40px',
                         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         '&:hover': {
-                          borderColor: '#2F6FB2',
-                          color: '#2F6FB2',
+                          borderColor: '#3a6fa6',
+                          color: '#3a6fa6',
                           bgcolor: 'rgba(47, 111, 178, 0.08)',
                           boxShadow: '0 2px 4px rgba(47, 111, 178, 0.15)',
                         }
@@ -888,12 +888,12 @@ export const DateRangePickerWithPresets = ({
                       onClick={handleAddRange}
                       disabled={isRangeLimitReached}
                       sx={{
-                        bgcolor: '#2F6FB2',
+                        bgcolor: '#3a6fa6',
                         color: 'white',
                         textTransform: 'none',
                         fontSize: '0.875rem',
                         fontWeight: 600,
-                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                        fontFamily: "var(--font-sans)",
                         borderRadius: 1.5,
                         flex: isMobilePicker ? 1 : '0 0 auto',
                         px: 3,
@@ -903,7 +903,7 @@ export const DateRangePickerWithPresets = ({
                         boxShadow: '0 2px 4px rgba(47, 111, 178, 0.2)',
                         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         '&:hover': {
-                          bgcolor: '#1F4E8C',
+                          bgcolor: '#24476e',
                           boxShadow: '0 4px 8px rgba(47, 111, 178, 0.3)',
                           transform: 'translateY(-1px)'
                         },
@@ -934,7 +934,7 @@ export const DateRangePickerWithPresets = ({
         <Typography sx={{ 
           fontSize: '0.75rem', 
           color: '#64748B',
-          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+          fontFamily: "var(--font-sans)",
           lineHeight: 1.5,
           mt: 0.5,
           fontStyle: 'italic'
@@ -951,7 +951,7 @@ export const DateRangePickerWithPresets = ({
         <Box sx={{ 
           mt: 1.5,
           pt: 1.5,
-          borderTop: '1px solid #F1F5F9'
+          borderTop: '1px solid #f1f5f9'
         }}>
           <Box
             sx={{
@@ -967,7 +967,7 @@ export const DateRangePickerWithPresets = ({
               fontSize: '0.875rem', 
               fontWeight: 600, 
               color: '#0F172A',
-              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontFamily: "var(--font-sans)",
               letterSpacing: '-0.01em',
               lineHeight: 1.3
             }}>
@@ -994,13 +994,13 @@ export const DateRangePickerWithPresets = ({
               bgcolor: '#FAFAFA', 
               borderRadius: '12px', 
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #e3e6eb',
               p: { xs: 1.5, md: 2 },
               display: 'flex',
               flexDirection: 'column',
               gap: 1,
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+              fontFamily: "var(--font-sans)",
               '&:hover': {
                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
                 borderColor: '#D1D5DB',
@@ -1017,7 +1017,7 @@ export const DateRangePickerWithPresets = ({
                   fontSize: '0.6875rem', 
                   color: '#757575',
                   fontWeight: 500,
-                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                  fontFamily: "var(--font-sans)",
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                   lineHeight: 1.2,
@@ -1040,7 +1040,7 @@ export const DateRangePickerWithPresets = ({
                 fontSize: { xs: '0.875rem', md: '0.9375rem' }, 
                 fontWeight: 600, 
                 color: '#212121',
-                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                fontFamily: "var(--font-sans)",
                 lineHeight: 1.4,
                 wordBreak: 'break-word'
               }}>
@@ -1053,13 +1053,13 @@ export const DateRangePickerWithPresets = ({
               bgcolor: '#FAFAFA', 
               borderRadius: '12px', 
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #e3e6eb',
               p: { xs: 1.5, md: 2 },
               display: 'flex',
               flexDirection: 'column',
               gap: 1,
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+              fontFamily: "var(--font-sans)",
               '&:hover': {
                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
                 borderColor: '#D1D5DB',
@@ -1076,7 +1076,7 @@ export const DateRangePickerWithPresets = ({
                   fontSize: '0.6875rem', 
                   color: '#757575',
                   fontWeight: 500,
-                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                  fontFamily: "var(--font-sans)",
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                   lineHeight: 1.2,
@@ -1099,7 +1099,7 @@ export const DateRangePickerWithPresets = ({
                 fontSize: { xs: '0.875rem', md: '0.9375rem' }, 
                 fontWeight: 600, 
                 color: '#212121',
-                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                fontFamily: "var(--font-sans)",
                 lineHeight: 1.4,
                 wordBreak: 'break-word'
               }}>
@@ -1114,13 +1114,13 @@ export const DateRangePickerWithPresets = ({
               bgcolor: '#FAFAFA', 
               borderRadius: '12px', 
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #e3e6eb',
               p: { xs: 1.5, md: 2 },
               display: 'flex',
               flexDirection: 'column',
               gap: 1,
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+              fontFamily: "var(--font-sans)",
               '&:hover': {
                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
                 borderColor: '#D1D5DB',
@@ -1137,7 +1137,7 @@ export const DateRangePickerWithPresets = ({
                   fontSize: '0.6875rem', 
                   color: '#757575',
                   fontWeight: 500,
-                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                  fontFamily: "var(--font-sans)",
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                   lineHeight: 1.2,
@@ -1160,7 +1160,7 @@ export const DateRangePickerWithPresets = ({
                 fontSize: { xs: '0.875rem', md: '0.9375rem' }, 
                 fontWeight: 600, 
                 color: '#212121',
-                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                fontFamily: "var(--font-sans)",
                 lineHeight: 1.4,
                 display: 'flex',
                 alignItems: 'center',
@@ -1171,7 +1171,7 @@ export const DateRangePickerWithPresets = ({
                     width: 6,
                     height: 6,
                     borderRadius: '50%',
-                    backgroundColor: invoiceData && invoiceData.length > 0 ? '#2F6FB2' : '#BDBDBD',
+                    backgroundColor: invoiceData && invoiceData.length > 0 ? '#3a6fa6' : '#BDBDBD',
                     flexShrink: 0
                   }}
                 />
@@ -1184,13 +1184,13 @@ export const DateRangePickerWithPresets = ({
               bgcolor: '#FAFAFA', 
               borderRadius: '12px', 
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #e3e6eb',
               p: { xs: 1.5, md: 2 },
               display: 'flex',
               flexDirection: 'column',
               gap: 1,
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+              fontFamily: "var(--font-sans)",
               '&:hover': {
                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
                 borderColor: '#D1D5DB',
@@ -1207,7 +1207,7 @@ export const DateRangePickerWithPresets = ({
                   fontSize: '0.6875rem', 
                   color: '#757575',
                   fontWeight: 500,
-                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                  fontFamily: "var(--font-sans)",
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                   lineHeight: 1.2,
@@ -1230,7 +1230,7 @@ export const DateRangePickerWithPresets = ({
                 fontSize: { xs: '0.875rem', md: '0.9375rem' }, 
                 fontWeight: 600, 
                 color: '#212121',
-                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                fontFamily: "var(--font-sans)",
                 lineHeight: 1.4,
                 wordBreak: 'break-word'
               }}>
@@ -1249,7 +1249,7 @@ export const DateRangePickerWithPresets = ({
           gap: 0.75, 
           mt: 1.5,
           pt: 1.5,
-          borderTop: '1px solid #F1F5F9'
+          borderTop: '1px solid #f1f5f9'
         }}>
           {rangeDates.map((range, index) => (
             <Chip
@@ -1262,13 +1262,13 @@ export const DateRangePickerWithPresets = ({
                 borderColor: '#E2E8F0',
                 color: '#475569',
                 fontSize: '0.75rem',
-                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                fontFamily: "var(--font-sans)",
                 height: 28,
                 borderRadius: 1.5,
                 transition: 'all 0.2s ease',
                 '&:hover': {
                   borderColor: '#CBD5E1',
-                  bgcolor: '#F8FAFC'
+                  bgcolor: '#f8fafc'
                 },
                 '& .MuiChip-deleteIcon': {
                   color: '#94A3B8',

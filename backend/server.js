@@ -11,7 +11,81 @@ const { Server } = require("socket.io");
 const qrcode = require("qrcode-terminal");
 const puppeteer = require("puppeteer");
 const { google } = require("googleapis");
+// whatsapp-web.js runs its login steps (authenticated -> ready) inside functions
+// exposed to the WhatsApp Web page; when one throws, the error is returned to the
+// page and lost, so login silently stalls at 99%. Log those errors instead.
+// Must run before whatsapp-web.js is required: Client.js destructures this helper.
+const waPuppeteerUtil = require("whatsapp-web.js/src/util/Puppeteer");
+const originalExposeFunctionIfAbsent = waPuppeteerUtil.exposeFunctionIfAbsent;
+waPuppeteerUtil.exposeFunctionIfAbsent = (page, name, fn) =>
+  originalExposeFunctionIfAbsent(page, name, async (...args) => {
+    try {
+      return await fn(...args);
+    } catch (err) {
+      console.error(`[wa] ${name} failed:`, err?.stack || err?.message || err);
+      throw err;
+    }
+  });
 const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
+const { Events: WAEvents } = require("whatsapp-web.js/src/util/Constants");
+
+// whatsapp-web.js bug: right after a QR scan WhatsApp Web reloads itself, and the
+// library's framenavigated handler calls page.evaluate() on the old, already
+// detached frame. That throws ("Attempted to use detached Frame"), the error is
+// swallowed as an unhandled rejection, inject() never runs again, and the client
+// never fires "authenticated"/"ready" — login just hangs after scanning.
+// Same logic as the library, but tolerant of detached frames and retrying inject.
+Client.prototype._registerFramenavigatedHandler = function registerFramenavigatedHandler() {
+  if (this._framenavigatedRegistered) return;
+  this._framenavigatedRegistered = true;
+
+  const isTransientFrameError = (err) =>
+    /detached Frame|Execution context was destroyed|Cannot find context|Target closed|frame got detached/i.test(
+      String(err?.message || err)
+    );
+
+  const injectWithRetry = async (attempt = 1) => {
+    try {
+      await this.inject();
+    } catch (err) {
+      if (!this.pupPage || this.pupPage.isClosed()) return;
+      if (isTransientFrameError(err) && attempt < 5) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        return injectWithRetry(attempt + 1);
+      }
+      console.error("WhatsApp inject after navigation failed:", err?.message || err);
+    }
+  };
+
+  this.pupPage.on("framenavigated", async (frame) => {
+    try {
+      if (frame.parentFrame() !== null) return;
+
+      const isLogout = frame.url().includes("post_logout=1") || this.lastLoggedOut;
+      if (isLogout) {
+        this.emit(WAEvents.DISCONNECTED, "LOGOUT");
+        await this.authStrategy.logout();
+        await this.authStrategy.beforeBrowserInitialized();
+        await this.authStrategy.afterBrowserInitialized();
+        this.lastLoggedOut = false;
+      }
+
+      // Evaluate on the page's current main frame; a failure here just means the
+      // new document is still loading, so treat the store as not injected yet.
+      let storeAvailable = false;
+      try {
+        storeAvailable = await this.pupPage.evaluate(() => typeof window.WWebJS !== "undefined");
+      } catch (err) {
+        if (!isTransientFrameError(err)) throw err;
+      }
+
+      if (!isLogout && storeAvailable) return;
+      await injectWithRetry();
+    } catch (err) {
+      console.error("WhatsApp framenavigated handler error:", err?.message || err);
+    }
+  });
+};
 const { execSync, spawn } = require("child_process");
 
 dotenv.config();
@@ -100,6 +174,7 @@ const GSHEET_FILE = path.join(DATA_DIR, "gsheet.json");
 const WA_SESSIONS_FILE = path.join(DATA_DIR, "wa-sessions.json");
 const PDF_TEMPORARY_FILE = path.join(DATA_DIR, "pdf-temporary.json");
 const PDF_LOG_FILE = path.join(DATA_DIR, "pdf-log.json");
+const SEND_HISTORY_FILE = path.join(DATA_DIR, "send-history.json");
 const PDF_PROGRESS_FILE = path.join(DATA_DIR, "pdf-progress.json");
 const PDF_LOGO_FILE = path.join(DATA_DIR, "pdf-logo.json");
 const PDF_WORKBOOK_DATA_FILE = path.join(DATA_DIR, "pdf-workbook-data.json");
@@ -364,6 +439,7 @@ let isWhatsAppInitializing = false;
 let readyWatchdogTimer = null;
 let initWatchdogTimer = null;
 let isSending = false;
+let cancelPdfSendRequested = false;
 let lastQrString = null;
 let lastQrAt = null;
 let lastWhatsAppEvent = "idle";
@@ -408,6 +484,61 @@ function sortedChatsCacheList() {
   return Array.from(chatsCache.values()).sort((a, b) => (b?.lastMessage?.timestamp || 0) - (a?.lastMessage?.timestamp || 0));
 }
 
+// WhatsApp now addresses many 1:1 chats by "@lid" (an internal id), not the phone
+// number. Resolve the real number once per chat and keep it here.
+const lidPhoneCache = new Map();
+
+async function resolveLidPhones(chatIds = []) {
+  // Only once WA Web is fully ready, and only from its local contact table:
+  // network lookups while it is still syncing can keep "ready" from firing.
+  if (!isWhatsAppReady || !waClient?.pupPage) return;
+  const pending = [...new Set(chatIds)].filter((id) => String(id).endsWith("@lid") && !lidPhoneCache.has(id));
+  if (!pending.length) return;
+  try {
+    const results = await Promise.race([
+      waClient.pupPage.evaluate((ids) => {
+        const factory = window.require("WAWebWidFactory");
+        const contacts = window.require("WAWebApiContact");
+        return ids.map((id) => {
+          try {
+            const pn = contacts.getPhoneNumber(factory.createWid(id));
+            return pn?.user || String(pn?._serialized || "").split("@")[0] || "";
+          } catch (_) {
+            return "";
+          }
+        });
+      }, pending),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
+    ]);
+    (results || []).forEach((pn, index) => {
+      if (pn) lidPhoneCache.set(pending[index], String(pn));
+    });
+  } catch (_) { /* retried on the next chat list load */ }
+}
+
+function chatPhoneFor(chatId, fallbackName = "") {
+  const id = String(chatId || "");
+  if (id.endsWith("@g.us")) return "";
+  if (id.endsWith("@c.us")) return id.split("@")[0];
+  if (lidPhoneCache.has(id)) return lidPhoneCache.get(id);
+  // WA titles unsaved contacts with their formatted number, e.g. "+62 812-8363-6605"
+  const name = String(fallbackName || "").trim();
+  if (/^\+?[\d\s\-()]+$/.test(name)) {
+    const digits = name.replace(/\D/g, "");
+    if (digits.length >= 8) return digits;
+  }
+  return "";
+}
+
+// Interactive/template messages carry a JPEG thumbnail in `body`; never show that as text.
+function cleanMessageBody(msg = {}) {
+  const body = String(msg.body || "");
+  const looksLikeBlob = body.length > 200 && !/\s/.test(body.slice(0, 200));
+  if (!looksLikeBlob) return body;
+  const data = msg._data || {};
+  return String(data.caption || data.title || data.footer || "");
+}
+
 function serializeMessage(msg) {
   const qd = msg._data?.quotedMsg;
   const mediaLikeTypes = new Set(["image", "video", "audio", "ptt", "document", "sticker"]);
@@ -419,8 +550,12 @@ function serializeMessage(msg) {
     id: msg.id?.id || String(Date.now()),
     serializedId: msg.id?._serialized || null,
     from: fromMe ? "me" : "them",
-    body: msg.body || "",
-    timestamp: msg.timestamp ? msg.timestamp * 1000 : Date.now(),
+    body: cleanMessageBody(msg),
+    // Raw WA Web models (full-history path) carry the send time as `t`, not `timestamp`
+    timestamp: (() => {
+      const seconds = msg.timestamp || msg.t || msg._data?.t;
+      return seconds ? (seconds > 1e12 ? seconds : seconds * 1000) : Date.now();
+    })(),
     type: msg.type || "chat",
     hasMedia: Boolean(msg.hasMedia || msg._data?.directPath || mediaLikeTypes.has(msg.type)),
     filename: msg.filename || msg._data?.filename || null,
@@ -1010,6 +1145,26 @@ function savePdfLogData(data = {}) {
   return payload;
 }
 
+// Last WhatsApp send result per customer, kept on the server so every browser sees
+// who was already sent. Shape: { [nama]: { ok, error, at, batch } } where batch is
+// the pdf-log generatedAt the message belonged to.
+function getSendHistory() {
+  const data = readJsonFile(SEND_HISTORY_FILE, {});
+  return data && typeof data === "object" && !Array.isArray(data) ? data : {};
+}
+
+function recordSendResult(nama, { ok, error = "" }) {
+  if (!nama) return;
+  const history = getSendHistory();
+  history[nama] = {
+    ok: !!ok,
+    error: ok ? "" : String(error || ""),
+    at: new Date().toISOString(),
+    batch: getPdfLogData().generatedAt || null,
+  };
+  writeJsonFile(SEND_HISTORY_FILE, history);
+}
+
 function getPdfProgress() {
   return readJsonFile(PDF_PROGRESS_FILE, {
     running: false,
@@ -1182,6 +1337,8 @@ function generateMessage(customer, template) {
 }
 
 function emitLog(type, message) {
+  // Also write to the pm2 log so WhatsApp login problems can be traced afterwards.
+  console.log(`[${type}] ${message}`);
   io.emit("send-log", {
     type,
     message,
@@ -1395,7 +1552,11 @@ function getCellValue(row = [], index = 0) {
 }
 
 function parseExcelDate(value) {
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    // xlsx (cellDates) returns sheet dates a few seconds before local midnight,
+    // e.g. 16:59:56Z for 00:00 WIB, which formats as the previous day. Round to the minute.
+    return new Date(Math.round(value.getTime() / 60000) * 60000);
+  }
   if (typeof value === "number") {
     const excelEpoch = new Date(Date.UTC(1899, 11, 30));
     return new Date(excelEpoch.getTime() + value * 86400000);
@@ -1418,7 +1579,9 @@ function parseExcelDate(value) {
   }
 
   const parsed = new Date(text);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  if (Number.isNaN(parsed.getTime())) return null;
+  // Same few-seconds-before-midnight quirk, for dates saved earlier as ISO strings.
+  return /T\d{2}:\d{2}/.test(text) ? new Date(Math.round(parsed.getTime() / 60000) * 60000) : parsed;
 }
 
 function formatDateId(value) {
@@ -1477,8 +1640,10 @@ function parsePeriodeMonth(value) {
 
   const date = parseExcelDate(value);
   if (date && !Number.isNaN(date.getTime())) {
-    const year = date.getFullYear();
-    const month = date.getMonth();
+    // Read the month in Asia/Bangkok (what the sheet shows), not the server's timezone.
+    const parts = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "numeric", timeZone: "Asia/Bangkok" }).formatToParts(date);
+    const year = Number(parts.find((p) => p.type === "year").value);
+    const month = Number(parts.find((p) => p.type === "month").value) - 1;
     return {
       key: `${year}-${String(month + 1).padStart(2, "0")}`,
       label: formatMonthDateId(date),
@@ -1880,93 +2045,104 @@ function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
   <meta charset="utf-8" />
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:#18181b;background:#fff;font-size:13px;line-height:1.65;padding:28px 32px}
+    body{font-family:Helvetica,Arial,sans-serif;color:#333;background:#fff;font-size:10pt;line-height:1.4;padding:8px 6px}
 
-    .hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:2px solid #18181b;margin-bottom:16px}
-    .hdr-logo{display:flex;flex-direction:row;align-items:center;gap:13px}
-    .hdr-logo img{max-width:76px;max-height:76px;object-fit:contain;object-position:center;display:block;flex-shrink:0}
-    .hdr-logo-texts{display:flex;flex-direction:column;gap:3px}
-    .hdr-logo-name{font-size:16.5px;font-weight:800;color:#18181b;letter-spacing:.01em;line-height:1.25;text-transform:uppercase;font-family:'Segoe UI',Arial,sans-serif}
-    .hdr-logo-sub{font-size:10.5px;color:#71717a}
+    table{width:100%;border-collapse:collapse}
+    .hdr td{vertical-align:top}
+    .hdr-logo{display:flex;align-items:center;gap:12px}
+    .hdr-logo img{max-width:96px;max-height:44px;object-fit:contain;display:block}
+    .hdr-logo-name{font-size:12pt;font-weight:bold;color:#333;text-transform:uppercase}
+    .hdr-logo-sub{font-size:9pt;color:#666;margin-top:2px}
     .hdr-right{text-align:right}
-    .hdr-right .doc-type{font-size:9px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px}
-    .hdr-right .doc-title{font-size:22px;font-weight:800;color:#18181b;letter-spacing:-.02em;line-height:1}
-    .hdr-right .doc-date{font-size:10.5px;color:#71717a;margin-top:6px;font-family:monospace}
+    .doc-title{font-size:28pt;color:#333;line-height:1;margin-bottom:6px}
+    .doc-type{font-size:8pt;color:#666;text-transform:uppercase;letter-spacing:.05em}
+    .doc-date{font-size:10pt;color:#333;margin-top:2px}
 
-    .info-grid{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:11.5px}
-    .info-grid td{border:1px solid #d4d4d8;padding:9px 12px;vertical-align:top}
-    .info-grid .ig-label{background:#f4f4f5;color:#71717a;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;width:130px}
-    .info-grid .ig-value{color:#18181b;font-weight:700}
-    .info-grid .ig-value.amt{font-family:monospace;font-size:13px}
+    .top{margin-top:22px;margin-bottom:22px}
+    .top > tbody > tr > td{vertical-align:top}
+    .box th{background:#e3e3e3;color:#333;font-size:8pt;font-weight:bold;text-align:left;padding:5px 6px;border:1px solid #c8c8c8}
+    .box td{padding:6px;border:1px solid #c8c8c8;font-size:10pt}
+    .billto td{height:58px;font-weight:bold}
+    .sum th,.sum td{text-align:center}
+    .sum td.amt{font-weight:bold;font-size:11pt;white-space:nowrap}
 
-    .sec-label{font-size:9px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px}
+    .sec-label{font-size:9pt;font-weight:bold;color:#333;margin:0 0 4px}
+    table.itemtable{margin-bottom:18px}
+    table.itemtable th{background:#e3e3e3;color:#333;font-size:8pt;font-weight:bold;padding:5px 6px;text-align:left;border-bottom:1px solid #c8c8c8;border-top:1px solid #c8c8c8}
+    table.itemtable td{padding:5px 6px;border-bottom:1px solid #e3e3e3;font-size:9pt;vertical-align:middle}
+    td.no{text-align:center;color:#666;width:26px}
+    td.inv{white-space:nowrap}
+    td.date{white-space:nowrap;width:86px}
+    td.center{text-align:center;width:74px;white-space:nowrap}
+    td.amt,td.amt-g{text-align:right;white-space:nowrap;width:130px}
+    .trow td{border-bottom:none;border-top:1px solid #333;font-weight:bold;font-size:10pt;padding-top:7px}
+    .trow td.lbl{text-align:right}
 
-    table.detail{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:11.5px}
-    table.detail th{font-size:9px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:.06em;padding:7px 10px;text-align:left;background:#f4f4f5;border:1px solid #d4d4d8}
-    table.detail td{padding:7px 10px;border:1px solid #e4e4e7;color:#3f3f46;vertical-align:middle}
-    td.no{color:#a1a1aa;font-size:10px;width:22px;padding-left:8px;text-align:center}
-    td.inv{font-weight:700;color:#27272a;font-family:monospace;font-size:11.5px;white-space:nowrap}
-    td.date{color:#52525b;font-size:11px;white-space:nowrap;width:84px;font-family:monospace}
-    td.center{text-align:center;width:74px;color:#52525b;white-space:nowrap}
-    td.amt{text-align:right;font-weight:700;color:#18181b;width:132px;white-space:nowrap;font-family:monospace}
-    td.amt-g{text-align:right;font-weight:700;color:#18181b;white-space:nowrap;font-family:monospace}
-    .trow td{background:#f4f4f5;font-weight:700;color:#18181b;border-top:2px solid #18181b;font-size:12px}
-    .trow .amt{font-size:12.5px}
-
-    .footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:11px;border-top:1px solid #d4d4d8;margin-top:4px}
-    .footer-left{display:flex;flex-direction:column;gap:2px}
-    .footer-auto{font-size:10px;font-weight:600;color:#52525b}
-    .footer-brand{font-size:9.5px;color:#a1a1aa}
-    .footer-time{font-size:10px;color:#71717a;font-family:monospace;text-align:right}
+    .footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:8px;border-top:1px solid #c8c8c8;margin-top:8px;font-size:8pt;color:#666}
+    .footer-auto{font-weight:bold;color:#333}
   </style>
 </head>
 <body>
-  <div class="hdr">
-    <div class="hdr-logo">
-      ${logoDataUrl ? `<img src="${logoDataUrl}" alt="logo" />` : ""}
-      <div class="hdr-logo-texts">
-        <div class="hdr-logo-name">PT Pilar Niaga Makmur</div>
-        <div class="hdr-logo-sub">Statement Tagihan Pelanggan</div>
-      </div>
-    </div>
-    <div class="hdr-right">
-      <div class="doc-type">Dokumen Tagihan</div>
-      <div class="doc-title">TAGIHAN</div>
-      <div class="doc-date">${escapeHtml(printDate)}, ${escapeHtml(printTime)} WIB</div>
-    </div>
-  </div>
-
-  <table class="info-grid">
+  <table class="hdr">
     <tr>
-      <td class="ig-label">Kepada Yth.</td>
-      <td class="ig-value">${escapeHtml(customer)}</td>
-      <td class="ig-label">Jumlah Invoice</td>
-      <td class="ig-value">${invoices.length}</td>
+      <td>
+        <div class="hdr-logo">
+          ${logoDataUrl ? `<img id="logo" src="${logoDataUrl}" alt="logo" />` : ""}
+          <div>
+            <div class="hdr-logo-name">PT Pilar Niaga Makmur</div>
+            <div class="hdr-logo-sub">Statement Tagihan Pelanggan</div>
+          </div>
+        </div>
+      </td>
+      <td class="hdr-right">
+        <div class="doc-title">Tagihan</div>
+        <div class="doc-type">Dokumen Tagihan</div>
+        <div class="doc-date">${escapeHtml(printDate)}, ${escapeHtml(printTime)} WIB</div>
+      </td>
     </tr>
+  </table>
+
+  <table class="top">
     <tr>
-      <td class="ig-label">Jatuh Tempo Terdekat</td>
-      <td class="ig-value">${escapeHtml(closestTempoStr)}</td>
-      <td class="ig-label">Total Yang Harus Dibayar</td>
-      <td class="ig-value amt">${escapeHtml(formatCurrency(total))}</td>
+      <td style="width:48%;padding-right:20px">
+        <table class="box billto">
+          <tr><th>Kepada Yth.</th></tr>
+          <tr><td>${escapeHtml(customer)}</td></tr>
+        </table>
+      </td>
+      <td style="width:52%">
+        <table class="box sum">
+          <tr>
+            <th>Jumlah Invoice</th>
+            <th>Jatuh Tempo Terdekat</th>
+            <th>Total Yang Harus Dibayar</th>
+          </tr>
+          <tr>
+            <td>${invoices.length}</td>
+            <td>${escapeHtml(closestTempoStr)}</td>
+            <td class="amt">${escapeHtml(formatCurrency(total))}</td>
+          </tr>
+        </table>
+      </td>
     </tr>
   </table>
 
   <div class="sec-label">Detail Invoice</div>
-  <table class="detail">
+  <table class="itemtable">
     <thead>
       <tr>
-        <th style="width:22px;text-align:center">No</th>
+        <th style="text-align:center">No</th>
         <th>Nomor Invoice</th>
-        <th style="width:80px">Tgl Invoice</th>
-        <th style="width:74px;text-align:center;white-space:nowrap">Termin</th>
-        <th style="width:80px">Jatuh Tempo</th>
-        <th style="width:128px;text-align:right">Jumlah Tagihan</th>
+        <th>Tgl Invoice</th>
+        <th style="text-align:center">Termin</th>
+        <th>Jatuh Tempo</th>
+        <th style="text-align:right">Jumlah Tagihan</th>
       </tr>
     </thead>
     <tbody>
       ${invoiceRowsHtml}
       <tr class="trow">
-        <td colspan="5" style="text-align:right;color:#71717a;font-size:8.5px">Total Tagihan</td>
+        <td colspan="5" class="lbl">Total Tagihan</td>
         <td class="amt">${escapeHtml(formatCurrency(total))}</td>
       </tr>
     </tbody>
@@ -1974,18 +2150,55 @@ function buildPdfHtml({ customer, invoices, periodeRows, logoDataUrl }) {
 
   ${periodeRows.length ? `
   <div class="sec-label">Riwayat per Periode</div>
-  <table class="detail">
+  <table class="itemtable">
     <thead><tr><th>Periode</th><th style="text-align:right">Jumlah</th></tr></thead>
     <tbody>${periodeRowsHtml}</tbody>
   </table>` : ""}
 
   <div class="footer">
-    <div class="footer-left">
+    <div>
       <div class="footer-auto">Dicetak otomatis oleh sistem</div>
-      <div class="footer-brand">PT Pilar Niaga Makmur</div>
+      <div>PT Pilar Niaga Makmur</div>
     </div>
-    <div class="footer-time">${escapeHtml(printDate)}, ${escapeHtml(printTime)} WIB</div>
+    <div>${escapeHtml(printDate)}, ${escapeHtml(printTime)} WIB</div>
   </div>
+  <script>
+    // Potong area putih/transparan di sekitar logo supaya ukurannya pas
+    (function () {
+      var img = document.getElementById("logo");
+      if (!img) { window.__logoReady = true; return; }
+      function done() { window.__logoReady = true; }
+      function trim() {
+        img.onload = done;
+        try {
+          var w = img.naturalWidth, h = img.naturalHeight;
+          var c = document.createElement("canvas");
+          c.width = w; c.height = h;
+          var ctx = c.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          var d = ctx.getImageData(0, 0, w, h).data;
+          var minX = w, minY = h, maxX = -1, maxY = -1;
+          for (var y = 0; y < h; y++) {
+            for (var x = 0; x < w; x++) {
+              var i = (y * w + x) * 4;
+              if (d[i + 3] < 16) continue;
+              if (d[i] > 240 && d[i + 1] > 240 && d[i + 2] > 240) continue;
+              if (x < minX) minX = x; if (x > maxX) maxX = x;
+              if (y < minY) minY = y; if (y > maxY) maxY = y;
+            }
+          }
+          if (maxX < 0 || (minX === 0 && minY === 0 && maxX === w - 1 && maxY === h - 1)) return done();
+          var cw = maxX - minX + 1, ch = maxY - minY + 1;
+          var out = document.createElement("canvas");
+          out.width = cw; out.height = ch;
+          out.getContext("2d").drawImage(c, minX, minY, cw, ch, 0, 0, cw, ch);
+          img.src = out.toDataURL("image/png");
+        } catch (e) { done(); }
+      }
+      if (img.complete && img.naturalWidth) trim();
+      else { img.onload = trim; img.onerror = done; }
+    })();
+  </script>
 </body>
 </html>`;
 }
@@ -2004,6 +2217,7 @@ async function renderPdfFile(outputPath, html, sharedBrowser = null) {
     const page = await browser.newPage();
     await page.setViewport({ width: 1240, height: 1754, deviceScaleFactor: 2 });
     await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.waitForFunction("window.__logoReady === true", { timeout: 5000 }).catch(() => {});
     await page.pdf({
       path: outputPath,
       format: "A4",
@@ -2184,25 +2398,24 @@ async function generatePdfPerPtJob({ rows: selectedRows = null, filter = {} } = 
 function killOrphanedBrowserProcesses(sessionId) {
   const sessionDir = getWhatsAppSessionDir(sessionId);
   try {
-    const escapedPath = sessionDir.replace(/\\/g, "\\\\");
-    const browserProcessNames = ["chrome.exe", "msedge.exe"];
-    const pids = [];
-
-    for (const processName of browserProcessNames) {
-      const cmd = `wmic process where "Name='${processName}' and CommandLine like '%${escapedPath}%'" get ProcessId /format:csv 2>nul`;
-      const output = execSync(cmd, { encoding: "utf8", timeout: 5000 });
-      const foundPids = output
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith("Node"))
-        .map((line) => {
-          const parts = line.split(",");
-          return parseInt(parts[parts.length - 1], 10);
-        })
-        .filter((pid) => !isNaN(pid) && pid > 0);
-
-      pids.push(...foundPids);
-    }
+    // wmic is gone on current Windows 11 builds, so ask PowerShell (CIM) instead.
+    // The session folder is passed through an env var to avoid quoting problems
+    // with spaces in the path ("WA-Sender  Website").
+    const script =
+      "Get-CimInstance Win32_Process -Filter \"Name='chrome.exe' OR Name='msedge.exe'\" | " +
+      "Where-Object { $_.CommandLine -and $_.CommandLine.Contains($env:WA_SESSION_DIR) } | " +
+      "ForEach-Object { $_.ProcessId }";
+    // execFileSync passes the script as one argument, so cmd.exe never re-parses its quotes.
+    const output = require("child_process").execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], {
+      encoding: "utf8",
+      timeout: 15000,
+      env: { ...process.env, WA_SESSION_DIR: sessionDir },
+      windowsHide: true,
+    });
+    const pids = output
+      .split(/\r?\n/)
+      .map((line) => parseInt(line.trim(), 10))
+      .filter((pid) => !isNaN(pid) && pid > 0);
 
     for (const pid of [...new Set(pids)]) {
       try {
@@ -2279,14 +2492,10 @@ function buildWhatsAppClient(sessionId, options = {}) {
       dataPath: SESSION_DIR,
       clientId: `wa-sender-${sessionId}`,
     }),
-    // Pin to a WA Web build known to work with this whatsapp-web.js version
-    // instead of always fetching the latest — the newest WA Web build
-    // sometimes breaks the library's internal store hooks, causing the
-    // client to get stuck at "authenticated" and never reach "ready".
-    webVersionCache: {
-      type: "remote",
-      remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1023556678.html",
-    },
+    // Load the live WhatsApp Web build. The old pinned build file (2.3000.1023556678)
+    // was removed upstream (404), and whatsapp-web.js is now installed from GitHub
+    // main, which tracks the current WA Web.
+    webVersionCache: { type: "none" },
     puppeteer: puppeteerOptions,
   });
 }
@@ -2407,6 +2616,14 @@ async function initWhatsAppClient(options = {}) {
       });
     });
 
+    waClient.on("loading_screen", (percent, message) => {
+      console.log(`[wa] loading ${percent}% ${message || ""}`);
+    });
+
+    waClient.on("change_state", (state) => {
+      console.log(`[wa] state: ${state}`);
+    });
+
     waClient.on("ready", () => {
       clearReadyWatchdog();
       clearInitWatchdog();
@@ -2521,8 +2738,9 @@ async function initWhatsAppClient(options = {}) {
       try {
         const chatId = msg.from;
         const contact = await msg.getContact().catch(() => null);
-        const name = contact?.pushname || contact?.name || contact?.number || chatId.replace("@c.us", "");
-        const phone = chatId.replace("@c.us", "").replace("@g.us", "");
+        await resolveLidPhones([chatId]);
+        const phone = chatPhoneFor(chatId) || contact?.number || "";
+        const name = contact?.name || contact?.pushname || chatsCache.get(chatId)?.name || phone || chatId.split("@")[0];
         const entry = storeMessage(chatId, name, phone, msg);
         const chat = chatHistory.get(chatId);
         upsertChatsCacheEntry(chatId, {
@@ -2540,8 +2758,9 @@ async function initWhatsAppClient(options = {}) {
       try {
         const chatId = msg.to;
         const contact = await msg.getContact().catch(() => null);
-        const name = contact?.pushname || contact?.name || contact?.number || chatId.replace("@c.us", "");
-        const phone = chatId.replace("@c.us", "").replace("@g.us", "");
+        await resolveLidPhones([chatId]);
+        const phone = chatPhoneFor(chatId) || contact?.number || "";
+        const name = contact?.name || contact?.pushname || chatsCache.get(chatId)?.name || phone || chatId.split("@")[0];
         const entry = storeMessage(chatId, name, phone, msg);
         upsertChatsCacheEntry(chatId, {
           name, phone, isGroup: chatId.endsWith("@g.us"), unread: 0,
@@ -3125,7 +3344,35 @@ app.get("/api/gsheet/input", async (req, res) => {
     });
     const pdfMapping = { ...basePdfMapping, ...detected };
 
-    return res.json({ success: true, headers, rows, pdfMapping });
+    // INPUT is FILTER('RAW COPY KE SINI') minus customers listed in 'TIDAK PERLU TAGIH'.
+    // Report what the filter dropped so the page can explain the gap.
+    let excluded = null;
+    const rawSheet = workbook.Sheets["RAW COPY KE SINI"];
+    const skipSheet = workbook.Sheets["TIDAK PERLU TAGIH"];
+    if (rawSheet && skipSheet) {
+      const customerCol = Number(String(pdfMapping.customer || "c4").slice(1));
+      const rawRows = getSheetMatrix(workbook, "RAW COPY KE SINI").slice(1)
+        .filter(row => row.some(cell => String(cell ?? "").trim()));
+      const skipNames = new Set(
+        getSheetMatrix(workbook, "TIDAK PERLU TAGIH").slice(1)
+          .map(row => String(row[0] ?? "").trim())
+          .filter(Boolean)
+      );
+      const counts = new Map();
+      rawRows.forEach(row => {
+        const name = String(row[customerCol] ?? "").trim();
+        if (skipNames.has(name)) counts.set(name, (counts.get(name) || 0) + 1);
+      });
+      excluded = {
+        rawCount: rawRows.length,
+        excludedCount: [...counts.values()].reduce((a, b) => a + b, 0),
+        customers: [...counts.entries()]
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
+      };
+    }
+
+    return res.json({ success: true, headers, rows, pdfMapping, excluded });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -3148,18 +3395,29 @@ app.get("/api/gsheet/periode", async (req, res) => {
       if (label) headers.push({ key: `c${i}`, label, colIndex: i });
     });
 
-    // c3 = periode (month/year); other numbers in Excel date range → dd/mm/yyyy
-    const monthColKey = "c3";
+    // Periode/bulan columns show "Maret 2026"; every other date column shows dd/mm/yyyy.
+    const isMonthCol = (h) => /^periode$|^bulan$/i.test(h.label.trim());
     const isExcelDateSerial = (v) => typeof v === "number" && v > 30000 && v < 100000 && Number.isInteger(v);
+    // xlsx hands back dates a few seconds before local midnight (e.g. 16:59:56Z for 00:00 WIB),
+    // which would format as the previous day. Round to the nearest minute first.
+    const roundToMinute = (d) => new Date(Math.round(d.getTime() / 60000) * 60000);
 
     const rows = matrix.slice(1)
       .filter(row => headers.some(h => String(row[h.colIndex] ?? "").trim()))
       .map(row => {
         const obj = {};
         headers.forEach(h => {
-          const raw = row[h.colIndex] ?? "";
-          if (isExcelDateSerial(raw)) {
-            obj[h.key] = h.key === monthColKey ? formatMonthId(raw) : formatDateId(raw);
+          let raw = row[h.colIndex] ?? "";
+          if (raw instanceof Date && !Number.isNaN(raw.getTime())) raw = roundToMinute(raw);
+          const isDateCell = raw instanceof Date || isExcelDateSerial(raw);
+          // Periode comes as text like "2026-06" -> "Juni 2026".
+          const ym = isMonthCol(h) && typeof raw === "string" ? raw.trim().match(/^(\d{4})-(\d{1,2})$/) : null;
+          if (ym) {
+            obj[h.key] = formatMonthDateId(new Date(Date.UTC(Number(ym[1]), Number(ym[2]) - 1, 15)));
+          } else if (isDateCell) {
+            obj[h.key] = isMonthCol(h) ? formatMonthId(raw) : formatDateId(raw);
+          } else if (raw !== null && typeof raw === "object") {
+            obj[h.key] = String(raw);
           } else {
             obj[h.key] = raw;
           }
@@ -3248,6 +3506,7 @@ app.get("/api/pdf/log", (req, res) => {
     success: true,
     rows: data.rows || [],
     generatedAt: data.generatedAt || null,
+    history: getSendHistory(),
   });
 });
 
@@ -3522,24 +3781,35 @@ app.post("/api/pdf/send-via-wa", async (req, res) => {
     if (!waClient || !isWhatsAppReady) return res.status(400).json({ success: false, message: "WhatsApp belum login / belum terhubung" });
 
     isSending = true;
+    cancelPdfSendRequested = false;
     setImmediate(async () => {
       const results = [];
+      let cancelled = false;
       try {
         for (let i = 0; i < rows.length; i++) {
+          if (cancelPdfSendRequested) {
+            cancelled = true;
+            emitLog("warning", `Pengiriman dihentikan. ${rows.length - i} pelanggan belum dikirim.`);
+            break;
+          }
           const row = rows[i];
           io.emit("pdf-wa-progress", { current: i + 1, total: rows.length, customer: row.nama || "-" });
           try {
             emitLog("info", `Kirim PDF ke: ${row.nama || "-"} (${row.nomor || "-"})`);
             await sendPdfToCustomer(row);
             results.push({ success: true, customer: row.nama });
+            recordSendResult(row.nama, { ok: true });
+            io.emit("pdf-wa-row", { customer: row.nama, success: true, at: new Date().toISOString() });
             emitLog("success", `PDF terkirim ke ${row.nama}`);
           } catch (err) {
             results.push({ success: false, customer: row.nama, error: err.message });
+            recordSendResult(row.nama, { ok: false, error: err.message });
+            io.emit("pdf-wa-row", { customer: row.nama, success: false, error: err.message, at: new Date().toISOString() });
             emitLog("error", `Gagal kirim PDF ke ${row.nama}: ${err.message}`);
           }
-          if (i < rows.length - 1) await sleep(randomBetween(2000, 4000));
+          if (i < rows.length - 1 && !cancelPdfSendRequested) await sleep(randomBetween(2000, 4000));
         }
-        io.emit("pdf-wa-done", { results });
+        io.emit("pdf-wa-done", { results, cancelled, total: rows.length });
       } catch (err) {
         io.emit("pdf-wa-error", { error: err.message });
       } finally {
@@ -3552,6 +3822,12 @@ app.post("/api/pdf/send-via-wa", async (req, res) => {
     isSending = false;
     return res.status(500).json({ success: false, message: error.message });
   }
+});
+
+app.post("/api/pdf/cancel-send", (req, res) => {
+  if (!isSending) return res.json({ success: true, message: "Tidak ada pengiriman yang berjalan" });
+  cancelPdfSendRequested = true;
+  return res.json({ success: true, message: "Pengiriman akan berhenti setelah pesan yang sedang dikirim" });
 });
 
 app.get("/api/pdf/drive-config", (req, res) => {
@@ -4176,11 +4452,13 @@ app.get("/api/chats", async (req, res) => {
       source = "wa-fallback";
     }
 
+    await resolveLidPhones(waChats.map((c) => c.id?._serialized || c.id).filter(Boolean));
+
     waChats.forEach((c) => {
       const lastMsg = c.lastMessage;
       const chatId = c.id?._serialized || c.id;
-      const phone = c.phone || c.id?.user || "";
       if (!chatId) return;
+      const phone = chatPhoneFor(chatId, c.name || c.formattedTitle) || (String(chatId).endsWith("@lid") ? "" : c.phone || c.id?.user || "");
 
       upsertChatsCacheEntry(chatId, {
         name: c.name || c.formattedTitle || phone || "Chat",
@@ -4189,8 +4467,8 @@ app.get("/api/chats", async (req, res) => {
         unread: c.unreadCount || 0,
         lastMessage: lastMsg ? {
           id: lastMsg.id?.id || lastMsg.id || "",
-          from: lastMsg.from || (lastMsg.fromMe ? "me" : "them"),
-          body: lastMsg.body || "",
+          from: (lastMsg.fromMe ?? lastMsg.id?.fromMe) ? "me" : "them",
+          body: cleanMessageBody(lastMsg),
           timestamp: lastMsg.timestamp
             ? lastMsg.timestamp > 1000000000000
               ? lastMsg.timestamp
@@ -4310,8 +4588,9 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
     }
 
     const contact = await waClient.getContactById(chatId).catch(() => null);
-    const name = contact?.pushname || contact?.name || chatId.replace("@c.us", "");
-    const phone = chatId.replace("@c.us", "").replace("@g.us", "");
+    await resolveLidPhones([chatId]);
+    const name = chat?.name || contact?.name || contact?.pushname || chatsCache.get(chatId)?.name || chatId.split("@")[0];
+    const phone = chatPhoneFor(chatId, name) || contact?.number || "";
     if (!chatHistory.has(chatId)) {
       chatHistory.set(chatId, { id: chatId, name, phone, unread: 0, messages: [] });
     }
@@ -4338,7 +4617,7 @@ app.get("/api/chats/:chatId/messages", async (req, res) => {
       if (fallbackMessages.length) {
         const cachedChat = chatsCache.get(chatId) || {};
         const name = cachedChat.name || chatId.replace("@c.us", "").replace("@g.us", "").replace("@lid", "");
-        const phone = cachedChat.phone || chatId.replace("@c.us", "").replace("@g.us", "").replace("@lid", "");
+        const phone = cachedChat.phone || chatPhoneFor(chatId, name);
         if (!chatHistory.has(chatId)) {
           chatHistory.set(chatId, { id: chatId, name, phone, unread: 0, messages: [] });
         }
@@ -4463,6 +4742,46 @@ app.post("/api/chats/:chatId/reply-media", chatMediaUpload.single("file"), async
 const mediaCache = new Map();
 const MEDIA_TTL = 30 * 60 * 1000;
 
+// wwebjs' msg.downloadMedia() gives up while WA Web is still FETCHING the file
+// (common for history messages synced from the phone), so wait for it here.
+async function downloadMessageMedia(serializedId, timeoutMs = 30000) {
+  return waClient.pupPage.evaluate(async (msgId, timeout) => {
+    const { Msg } = window.require("WAWebCollections");
+    const msg = Msg.get(msgId) || (await Msg.getMessagesById([msgId]))?.messages?.[0];
+    if (!msg || !msg.mediaData) return { failed: msg ? "no-media-data" : "msg-not-found" };
+
+    const stage = () => String(msg.mediaData?.mediaStage || "");
+    const request = () => msg.downloadMedia({ downloadEvenIfExpensive: true, rmrReason: 1, isUserInitiated: true });
+    if (stage() !== "REUPLOADING") await request();
+    const started = Date.now();
+    let pokes = 0;
+    while (Date.now() - started < timeout) {
+      const current = stage();
+      if (current === "RESOLVED" || current.includes("ERROR")) break;
+      // NEED_POKE = WA Web wants another explicit download request (the "tap to download" state)
+      if (current === "NEED_POKE") {
+        if (pokes >= 4) break;
+        pokes += 1;
+        await request().catch(() => {});
+      }
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    if (stage().includes("ERROR") || stage() === "FETCHING") return { failed: `stage ${stage()}` };
+
+    const cached = window.require("WAWebMediaInMemoryBlobCache").InMemoryMediaBlobCache.get(msg.mediaObject?.filehash);
+    const blob = cached || (msg.mediaObject?.mediaBlob ? msg.mediaObject.mediaBlob.forceToBlob() : null);
+    if (!blob) return { failed: `no blob (stage ${stage()})` };
+
+    const data = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    return { data, mimetype: msg.mimetype || blob.type || "application/octet-stream", filename: msg.filename || null };
+  }, serializedId, timeoutMs);
+}
+
 app.get("/api/messages/:serializedId/media", async (req, res) => {
   const serializedId = decodeURIComponent(req.params.serializedId);
   const wantsDownload = String(req.query.download || "") === "1";
@@ -4475,10 +4794,11 @@ app.get("/api/messages/:serializedId/media", async (req, res) => {
       return res.send(Buffer.from(cached.data, "base64"));
     }
     await ensureWhatsAppStable();
-    const msg = await waClient.getMessageById(serializedId);
-    if (!msg) return res.status(404).json({ error: "Pesan tidak ditemukan" });
-    const media = await msg.downloadMedia();
-    if (!media) return res.status(404).json({ error: "Media tidak tersedia" });
+    const media = await downloadMessageMedia(serializedId);
+    if (!media || media.failed) {
+      if (media?.failed) console.warn(`Media ${serializedId} tidak tersedia: ${media.failed}`);
+      return res.status(404).json({ error: "Media tidak tersedia" });
+    }
     mediaCache.set(serializedId, {
       mimetype: media.mimetype,
       data: media.data,
@@ -4491,6 +4811,7 @@ app.get("/api/messages/:serializedId/media", async (req, res) => {
     if (media.filename) res.setHeader("Content-Disposition", `${wantsDownload ? "attachment" : "inline"}; filename="${media.filename}"`);
     res.send(buf);
   } catch (err) {
+    console.error(`Media ${serializedId} gagal: ${err?.message || err}`);
     res.status(500).json({ error: "Gagal mengunduh media" });
   }
 });

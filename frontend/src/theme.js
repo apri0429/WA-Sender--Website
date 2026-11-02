@@ -4,21 +4,24 @@ const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#1976d2"
+      main: "#24476e",
+      dark: "#1c2a3d",
+      light: "#3a6fa6"
     },
     secondary: {
-      main: "#10b981"
+      main: "#b8955a"
     },
     background: {
-      default: "#f4f7fb",
+      default: "#f4f5f7",
       paper: "#ffffff"
     }
   },
   shape: {
-    borderRadius: 16
+    borderRadius: 4
   },
   typography: {
-    fontFamily: `"Inter", "Roboto", "Arial", sans-serif`
+    fontFamily: `"Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif`,
+    fontSize: 13
   }
 });
 

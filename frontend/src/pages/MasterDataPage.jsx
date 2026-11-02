@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { SearchBox, ToolButton, SetupNotice } from "../components/PageTools";
 import {
   Alert,
   Box,
@@ -21,9 +22,10 @@ import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlin
 import RoomRoundedIcon from "@mui/icons-material/RoomRounded";
 import api from "../services/api";
 import CreateButton from "../components/button/CreateButton";
+import Avatar from "../components/Avatar";
 
-const FONT_SANS = "'Plus Jakarta Sans', 'Inter', sans-serif";
-const FONT_MONO = "'JetBrains Mono', 'Fira Code', monospace";
+const FONT_SANS = "var(--font-sans)";
+const FONT_MONO = "var(--font-mono)";
 
 const T = {
   brand: "#1a4ba8",
@@ -34,7 +36,7 @@ const T = {
   text: "#374151",
   muted: "#6b7280",
   subtle: "#9ca3af",
-  line: "#e5e7eb",
+  line: "#e3e6eb",
   surface: "#f9fafb",
   white: "#ffffff",
   red: "#dc2626",
@@ -82,10 +84,10 @@ function RowsPerPageDropdown({ value, onChange }) {
         onClick={() => setOpen((v) => !v)}
         style={{
           width: "100%", height: 30, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
-          borderRadius: 999, border: `1.5px solid ${open ? "rgba(233,196,106,0.75)" : "#d4ddf0"}`,
-          background: "linear-gradient(180deg, #f8fafc 0%, #eef1f6 100%)",
+          borderRadius: 3, border: `1px solid ${open ? "#3a6fa6" : "#aebfd8"}`,
+          background: "#fff",
           padding: "0 8px 0 11px", cursor: "pointer", outline: "none",
-          boxShadow: open ? "0 0 0 3px rgba(233,196,106,0.13)" : "0 2px 8px rgba(22,58,107,0.06)",
+          boxShadow: open ? "0 0 0 3px rgba(58, 111, 166,0.14)" : "0 1px 2px rgba(36, 71, 110,0.08)",
           transition: "border-color 0.18s, box-shadow 0.18s",
         }}
       >
@@ -93,7 +95,7 @@ function RowsPerPageDropdown({ value, onChange }) {
         <KeyboardArrowDownRoundedIcon style={{ fontSize: 16, color: T.brand, flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
       </button>
       {open && (
-        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, right: 0, zIndex: 1000, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 12, boxShadow: "0 10px 30px rgba(22,58,107,0.14), 0 2px 8px rgba(22,58,107,0.07)", overflow: "hidden" }}>
+        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, right: 0, zIndex: 1000, background: "#fff", border: "1px solid #c9d4e1", borderRadius: 3, padding: 4, boxShadow: "0 8px 24px rgba(36, 71, 110,0.16)" }}>
           {options.map((opt) => {
             const active = opt === value;
             return (
@@ -101,12 +103,12 @@ function RowsPerPageDropdown({ value, onChange }) {
                 key={opt}
                 type="button"
                 onClick={() => { onChange(opt); setOpen(false); }}
-                style={{ width: "100%", minHeight: 30, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "7px 9px 7px 11px", background: active ? T.brandLight : "transparent", border: "none", borderBottom: opt === options[options.length - 1] ? "none" : `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", transition: "background 0.12s" }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f4f6fa"; }}
-                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "6px 8px", background: active ? "#f0f4f9" : "transparent", border: "none", borderRadius: 6, cursor: "pointer", textAlign: "left", fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? "#24476e" : "#374151", whiteSpace: "nowrap", outline: "none" }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f3f6fb"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = active ? "#f0f4f9" : "transparent"; }}
               >
-                <span style={{ fontFamily: FONT_MONO, fontSize: 11.5, fontWeight: active ? 800 : 600, color: active ? T.brand : T.text }}>{opt}</span>
-                {active && <CheckCircleOutlineRoundedIcon style={{ fontSize: 14, color: T.brand, flexShrink: 0 }} />}
+                <span>{opt}</span>
+                {active && <CheckCircleOutlineRoundedIcon style={{ fontSize: 15, color: "#3a6fa6", flexShrink: 0 }} />}
               </button>
             );
           })}
@@ -130,8 +132,8 @@ function WilayahDropdown({ options, value, onChange }) {
 
   return (
     <div ref={ref} style={{ position: "relative", width: 176 }}>
-      <button type="button" onClick={() => setOpen((v) => !v)}
-        style={{ width: "100%", height: 36, display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: 999, border: `1.5px solid ${open ? T.brand : "#d4ddf0"}`, background: "linear-gradient(180deg, #f8fafc 0%, #eef1f6 100%)", padding: "0 11px 0 14px", cursor: "pointer", outline: "none", boxShadow: open ? `0 0 0 3px ${T.brandLight}` : "0 2px 8px rgba(22,58,107,0.07)", transition: "border-color 0.18s, box-shadow 0.18s" }}>
+      <button type="button" className="ns-select" onClick={() => setOpen((v) => !v)}
+        style={{ width: "100%", height: 36, display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: 999, border: `1.5px solid ${open ? T.brand : "#d7e1ee"}`, background: "linear-gradient(180deg, #f8fafc 0%, #eff1f4 100%)", padding: "0 11px 0 14px", cursor: "pointer", outline: "none", boxShadow: open ? `0 0 0 3px ${T.brandLight}` : "0 2px 8px rgba(36, 71, 110,0.07)", transition: "border-color 0.18s, box-shadow 0.18s" }}>
         <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
           <span style={{ width: 24, height: 24, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: value === "all" ? T.white : T.brandLight, border: `1px solid ${value === "all" ? T.line : T.brandBorder}` }}>
             <RoomRoundedIcon style={{ fontSize: 14, color: value === "all" ? T.subtle : T.brand }} />
@@ -143,7 +145,7 @@ function WilayahDropdown({ options, value, onChange }) {
         <KeyboardArrowDownRoundedIcon style={{ fontSize: 19, color: T.brand, flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: "100%", minWidth: 200, zIndex: 1000, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 14, boxShadow: "0 8px 32px rgba(22,58,107,0.13), 0 2px 8px rgba(22,58,107,0.07)", overflow: "hidden", maxHeight: 260, overflowY: "auto" }}>
+        <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: "100%", minWidth: 200, zIndex: 1000, background: T.white, border: `1.5px solid ${T.brandBorder}`, borderRadius: 3, boxShadow: "0 8px 32px rgba(36, 71, 110,0.13), 0 2px 8px rgba(36, 71, 110,0.07)", overflow: "hidden", maxHeight: 260, overflowY: "auto" }}>
           <div style={{ padding: "6px 10px 4px", borderBottom: `1px solid ${T.line}` }}>
             <span style={{ fontFamily: FONT_SANS, fontSize: 10, fontWeight: 800, color: T.subtle, textTransform: "uppercase", letterSpacing: "0.07em" }}>Wilayah</span>
           </div>
@@ -152,7 +154,7 @@ function WilayahDropdown({ options, value, onChange }) {
             return (
               <button key={item.value} type="button" onClick={() => { onChange(item.value); setOpen(false); }}
                 style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: active ? T.brandLight : "transparent", border: "none", borderBottom: `1px solid ${T.line}`, cursor: "pointer", transition: "background 0.12s", textAlign: "left" }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f4f6fa"; }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f5f6f8"; }}
                 onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: item.value === "all" ? T.subtle : "#16a34a" }} />
                 <span style={{ flex: 1, minWidth: 0, fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: active ? 800 : 600, color: active ? T.brand : T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -200,12 +202,12 @@ function CellPopupEditor({ rect, value, label, onClose, onChange, onKeyDown }) {
       <div
         style={{
           position: "fixed", top, left, width, zIndex: 8999,
-          borderRadius: 16,
+          borderRadius: 3,
           overflow: "hidden",
           boxShadow: "0 28px 80px rgba(10,18,40,0.28), 0 4px 16px rgba(10,18,40,0.14)",
           animation: "cellDrop 0.15s cubic-bezier(.22,.68,0,1.1) both",
           transformOrigin,
-          border: "1px solid rgba(26,42,87,0.12)",
+          border: "1px solid rgba(36, 71, 110,0.12)",
           background: T.white,
         }}
       >
@@ -214,11 +216,11 @@ function CellPopupEditor({ rect, value, label, onClose, onChange, onKeyDown }) {
         <div style={{
           display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12,
           padding: "14px 16px 12px",
-          background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)",
-          borderBottom: "1px solid rgba(26,42,87,0.10)",
+          background: "var(--ns-head-gradient)",
+          borderBottom: "1px solid rgba(36, 71, 110,0.10)",
         }}>
           <div>
-            <p style={{ fontFamily: FONT_MONO, fontSize: 10, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>
+            <p style={{ fontFamily: FONT_MONO, fontSize: 10, fontWeight: 600, color: "rgba(58, 111, 166,0.92)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>
               Edit Data
             </p>
             <h3 style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>
@@ -229,7 +231,7 @@ function CellPopupEditor({ rect, value, label, onClose, onChange, onKeyDown }) {
             type="button"
             onClick={onClose}
             style={{ width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: 8, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.75)", cursor: "pointer", transition: "background 0.15s, border-color 0.15s" }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; e.currentTarget.style.borderColor = "rgba(233,196,106,0.4)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; e.currentTarget.style.borderColor = "rgba(58, 111, 166,0.4)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; }}
           >
             <CloseRoundedIcon style={{ fontSize: 14 }} />
@@ -247,15 +249,15 @@ function CellPopupEditor({ rect, value, label, onClose, onChange, onKeyDown }) {
             style={{
               width: "100%", boxSizing: "border-box",
               height: 38, padding: "0 12px",
-              border: "1.5px solid rgba(26,42,87,0.18)",
-              borderRadius: 10,
+              border: "1.5px solid rgba(36, 71, 110,0.18)",
+              borderRadius: 3,
               fontFamily: FONT_SANS, fontSize: 13, fontWeight: 500,
               color: T.ink, outline: "none",
               background: T.brandLight,
               transition: "border-color 0.15s, box-shadow 0.15s",
             }}
-            onFocus={(e) => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = "0 0 0 3px rgba(35,57,113,0.10)"; }}
-            onBlur={(e)  => { e.target.style.borderColor = "rgba(26,42,87,0.18)"; e.target.style.boxShadow = "none"; }}
+            onFocus={(e) => { e.target.style.borderColor = T.brand; e.target.style.boxShadow = "0 0 0 3px rgba(36, 71, 110,0.10)"; }}
+            onBlur={(e)  => { e.target.style.borderColor = "rgba(36, 71, 110,0.18)"; e.target.style.boxShadow = "none"; }}
           />
           <p style={{ margin: "7px 1px 0", fontFamily: FONT_SANS, fontSize: 10.5, color: T.subtle }}>
             <span style={{ color: T.brand, fontWeight: 700 }}>Enter</span> simpan &nbsp;·&nbsp; <span style={{ fontWeight: 600 }}>Esc</span> batal
@@ -284,13 +286,13 @@ function DeleteConfirmPopup({ open, label, onConfirm, onCancel }) {
       `}</style>
       <div style={{ position: "fixed", inset: 0, zIndex: 1300, background: "rgba(10,18,40,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}
         onClick={handleCancel}>
-        <div onClick={(e) => e.stopPropagation()} style={{ width: 300, borderRadius: 18, overflow: "hidden", border: "1px solid rgba(239,68,68,0.18)", boxShadow: "0 20px 56px rgba(10,18,40,0.30), 0 4px 14px rgba(10,18,40,0.12)", animation: fading ? "_del-out 0.32s cubic-bezier(.4,0,1,1) forwards" : "_del-in 0.42s cubic-bezier(.22,.68,0,1.1) both" }}>
-          <div style={{ padding: "16px 16px 14px", background: "linear-gradient(180deg, rgba(24,43,88,1) 0%, rgba(27,55,112,0.96) 100%)", borderBottom: "1px solid rgba(26,42,87,0.10)", display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ width: 300, borderRadius: 3, overflow: "hidden", border: "1px solid rgba(239,68,68,0.18)", boxShadow: "0 20px 56px rgba(10,18,40,0.30), 0 4px 14px rgba(10,18,40,0.12)", animation: fading ? "_del-out 0.32s cubic-bezier(.4,0,1,1) forwards" : "_del-in 0.42s cubic-bezier(.22,.68,0,1.1) both" }}>
+          <div style={{ padding: "16px 16px 14px", background: "var(--ns-head-gradient)", borderBottom: "1px solid rgba(36, 71, 110,0.10)", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 3, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <DeleteForeverRoundedIcon style={{ fontSize: 20, color: "#f87171" }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: FONT_MONO, fontSize: 10, fontWeight: 600, color: "rgba(233,196,106,0.92)", textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 3px" }}>Master Data</p>
+              <p style={{ fontFamily: FONT_MONO, fontSize: 10, fontWeight: 600, color: "rgba(58, 111, 166,0.92)", textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 3px" }}>Master Data</p>
               <h3 style={{ fontFamily: FONT_SANS, fontSize: 15, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2 }}>Hapus Baris</h3>
             </div>
           </div>
@@ -304,13 +306,13 @@ function DeleteConfirmPopup({ open, label, onConfirm, onCancel }) {
           </div>
           <div style={{ display: "flex", gap: 8, padding: "0 16px 16px", background: "#fff" }}>
             <button type="button" onClick={handleCancel}
-              style={{ flex: 1, height: 36, borderRadius: 10, border: `1px solid ${T.line}`, background: "#f8fafc", color: T.text, fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 600, cursor: "pointer", transition: "background 0.15s" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#eef1f6"; }}
+              style={{ flex: 1, height: 36, borderRadius: 3, border: `1px solid ${T.line}`, background: "#f8fafc", color: T.text, fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 600, cursor: "pointer", transition: "background 0.15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#eff1f4"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "#f8fafc"; }}>
               Batal
             </button>
             <button type="button" onClick={handleConfirm}
-              style={{ flex: 1, height: 36, borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", background: "linear-gradient(180deg, #ef4444 0%, #dc2626 100%)", color: "#fff", fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "opacity 0.15s" }}
+              style={{ flex: 1, height: 36, borderRadius: 3, border: "1px solid rgba(239,68,68,0.3)", background: "linear-gradient(180deg, #d43b30 0%, #b42318 100%)", color: "#fff", fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "opacity 0.15s" }}
               onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
               onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}>
               <DeleteForeverRoundedIcon style={{ fontSize: 14 }} />
@@ -499,50 +501,13 @@ export default function MasterDataPage() {
   const paged = filteredWithIdx.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
   return (
-    <Box sx={{ fontFamily: FONT_SANS, p: 2, display: "flex", flexDirection: "column", gap: 1.5, height: "calc(100vh - 64px)", boxSizing: "border-box", overflow: "hidden" }}>
+    <Box className="ns-page" sx={{ fontFamily: FONT_SANS, p: 2, display: "flex", flexDirection: "column", gap: 1.5, flex: 1, minHeight: 0, boxSizing: "border-box", overflow: "hidden" }}>
 
-      {headerSlot && createPortal(
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <style>{`.hdr-search::placeholder { color: rgba(255,255,255,0.42); font-weight: 400; }`}</style>
-          <div style={{ position: "relative", display: "flex", alignItems: "center" }}
-            onMouseEnter={e => { const inp = e.currentTarget.querySelector("input"); if (inp !== document.activeElement) { inp.style.borderColor = "rgba(233,196,106,0.55)"; inp.style.background = "rgba(233,196,106,0.1)"; } }}
-            onMouseLeave={e => { const inp = e.currentTarget.querySelector("input"); if (inp !== document.activeElement) { inp.style.borderColor = searchQuery ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)"; inp.style.background = "rgba(255,255,255,0.12)"; } }}
-          >
-            <SearchRoundedIcon style={{ position: "absolute", left: 11, fontSize: 14, color: "rgba(255,255,255,0.55)", pointerEvents: "none" }} />
-            <input type="text" className="hdr-search" placeholder="Search..." value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
-              style={{ height: 34, paddingLeft: 32, paddingRight: searchQuery ? 30 : 14, width: 200, fontFamily: FONT_SANS, fontSize: 12.5, fontWeight: 500, color: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", borderRadius: 10, background: "rgba(255,255,255,0.12)", outline: "none", transition: "border-color 0.18s, background 0.18s", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.12)" }}
-              onFocus={e => { e.target.style.borderColor = "rgba(233,196,106,0.8)"; e.target.style.background = "rgba(233,196,106,0.12)"; }}
-              onBlur={e  => { e.target.style.borderColor = searchQuery ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)"; e.target.style.background = "rgba(255,255,255,0.12)"; }}
-            />
-            {searchQuery && (
-              <button onClick={() => { setSearchQuery(""); setPage(0); }} style={{ position: "absolute", right: 8, width: 16, height: 16, borderRadius: "50%", background: "rgba(255,255,255,0.28)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
-                <CloseRoundedIcon style={{ fontSize: 9, color: "#fff" }} />
-              </button>
-            )}
-          </div>
-          {gsheetConfigured ? (
-            <button type="button" onClick={handleOpenGSheet} className="header-icon-button header-icon-button--compact" title="Open Google Sheet">
-              <GoogleSheetsLogo size={18} />
-            </button>
-          ) : (
-            <span className="header-icon-button header-icon-button--compact" style={{ opacity: 0.35, cursor: "default" }}>
-              <GoogleSheetsLogo size={18} />
-            </span>
-          )}
-          <button className="header-icon-button header-icon-button--compact" onClick={handleSync} disabled={syncing || !gsheetUrlRef.current} style={{ opacity: !gsheetUrlRef.current ? 0.4 : 1 }}>
-            {syncing ? <CircularProgress size={15} sx={{ color: "#fff" }} /> : <SyncRoundedIcon style={{ fontSize: 17 }} />}
-          </button>
-        </div>,
-        headerSlot
-      )}
-
-      <section className="dashboard-panel" style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", borderRadius: 28 }}>
+      <section className="dashboard-panel" style={{ flex: 1, minHeight: 0, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", borderRadius: 3 }}>
 
         {/* Card Header */}
         <div className="dashboard-panel__header" style={{ padding: "18px 24px 12px", borderBottom: "none", background: T.white, flexShrink: 0, margin: 0 }}>
           <div>
-            <p className="dashboard-panel__eyebrow" style={{ fontFamily: FONT_SANS, marginBottom: 2 }}>Master Data</p>
             <h2 className="dashboard-panel__title" style={{ margin: 0 }}>Master Data</h2>
             {data.length > 0 && (
               <p className="dashboard-panel__description" style={{ margin: "3px 0 0", fontFamily: FONT_MONO }}>
@@ -554,22 +519,26 @@ export default function MasterDataPage() {
               </p>
             )}
           </div>
-          <div className="dashboard-panel__action" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
+          <div className="dashboard-panel__action" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
+            {data.length > 0 && (
+              <SearchBox value={searchQuery} onChange={(v) => { setSearchQuery(v); setPage(0); }} placeholder="Cari nama atau nomor..." />
+            )}
             <WilayahDropdown options={wilayahOptions} value={wilayahFilter} onChange={(next) => { setWilayahFilter(next); setPage(0); }} />
-            <Tooltip title="Tambah baris baru">
-              <IconButton size="small" onClick={addRow} disabled={loading}
-                sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: T.brandLight, color: T.brand, border: `1.5px solid ${T.brandBorder}`, "&:hover": { bgcolor: T.brandBorder } }}>
-                <AddRoundedIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            </Tooltip>
+            <ToolButton tone="green" icon={<GoogleSheetsLogo size={16} />} onClick={handleOpenGSheet} disabled={!gsheetConfigured}>
+              Buka Sheet
+            </ToolButton>
+            <ToolButton tone="blue" icon={<SyncRoundedIcon />} onClick={handleSync} loading={syncing} disabled={!gsheetConfigured} title="Ambil ulang daftar pelanggan dari Google Sheet">
+              {syncing ? "Memuat..." : "Sync"}
+            </ToolButton>
+            <ToolButton primary icon={<AddRoundedIcon />} onClick={addRow} disabled={loading}>
+              Tambah
+            </ToolButton>
           </div>
         </div>
 
-        {!loading && data.length === 0 && (
+        {!loading && !gsheetConfigured && (
           <div style={{ padding: "0 20px 10px", flexShrink: 0 }}>
-            <Alert severity="info" sx={{ fontFamily: FONT_SANS, fontSize: 12, py: 0.25, borderRadius: "10px" }}>
-              Belum ada data — sync dari Google Sheet atau tambah manual terlebih dahulu
-            </Alert>
+            <SetupNotice>Google Sheet belum diatur. Anda tetap bisa menambah pelanggan manual dengan tombol Tambah.</SetupNotice>
           </div>
         )}
 
@@ -597,7 +566,7 @@ export default function MasterDataPage() {
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
                         <StorageRoundedIcon style={{ fontSize: 32, color: T.subtle }} />
                         <span style={{ fontFamily: FONT_SANS, fontSize: 13, color: T.muted, fontWeight: 600 }}>Belum ada data</span>
-                        <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: T.subtle }}>Klik "Sync Sheet" untuk memuat dari Google Sheet, atau klik "+" untuk tambah manual</span>
+                        <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: T.subtle }}>Klik "Sync" untuk memuat dari Google Sheet, atau "Tambah" untuk isi manual</span>
                       </div>
                     </td>
                   </tr>
@@ -612,14 +581,14 @@ export default function MasterDataPage() {
                         onClick={() => handleCellClick(globalIdx, k)}
                         style={{
                           display: "flex", alignItems: "center", width: "100%",
-                          border: `1px solid ${active ? "rgba(233,196,106,0.9)" : "transparent"}`,
+                          border: `1px solid ${active ? "rgba(58, 111, 166,0.9)" : "transparent"}`,
                           borderRadius: 6, padding: "5px 7px",
-                          background: active ? "rgba(233,196,106,0.14)" : "transparent",
+                          background: active ? "rgba(58, 111, 166,0.14)" : "transparent",
                           cursor: "text", textAlign: "left", overflow: "hidden",
-                          boxShadow: active ? "0 0 0 3px rgba(233,196,106,0.12)" : "none",
+                          boxShadow: active ? "0 0 0 3px rgba(58, 111, 166,0.12)" : "none",
                           transition: "border-color 0.12s, background 0.12s, box-shadow 0.12s",
                         }}
-                        onMouseEnter={(e) => { if (!active) { e.currentTarget.style.borderColor = "rgba(233,196,106,0.55)"; e.currentTarget.style.background = "rgba(233,196,106,0.08)"; } }}
+                        onMouseEnter={(e) => { if (!active) { e.currentTarget.style.borderColor = "rgba(58, 111, 166,0.55)"; e.currentTarget.style.background = "rgba(58, 111, 166,0.08)"; } }}
                         onMouseLeave={(e) => { if (!active) { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.background = "transparent"; } }}
                       >
                         {displayNode}
@@ -632,7 +601,7 @@ export default function MasterDataPage() {
                       <td style={{ padding: "4px 8px", minWidth: 0, overflow: "hidden" }}>
                         {cellBtn("nama", (
                           <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
-                            <span className="users-table__avatar" style={{ width: 30, height: 30, fontFamily: FONT_SANS, fontSize: 9.5, letterSpacing: "0.04em", flexShrink: 0 }}>{getInitials(row.nama)}</span>
+                            <Avatar seed={row.nama} initials={getInitials(row.nama)} />
                             <span style={{ fontWeight: 600, color: T.ink, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.nama || <span style={{ color: T.subtle, fontStyle: "italic", fontWeight: 400 }}>—</span>}</span>
                           </div>
                         ))}
@@ -724,7 +693,7 @@ export default function MasterDataPage() {
       />
 
       <Snackbar open={toast.open} autoHideDuration={3000} onClose={() => setToast((p) => ({ ...p, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: "10px", fontFamily: FONT_SANS }}>{toast.message}</Alert>
+        <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: "4px", fontFamily: FONT_SANS }}>{toast.message}</Alert>
       </Snackbar>
     </Box>
   );

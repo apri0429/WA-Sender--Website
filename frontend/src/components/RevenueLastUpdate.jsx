@@ -21,7 +21,7 @@ function RevenueLastUpdate({ sx }) {
         px: 1.25,
         py: 0.75,
         borderRadius: 999,
-        bgcolor: '#F8FAFC',
+        bgcolor: '#f8fafc',
         border: '1px solid #E2E8F0',
         color: '#475569',
         ...sx,
@@ -33,7 +33,7 @@ function RevenueLastUpdate({ sx }) {
           fontSize: '0.75rem',
           fontWeight: 500,
           lineHeight: 1.2,
-          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+          fontFamily: "var(--font-sans)",
         }}
       >
         Update terakhir: {formatLastUpdate()}
