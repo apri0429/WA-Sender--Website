@@ -1048,12 +1048,19 @@ export default function ChatInboxPage() {
         api.post(`/chats/${encodeURIComponent(payload.chatId)}/mark-read`).catch(() => {});
       }
     };
+    const onWaDisconnected = (payload) => {
+      setWhatsappReady(false);
+      setWaInitializing(!payload?.loggedOut);
+      showToast(payload?.message || "WhatsApp terputus", "error");
+    };
     socket.on("wa-ready", onWaReady);
     socket.on("wa-qr", onWaQr);
+    socket.on("wa-disconnected", onWaDisconnected);
     socket.on("chat:new-message", onNewMessage);
     return () => {
       socket.off("wa-ready", onWaReady);
       socket.off("wa-qr", onWaQr);
+      socket.off("wa-disconnected", onWaDisconnected);
       socket.off("chat:new-message", onNewMessage);
     };
   }, [activeWaSessionId, selectedChatId, waAccount, waSessions]);

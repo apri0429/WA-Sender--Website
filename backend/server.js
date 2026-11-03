@@ -438,6 +438,13 @@ let isWhatsAppReady = false;
 let isWhatsAppInitializing = false;
 let readyWatchdogTimer = null;
 let initWatchdogTimer = null;
+let healthCheckTimer = null;
+let healthCheckFailures = 0;
+let reconnectTimer = null;
+let reconnectAttempts = 0;
+// Bumped on every initWhatsAppClient call, so a slow call that was overtaken
+// by a newer one (quick account switching) stops instead of clobbering it.
+let initGeneration = 0;
 let isSending = false;
 let cancelPdfSendRequested = false;
 let lastQrString = null;
@@ -983,8 +990,31 @@ async function focusWhatsAppBrowserWindow(timeoutMs = 15000) {
   return false;
 }
 
+// Close a client's browser without ever hanging: destroy() can stall when the
+// page is frozen, so cap it and kill the Chrome process tree if it is still up.
+async function forceCloseWhatsAppClient(client) {
+  if (!client) return;
+  let browserProcess = null;
+  try {
+    browserProcess = client.pupBrowser?.process?.() || null;
+  } catch {}
+
+  try {
+    await withTimeout(client.destroy(), 8000, "destroy timeout");
+  } catch (error) {
+    console.error("Gagal destroy WhatsApp client:", error.message);
+  }
+
+  if (browserProcess?.pid && browserProcess.exitCode === null) {
+    try {
+      execSync(`taskkill /PID ${browserProcess.pid} /F /T 2>nul`, { timeout: 5000 });
+    } catch {}
+  }
+}
+
 async function destroyWhatsAppClient() {
   clearReadyWatchdog();
+  stopWhatsAppHealthCheck();
   if (!waClient) return;
 
   const clientToDestroy = waClient;
@@ -992,30 +1022,37 @@ async function destroyWhatsAppClient() {
   currentClientSessionId = null;
   currentClientVisible = false;
   currentClientBrowser = "auto";
+  // Reset before awaiting so nobody reads the old account's "ready" while it closes.
+  resetWhatsAppRuntimeState();
 
-  try {
-    await clientToDestroy.destroy();
-  } catch (error) {
-    console.error("Gagal destroy WhatsApp client:", error.message);
-  }
+  await forceCloseWhatsAppClient(clientToDestroy);
 }
 
 async function logoutWhatsAppClient() {
+  cancelWhatsAppReconnect();
   if (!waClient) {
     resetWhatsAppRuntimeState();
     return;
   }
 
+  // Detach first: logout() makes the client fire its own "disconnected: LOGOUT",
+  // which must not be treated as a phone-side logout and reconnected.
   const clientToLogout = waClient;
+  clearReadyWatchdog();
+  stopWhatsAppHealthCheck();
+  waClient = null;
+  currentClientSessionId = null;
+  currentClientVisible = false;
+  currentClientBrowser = "auto";
+  resetWhatsAppRuntimeState();
 
   try {
-    await clientToLogout.logout();
+    await withTimeout(clientToLogout.logout(), 10000, "logout timeout");
   } catch (error) {
     console.error("Gagal logout WhatsApp client:", error.message);
   }
 
-  await destroyWhatsAppClient();
-  resetWhatsAppRuntimeState();
+  await forceCloseWhatsAppClient(clientToLogout);
   lastWhatsAppEvent = "logged_out";
 }
 
@@ -1038,6 +1075,115 @@ async function waitForWhatsAppState(timeoutMs = 30000) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function withTimeout(promise, ms, message = "timeout") {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    }),
+  ]).finally(() => clearTimeout(timer));
+}
+
+const WA_LOGOUT_STATES = ["LOGOUT", "UNPAIRED", "UNPAIRED_IDLE"];
+
+function stopWhatsAppHealthCheck() {
+  if (healthCheckTimer) {
+    clearInterval(healthCheckTimer);
+    healthCheckTimer = null;
+  }
+  healthCheckFailures = 0;
+}
+
+function cancelWhatsAppReconnect() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+}
+
+// A phone-side logout or a dead page does not always reach whatsapp-web.js's
+// own "disconnected" event, so poll the socket state while the client is ready.
+function startWhatsAppHealthCheck(client, sessionId) {
+  stopWhatsAppHealthCheck();
+  healthCheckTimer = setInterval(async () => {
+    if (waClient !== client || !isWhatsAppReady) return;
+    let state = null;
+    try {
+      state = await withTimeout(client.getState(), 10000, "getState timeout");
+    } catch {
+      state = null;
+    }
+    if (waClient !== client) return;
+
+    if (WA_LOGOUT_STATES.includes(state)) {
+      handleWhatsAppDisconnect(client, sessionId, state);
+      return;
+    }
+    if (state === "CONNECTED") {
+      healthCheckFailures = 0;
+      return;
+    }
+    healthCheckFailures += 1;
+    if (healthCheckFailures >= 3) {
+      handleWhatsAppDisconnect(client, sessionId, state || "NO_RESPONSE");
+    }
+  }, 15000);
+}
+
+function scheduleWhatsAppReconnect(sessionId, loggedOut) {
+  cancelWhatsAppReconnect();
+  // Logged out: reopen right away so a fresh QR is waiting. Otherwise back off.
+  const delays = [3000, 10000, 30000, 60000];
+  if (!loggedOut && reconnectAttempts >= delays.length) {
+    emitLog("error", "WhatsApp gagal tersambung ulang otomatis. Klik Hubungkan untuk mencoba lagi.");
+    return;
+  }
+  const delay = loggedOut ? 1500 : delays[reconnectAttempts];
+  if (!loggedOut) reconnectAttempts += 1;
+
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    if (waClient || sessionId !== activeSessionId) return;
+    initWhatsAppClient({ sessionId }).catch((error) => {
+      lastWhatsAppEvent = "error";
+      emitLog("error", `Gagal menyambungkan ulang WhatsApp: ${error.message}`);
+    });
+  }, delay);
+}
+
+function handleWhatsAppDisconnect(client, sessionId, reason) {
+  if (waClient !== client) return;
+  clearReadyWatchdog();
+  stopWhatsAppHealthCheck();
+  waClient = null;
+  currentClientSessionId = null;
+  currentClientVisible = false;
+  resetWhatsAppRuntimeState();
+
+  const reasonText = String(reason || "-");
+  const loggedOut = WA_LOGOUT_STATES.includes(reasonText);
+  lastWhatsAppEvent = loggedOut ? "logged_out" : "disconnected";
+
+  const meta = getWhatsAppSessionMeta(sessionId);
+  const label = meta?.lastKnownName || meta?.label || sessionId;
+  const message = loggedOut
+    ? `WhatsApp ${label} sudah logout. Scan QR lagi untuk menghubungkan.`
+    : `Koneksi WhatsApp ${label} terputus (${reasonText}). Menyambungkan ulang...`;
+
+  emitLog(loggedOut ? "error" : "warning", message);
+  io.emit("wa-disconnected", {
+    sessionId,
+    reason: reasonText,
+    loggedOut,
+    message,
+    time: new Date().toISOString(),
+    sessions: getWhatsAppSessionsSummary(),
+  });
+
+  forceCloseWhatsAppClient(client).finally(() => scheduleWhatsAppReconnect(sessionId, loggedOut));
 }
 
 function randomBetween(min, max) {
@@ -2395,8 +2541,24 @@ async function generatePdfPerPtJob({ rows: selectedRows = null, filter = {} } = 
   return logRows;
 }
 
+// Chrome on Windows holds "lockfile" in its profile open while it runs, so if the
+// file is absent or deletable no Chrome is using this session.
+function isSessionProfileLocked(sessionDir) {
+  const lockPath = path.join(sessionDir, "lockfile");
+  if (!fs.existsSync(lockPath)) return false;
+  try {
+    fs.unlinkSync(lockPath);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 function killOrphanedBrowserProcesses(sessionId) {
   const sessionDir = getWhatsAppSessionDir(sessionId);
+  // The PowerShell scan below blocks the whole server for a second or more,
+  // so skip it on the normal path where the previous browser closed cleanly.
+  if (!fs.existsSync(sessionDir) || !isSessionProfileLocked(sessionDir)) return;
   try {
     // wmic is gone on current Windows 11 builds, so ask PowerShell (CIM) instead.
     // The session folder is passed through an env var to avoid quoting problems
@@ -2505,6 +2667,8 @@ async function initWhatsAppClient(options = {}) {
   if (!requestedSessionId) {
     throw new Error("Session WhatsApp belum dipilih");
   }
+  const generation = ++initGeneration;
+  cancelWhatsAppReconnect();
 
   const requestedLabel =
     String(options.label || getWhatsAppSessionMeta(requestedSessionId)?.label || "").trim() ||
@@ -2528,6 +2692,8 @@ async function initWhatsAppClient(options = {}) {
   if (shouldSwitchSession || shouldRebuildForBrowserMode || shouldForceReopen) {
     await destroyWhatsAppClient();
     resetWhatsAppRuntimeState();
+    // A newer call (another account picked meanwhile) owns the client now.
+    if (generation !== initGeneration) return waClient;
   }
 
   activeSessionId = requestedSessionId;
@@ -2555,6 +2721,7 @@ async function initWhatsAppClient(options = {}) {
   if (waClient && !isWhatsAppReady) {
     await destroyWhatsAppClient();
     resetWhatsAppRuntimeState();
+    if (generation !== initGeneration) return waClient;
   }
 
   isWhatsAppInitializing = true;
@@ -2576,9 +2743,11 @@ async function initWhatsAppClient(options = {}) {
     // Connection..." forever even though the browser itself is logged in.
     // Watch for that and rebuild the client if nothing happens in time.
     clearInitWatchdog();
-    const clientAtInitStart = waClient;
+    // Every handler below checks it still belongs to the current client: a
+    // client being torn down by an account switch can still fire events.
+    const client = waClient;
     initWatchdogTimer = setTimeout(() => {
-      if (waClient !== clientAtInitStart || isWhatsAppReady || lastWhatsAppEvent !== "initializing") return;
+      if (waClient !== client || isWhatsAppReady || lastWhatsAppEvent !== "initializing") return;
       emitLog("error", "WhatsApp macet saat memuat sesi, menyambungkan ulang otomatis...");
       destroyWhatsAppClient()
         .catch((e) => console.error("Destroy after init-watchdog timeout:", e.message))
@@ -2593,7 +2762,8 @@ async function initWhatsAppClient(options = {}) {
 
     let qrRefreshCount = 0;
 
-    waClient.on("qr", (qr) => {
+    client.on("qr", (qr) => {
+      if (waClient !== client) return;
       clearInitWatchdog();
       qrRefreshCount += 1;
       lastQrString = qr;
@@ -2616,15 +2786,16 @@ async function initWhatsAppClient(options = {}) {
       });
     });
 
-    waClient.on("loading_screen", (percent, message) => {
+    client.on("loading_screen", (percent, message) => {
       console.log(`[wa] loading ${percent}% ${message || ""}`);
     });
 
-    waClient.on("change_state", (state) => {
+    client.on("change_state", (state) => {
       console.log(`[wa] state: ${state}`);
     });
 
-    waClient.on("ready", () => {
+    client.on("ready", () => {
+      if (waClient !== client) return;
       clearReadyWatchdog();
       clearInitWatchdog();
       const account = getWhatsAppAccountInfo();
@@ -2642,6 +2813,13 @@ async function initWhatsAppClient(options = {}) {
         lastUsedAt: new Date().toISOString(),
       });
 
+      reconnectAttempts = 0;
+      startWhatsAppHealthCheck(client, requestedSessionId);
+      // Chrome crashing or its window being closed: report it immediately.
+      client.pupBrowser?.once("disconnected", () => {
+        handleWhatsAppDisconnect(client, requestedSessionId, "BROWSER_CLOSED");
+      });
+
       emitLog("success", "WhatsApp Web sudah login dan siap dipakai");
       io.emit("wa-ready", {
         sessionId: requestedSessionId,
@@ -2652,7 +2830,8 @@ async function initWhatsAppClient(options = {}) {
       });
     });
 
-    waClient.on("authenticated", () => {
+    client.on("authenticated", () => {
+      if (waClient !== client) return;
       clearInitWatchdog();
       isWhatsAppInitializing = true;
       lastQrString = null;
@@ -2670,9 +2849,8 @@ async function initWhatsAppClient(options = {}) {
       // the client from scratch instead of leaving the session dead until
       // someone reopens the page.
       clearReadyWatchdog();
-      const stuckClient = waClient;
       readyWatchdogTimer = setTimeout(() => {
-        if (waClient !== stuckClient || isWhatsAppReady) return;
+        if (waClient !== client || isWhatsAppReady) return;
         readyWatchdogTimer = null;
         const readyRetryCount = options._readyRetryCount || 0;
         const maxReadyRetries = 2;
@@ -2708,33 +2886,32 @@ async function initWhatsAppClient(options = {}) {
       }, 90000);
     });
 
-    waClient.on("auth_failure", (msg) => {
+    client.on("auth_failure", (msg) => {
+      if (waClient !== client) return;
       clearReadyWatchdog();
-      const failedClient = waClient;
+      stopWhatsAppHealthCheck();
       waClient = null;
       currentClientSessionId = null;
       resetWhatsAppRuntimeState();
       lastWhatsAppEvent = "auth_failure";
       emitLog("error", `Autentikasi WhatsApp gagal: ${msg || "-"}`);
-      if (failedClient) {
-        failedClient.destroy().catch((e) => console.error("Destroy after auth_failure:", e.message));
-      }
+      io.emit("wa-disconnected", {
+        sessionId: requestedSessionId,
+        reason: "AUTH_FAILURE",
+        loggedOut: true,
+        message: "Autentikasi WhatsApp gagal. Scan QR lagi untuk menghubungkan.",
+        time: new Date().toISOString(),
+        sessions: getWhatsAppSessionsSummary(),
+      });
+      forceCloseWhatsAppClient(client);
     });
 
-    waClient.on("disconnected", (reason) => {
-      clearReadyWatchdog();
-      const disconnectedClient = waClient;
-      waClient = null;
-      currentClientSessionId = null;
-      resetWhatsAppRuntimeState();
-      lastWhatsAppEvent = "disconnected";
-      emitLog("error", `WhatsApp terputus: ${reason || "-"}`);
-      if (disconnectedClient) {
-        disconnectedClient.destroy().catch((e) => console.error("Destroy after disconnect:", e.message));
-      }
+    client.on("disconnected", (reason) => {
+      handleWhatsAppDisconnect(client, requestedSessionId, reason);
     });
 
-    waClient.on("message", async (msg) => {
+    client.on("message", async (msg) => {
+      if (waClient !== client) return;
       try {
         const chatId = msg.from;
         const contact = await msg.getContact().catch(() => null);
@@ -2753,8 +2930,8 @@ async function initWhatsAppClient(options = {}) {
       }
     });
 
-    waClient.on("message_create", async (msg) => {
-      if (!msg.fromMe) return;
+    client.on("message_create", async (msg) => {
+      if (waClient !== client || !msg.fromMe) return;
       try {
         const chatId = msg.to;
         const contact = await msg.getContact().catch(() => null);
@@ -2773,8 +2950,10 @@ async function initWhatsAppClient(options = {}) {
     });
 
     try {
-      await waClient.initialize();
+      await client.initialize();
     } catch (error) {
+      // Closed on purpose by an account switch: not a failure.
+      if (waClient !== client) return waClient;
       console.error("WhatsApp initialize() failed:", error.message);
       try {
         await destroyWhatsAppClient();
@@ -4024,12 +4203,17 @@ app.post("/api/select-whatsapp-session", async (req, res) => {
       lastUsedAt: new Date().toISOString(),
     });
 
-    await initWhatsAppClient({
+    // Don't hold the request until WhatsApp Web has fully loaded (can take
+    // 20s+): the dashboard gets "wa-qr" / "wa-ready" over the socket.
+    initWhatsAppClient({
       sessionId: requestedSessionId,
       label: sessionMeta.label || requestedSessionId,
+    }).catch((initError) => {
+      lastWhatsAppEvent = "error";
+      emitLog("error", `Gagal menghubungkan akun WhatsApp: ${initError.message}`);
     });
 
-    await waitForWhatsAppState(5000);
+    await waitForWhatsAppState(3000);
 
     return res.json(
       buildWhatsAppStatusResponse({
@@ -4921,7 +5105,7 @@ server.listen(PORT, "0.0.0.0", () => {
 process.on("SIGINT", async () => {
   try {
     if (waClient) {
-      await waClient.destroy();
+      await withTimeout(waClient.destroy(), 8000, "destroy timeout");
     }
   } catch (error) {
   } finally {
@@ -4932,7 +5116,7 @@ process.on("SIGINT", async () => {
 process.on("SIGTERM", async () => {
   try {
     if (waClient) {
-      await waClient.destroy();
+      await withTimeout(waClient.destroy(), 8000, "destroy timeout");
     }
   } catch (error) {
   } finally {

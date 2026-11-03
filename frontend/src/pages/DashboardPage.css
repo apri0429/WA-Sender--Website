@@ -885,36 +885,57 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 20px 22px 16px;
+  margin-bottom: 18px;
+  padding: 16px 22px;
+  background: linear-gradient(90deg, #1c2a3d 0%, #24476e 100%);
+  border-bottom: 3px solid #3577c8;
 }
 
 .bd-qr__head h3 {
   margin: 0;
-  color: #0f172a;
+  color: #fff;
   font-size: 16px;
   font-weight: 600;
 }
 
 .bd-qr__head p {
   margin: 4px 0 0;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.75);
   font-size: 13px;
+}
+
+.bd-qr__head .bd-btn.bd-btn--icon {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: 3px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.bd-qr__head .bd-btn.bd-btn--icon:hover:not(:disabled) {
+  border-color: #fff !important;
+  background: rgba(255, 255, 255, 0.28) !important;
 }
 
 .bd-qr__frame {
   padding: 14px;
-  border: 1px solid #e3e6eb;
-  border-radius: 12px;
+  border: 2px solid #24476e;
+  border-radius: 6px;
   background: #fff;
+  box-shadow: 0 6px 18px rgba(28, 42, 61, 0.15);
 }
 
 .bd-qr__steps {
   width: 100%;
   margin: 0;
   padding: 12px 14px 12px 32px;
-  border-radius: 10px;
-  background: #f8fafc;
-  color: #334155;
+  border: 1px solid #d3d9e1;
+  border-left: 4px solid #24476e;
+  border-radius: 3px;
+  background: #eef2f7;
+  color: #1c2a3d;
   font-size: 13px;
   line-height: 1.8;
 }
@@ -1022,6 +1043,81 @@
 .bd-toast__close:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+/* Same look as the filled "berhasil" toast on the Input page (MUI Alert filled) */
+.bd-toast--ok,
+.bd-toast--error {
+  align-items: center;
+  border: 0;
+  border-radius: 4px;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+.bd-toast--ok {
+  background: #2e7d32;
+}
+
+.bd-toast--error {
+  background: #d32f2f;
+}
+
+.bd-toast--ok .bd-toast__icon,
+.bd-toast--error .bd-toast__icon {
+  width: auto;
+  height: auto;
+  background: none;
+  color: #fff;
+}
+
+.bd-toast--ok .bd-toast__text strong,
+.bd-toast--error .bd-toast__text strong {
+  color: #fff;
+}
+
+.bd-toast--ok .bd-toast__text span,
+.bd-toast--error .bd-toast__text span {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.bd-toast--ok .bd-toast__close,
+.bd-toast--error .bd-toast__close {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.bd-toast--ok .bd-toast__close:hover,
+.bd-toast--error .bd-toast__close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* "Menyiapkan WhatsApp..." = yellow, dark text for contrast */
+.bd-toast--loading {
+  align-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: #fbc02d;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+.bd-toast--loading .bd-toast__icon {
+  width: auto;
+  height: auto;
+  background: none;
+}
+
+.bd-toast--loading .bd-toast__text strong {
+  color: #3d2e00;
+}
+
+.bd-toast--loading .bd-toast__text span {
+  color: #5c4500;
+}
+
+.bd-toast--loading .bd-spin {
+  border-color: #3d2e00;
+  border-right-color: transparent;
 }
 
 .bd-spin {

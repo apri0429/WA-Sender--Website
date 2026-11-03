@@ -132,7 +132,7 @@ function QRDialog({ open, waQr, waQrAt, formatSyncTime, onClose }) {
       maxWidth="xs"
       fullWidth
       slotProps={{ backdrop: { sx: { background: "rgba(15, 23, 42, 0.45)" } } }}
-      PaperProps={{ sx: { borderRadius: "14px", fontFamily: F.sans, boxShadow: "0 24px 60px rgba(15, 23, 42, 0.25)" } }}
+      PaperProps={{ sx: { borderRadius: "4px", overflow: "hidden", fontFamily: F.sans, boxShadow: "0 24px 60px rgba(15, 23, 42, 0.25)" } }}
     >
       <div className="bd-qr__head">
         <div>
@@ -217,6 +217,8 @@ const FILTERS = [
   { id: "overdue", label: "Lewat Tempo" },
   { id: "soon",    label: "7 Hari Lagi" },
   { id: "nowa",    label: "Tanpa No. WA" },
+  { id: "luar",    label: "Luar Kota" },
+  { id: "dalam",   label: "Dalam Kota" },
   { id: "failed",  label: "Gagal" },
 ];
 
@@ -792,10 +794,24 @@ export default function DashboardPage() {
       addLog("info", "QR ter-scan, menyinkronkan WhatsApp...");
       window.setTimeout(() => { checkWhatsappStatus(false, d?.sessionId || ""); }, 1200);
     };
+    const onWaDisconnected = (d) => {
+      const loggedOut = !!d?.loggedOut;
+      setWhatsappReady(false); setWaPopup(false); setWaQr("");
+      // Not logged out = the server is already reconnecting on its own.
+      setWaInitializing(!loggedOut);
+      if (Array.isArray(d?.sessions)) setWaSessions(normalizeSessions(d.sessions));
+      lastWhatsappLogRef.current = "wa-disconnected";
+      setWaError({
+        open: true,
+        title: loggedOut ? "WhatsApp logout" : "WhatsApp terputus",
+        message: d?.message || (loggedOut ? "Akun sudah logout. Scan QR lagi." : "Menyambungkan ulang..."),
+        persist: loggedOut,
+      });
+    };
     const onWaReady = async (d) => {
       if (d?.sessionId) setActiveWaSessionId(d.sessionId);
       setPendingWaSessionId(""); setWhatsappReady(true); setWaQr(""); setWaInitializing(false);
-      setQrOpen(false); setWaPopup(true);
+      setQrOpen(false); setWaPopup(true); setWaError({ open: false, message: "" });
       lastWhatsappLogRef.current = "wa-ready";
       addLog("success", "WhatsApp siap digunakan");
       await checkWhatsappStatus(false, d?.sessionId || "");
@@ -810,6 +826,7 @@ export default function DashboardPage() {
       socket.on("wa-qr",             onWaQr);
       socket.on("wa-authenticated",  onWaAuthenticated);
       socket.on("wa-ready",          onWaReady);
+      socket.on("wa-disconnected",   onWaDisconnected);
     }
     return () => {
       if (socket?.off) {
@@ -821,13 +838,16 @@ export default function DashboardPage() {
         socket.off("wa-qr",            onWaQr);
         socket.off("wa-authenticated", onWaAuthenticated);
         socket.off("wa-ready",         onWaReady);
+        socket.off("wa-disconnected",  onWaDisconnected);
       }
     };
   }, []);
 
+  // Keep checking while connected too (slower), as a fallback if the
+  // "wa-disconnected" socket event is missed, e.g. while the socket reconnects.
   useEffect(() => {
-    if (whatsappReady || (!waInitializing && !waQr)) return;
-    const timer = window.setInterval(() => checkWhatsappStatus(false, pendingWaSessionId || activeWaSessionId), 5000);
+    if (!whatsappReady && !waInitializing && !waQr) return;
+    const timer = window.setInterval(() => checkWhatsappStatus(false, pendingWaSessionId || activeWaSessionId), whatsappReady ? 15000 : 5000);
     return () => window.clearInterval(timer);
   }, [whatsappReady, waInitializing, waQr, activeWaSessionId, pendingWaSessionId]);
 
@@ -849,12 +869,16 @@ export default function DashboardPage() {
   const sentCount    = rows.filter((r) => rowStatus[r.nama]?.ok).length;
   const failedCount  = failedRows.length;
 
-  const filterCounts = { all: rows.length, overdue: overdueRows.length, soon: soonRows.length, nowa: noWaRows.length, failed: failedCount };
+  const isLuarKota   = (r) => (r.wilayah || "").trim().toLowerCase() === "luar kota";
+  const isDalamKota  = (r) => (r.wilayah || "").trim().toLowerCase() === "dalam kota";
+  const filterCounts = { all: rows.length, overdue: overdueRows.length, soon: soonRows.length, nowa: noWaRows.length, luar: rows.filter(isLuarKota).length, dalam: rows.filter(isDalamKota).length, failed: failedCount };
   const term = search.trim().toLowerCase();
   const visibleRows = rows.filter((r) => {
     if (filter === "overdue" && !(r.days !== null && r.days < 0)) return false;
     if (filter === "soon"    && !(r.days !== null && r.days >= 0 && r.days <= 7)) return false;
     if (filter === "nowa"    && r.hasWa) return false;
+    if (filter === "luar"    && !isLuarKota(r)) return false;
+    if (filter === "dalam"   && !isDalamKota(r)) return false;
     if (filter === "failed"  && !failedRows.includes(r)) return false;
     if (!term) return true;
     return (r.nama || "").toLowerCase().includes(term)
@@ -1277,9 +1301,9 @@ export default function DashboardPage() {
         <Toast
           open={waError.open}
           tone="error"
-          title="Koneksi gagal"
+          title={waError.title || "Koneksi gagal"}
           message={waError.message}
-          autoHide={6000}
+          autoHide={waError.persist ? 0 : 6000}
           onClose={() => setWaError({ open: false, message: "" })}
         />
       </div>
